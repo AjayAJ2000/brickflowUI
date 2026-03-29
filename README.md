@@ -1,11 +1,11 @@
 # BricksFlowUI
 
-> Canonical package name: `bricksflowui`
+> Canonical package name: `brickflowui`
 >
 > Install with:
 >
 > ```bash
-> pip install bricksflowui
+> pip install brickflowui
 > ```
 >
 > Import with:
@@ -23,8 +23,8 @@
 
 ## Release Notes
 
-- PyPI package name is now `bricksflowui`
-- CLI commands supported: `brickflowui` and `bricksflowui`
+- PyPI package name is `brickflowui`
+- CLI command: `brickflowui`
 - Standard Python import remains `brickflowui`
 - Source distributions and wheels include bundled frontend assets plus docs/examples
 
@@ -51,7 +51,7 @@ BricksFlowUI is an independent project and is not affiliated with Nike's Brickfl
 ## Quick Start
 
 ```bash
-pip install bricksflowui
+pip install brickflowui
 
 # Scaffold a new app
 brickflowui new my_app
@@ -316,8 +316,8 @@ Then in the Databricks workspace:
 ### `requirements.txt`
 
 ```text
-bricksflowui>=0.1.0
-# bricksflowui[databricks]  # for SQL + Unity Catalog
+brickflowui>=0.1.1
+# brickflowui[databricks]  # for SQL + Unity Catalog
 ```
 
 ---

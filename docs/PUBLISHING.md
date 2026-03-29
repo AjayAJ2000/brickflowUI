@@ -1,15 +1,13 @@
 # Publishing Guide
 
-This project is set up so it can be published to GitHub and PyPI as `bricksflowui`.
+This project is set up so it can be published to GitHub and PyPI as `brickflowui`.
 
 ## Package identity
 
-- PyPI package: `bricksflowui`
+- PyPI package: `brickflowui`
 - standard import path: `brickflowui`
-- compatibility import path: `bricksflowui`
-- CLI commands:
+- CLI command:
   - `brickflowui`
-  - `bricksflowui`
 
 ## Recommended release checklist
 
@@ -72,7 +70,7 @@ It runs when a GitHub Release is published, and can also be started manually wit
 Users should be able to run:
 
 ```bash
-pip install bricksflowui
+pip install brickflowui
 ```
 
 Then:
@@ -84,5 +82,5 @@ import brickflowui as db
 ## Packaging notes
 
 - bundled frontend assets are included in wheel and sdist builds
-- both `brickflowui` and `bricksflowui` packages are included
+- the published distribution includes the `brickflowui` Python package
 - docs and examples are included in the source distribution

@@ -7,18 +7,18 @@ This guide gets a new user from zero to a running BricksFlowUI app as quickly as
 Basic install:
 
 ```bash
-pip install bricksflowui
+pip install brickflowui
 ```
 
 If you plan to use Databricks SQL helpers too:
 
 ```bash
-pip install "bricksflowui[databricks]"
+pip install "brickflowui[databricks]"
 ```
 
 ## 2. Know the package names
 
-- install package: `bricksflowui`
+- install package: `brickflowui`
 - CLI command: `brickflowui`
 - Python import: `import brickflowui as db`
 

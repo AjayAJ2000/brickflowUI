@@ -25,7 +25,7 @@ If you are new to the library, follow these in order:
 ## Install
 
 ```bash
-pip install bricksflowui
+pip install brickflowui
 ```
 
 Then import it with:

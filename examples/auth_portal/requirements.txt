@@ -1,1 +1,1 @@
-bricksflowui>=0.1.0
+brickflowui>=0.1.1

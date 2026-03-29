@@ -1,0 +1,82 @@
+<svg width="1200" height="627" viewBox="0 0 1200 627" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="627" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0F172A"/>
+      <stop offset="0.5" stop-color="#121B34"/>
+      <stop offset="1" stop-color="#1F1140"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="215" y1="126" x2="958" y2="553" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FF5A36"/>
+      <stop offset="0.5" stop-color="#FF2D7A"/>
+      <stop offset="1" stop-color="#8B5CF6"/>
+    </linearGradient>
+    <linearGradient id="chip" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.08"/>
+    </linearGradient>
+    <filter id="blur" x="0" y="0" width="1200" height="627" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="60"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="627" rx="28" fill="url(#bg)"/>
+
+  <g opacity="0.75" filter="url(#blur)">
+    <circle cx="1010" cy="118" r="150" fill="#FF2D7A"/>
+    <circle cx="205" cy="540" r="140" fill="#FF5A36"/>
+    <circle cx="760" cy="520" r="120" fill="#4F46E5"/>
+  </g>
+
+  <path d="M0 493C164 412 287 403 405 441C570 494 665 596 861 562C997 538 1097 451 1200 387V627H0V493Z" fill="#FFFFFF" fill-opacity="0.04"/>
+
+  <rect x="64" y="56" width="155" height="44" rx="22" fill="url(#chip)" stroke="#FFFFFF" stroke-opacity="0.16"/>
+  <text x="141.5" y="84" fill="#F8FAFC" font-size="20" font-family="Segoe UI, Arial, sans-serif" text-anchor="middle" font-weight="700">Now Live</text>
+
+  <text x="64" y="176" fill="#F8FAFC" font-size="72" font-family="Segoe UI, Arial, sans-serif" font-weight="800">BricksFlowUI</text>
+  <text x="64" y="238" fill="#CBD5E1" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="500">
+    Build Databricks dashboards, portals, and internal web apps
+  </text>
+  <text x="64" y="278" fill="#CBD5E1" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="500">
+    in pure Python.
+  </text>
+
+  <rect x="64" y="324" width="438" height="70" rx="24" fill="#FFFFFF" fill-opacity="0.06" stroke="#FFFFFF" stroke-opacity="0.10"/>
+  <text x="96" y="366" fill="#F8FAFC" font-size="26" font-family="Segoe UI, Arial, sans-serif" font-weight="700">
+    pip install brickflowui
+  </text>
+
+  <g>
+    <rect x="64" y="436" width="223" height="52" rx="20" fill="url(#chip)" stroke="#FFFFFF" stroke-opacity="0.12"/>
+    <text x="176" y="468" fill="#F8FAFC" font-size="22" font-family="Segoe UI, Arial, sans-serif" text-anchor="middle" font-weight="600">Python-first UI</text>
+
+    <rect x="303" y="436" width="216" height="52" rx="20" fill="url(#chip)" stroke="#FFFFFF" stroke-opacity="0.12"/>
+    <text x="411" y="468" fill="#F8FAFC" font-size="22" font-family="Segoe UI, Arial, sans-serif" text-anchor="middle" font-weight="600">Auth-ready apps</text>
+
+    <rect x="535" y="436" width="223" height="52" rx="20" fill="url(#chip)" stroke="#FFFFFF" stroke-opacity="0.12"/>
+    <text x="646.5" y="468" fill="#F8FAFC" font-size="22" font-family="Segoe UI, Arial, sans-serif" text-anchor="middle" font-weight="600">YAML theming</text>
+  </g>
+
+  <g opacity="0.97">
+    <rect x="744" y="110" width="392" height="360" rx="32" fill="#0B1228" fill-opacity="0.78" stroke="url(#accent)" stroke-width="2"/>
+    <rect x="775" y="144" width="330" height="26" rx="13" fill="#FFFFFF" fill-opacity="0.08"/>
+    <rect x="775" y="192" width="112" height="112" rx="24" fill="url(#accent)"/>
+    <rect x="903" y="192" width="202" height="48" rx="18" fill="#FFFFFF" fill-opacity="0.08"/>
+    <rect x="903" y="256" width="165" height="20" rx="10" fill="#FFFFFF" fill-opacity="0.08"/>
+    <rect x="775" y="332" width="330" height="107" rx="26" fill="#FFFFFF" fill-opacity="0.06"/>
+
+    <polyline points="805,403 858,381 915,390 972,346 1030,362 1080,318" fill="none" stroke="url(#accent)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="805" cy="403" r="7" fill="#FF5A36"/>
+    <circle cx="858" cy="381" r="7" fill="#FF5A36"/>
+    <circle cx="915" cy="390" r="7" fill="#FF2D7A"/>
+    <circle cx="972" cy="346" r="7" fill="#FF2D7A"/>
+    <circle cx="1030" cy="362" r="7" fill="#8B5CF6"/>
+    <circle cx="1080" cy="318" r="7" fill="#8B5CF6"/>
+  </g>
+
+  <text x="64" y="567" fill="#94A3B8" font-size="22" font-family="Segoe UI, Arial, sans-serif" font-weight="500">
+    Open source • PyPI package • GitHub Pages docs
+  </text>
+  <text x="64" y="600" fill="#E2E8F0" font-size="22" font-family="Segoe UI, Arial, sans-serif" font-weight="700">
+    github.com/AjayAJ2000/brickflowUI
+  </text>
+</svg>

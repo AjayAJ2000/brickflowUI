@@ -54,12 +54,11 @@ docs = [
     "mkdocs-material>=9.6.0",
 ]
 all = [
-    "bricksflowui[databricks,viz,dev,docs]",
+    "brickflowui[databricks,viz,dev,docs]",
 ]
 
 [project.scripts]
 brickflowui = "brickflowui.cli.main:app"
-bricksflowui = "bricksflowui.cli.main:app"
 
 [project.urls]
 Homepage = "https://github.com/AjayAJ2000/brickflowUI"
@@ -68,7 +67,7 @@ Repository = "https://github.com/AjayAJ2000/brickflowUI"
 Issues = "https://github.com/AjayAJ2000/brickflowUI/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["brickflowui", "bricksflowui"]
+packages = ["brickflowui"]
 
 [tool.hatch.build.targets.wheel.shared-data]
 "brickflowui/frontend/dist" = "brickflowui/frontend/dist"
@@ -79,7 +78,6 @@ include = [
     "/LICENSE",
     "/pyproject.toml",
     "/brickflowui",
-    "/bricksflowui",
     "/docs",
     "/examples",
     "/tests",
