@@ -1,0 +1,11 @@
+command:
+  - python
+  - app.py
+
+env:
+  - name: DATABRICKS_WAREHOUSE_ID
+    value: replace-with-your-warehouse-id
+  # - name: DATABRICKS_TOKEN
+  #   valueFrom:
+  #     secretScope: my-scope
+  #     secretKey: my-token

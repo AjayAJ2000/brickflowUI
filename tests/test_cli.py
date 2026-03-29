@@ -1,0 +1,39 @@
+import shutil
+from pathlib import Path
+
+from typer.testing import CliRunner
+
+from brickflowui.cli.main import app
+
+
+runner = CliRunner()
+
+
+def test_cli_help_only_shows_supported_commands():
+    result = runner.invoke(app, ["--help"])
+
+    assert result.exit_code == 0
+    assert "new" in result.output
+    assert "dev" in result.output
+    assert "info" not in result.output
+    assert "--template" not in result.output
+
+
+def test_new_command_scaffolds_default_app(monkeypatch):
+    repo_root = Path(__file__).resolve().parents[1]
+    scratch_dir = repo_root / "tests" / "_tmp_cli"
+
+    shutil.rmtree(scratch_dir, ignore_errors=True)
+    scratch_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        monkeypatch.chdir(scratch_dir)
+        result = runner.invoke(app, ["new", "sample_app"], catch_exceptions=False)
+
+        assert result.exit_code == 0
+        assert (scratch_dir / "sample_app" / "app.py").exists()
+        assert (scratch_dir / "sample_app" / "app.yaml").exists()
+        assert (scratch_dir / "sample_app" / "requirements.txt").exists()
+        assert (scratch_dir / "sample_app" / ".env.example").exists()
+    finally:
+        shutil.rmtree(scratch_dir, ignore_errors=True)

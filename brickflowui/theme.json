@@ -1,0 +1,26 @@
+{
+  "colors": {
+    "primary": "#003087",
+    "primary-light": "#00aed1",
+    "bg": "#f8f9fa",
+    "surface": "#ffffff",
+    "text": "#1a1a1a",
+    "text-muted": "#6b7280",
+    "border": "#e5e7eb",
+    "success": "#10b981",
+    "warning": "#f59e0b",
+    "error": "#ef4444",
+    "link": "#003087"
+  },
+  "typography": {
+    "sans": "'Inter', -apple-system, sans-serif",
+    "mono": "'Fira Code', monospace"
+  },
+  "spacing": {
+    "base": "4px"
+  },
+  "radius": {
+    "md": "8px",
+    "lg": "12px"
+  }
+}

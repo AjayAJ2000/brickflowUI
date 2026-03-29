@@ -1,0 +1,91 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bricksflowui"
+version = "0.1.0"
+description = "A Databricks-first Python UI framework for building secure dashboards, portals, and web apps with pure Python."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "BrickflowUI Contributors" }]
+keywords = ["databricks", "ui", "dashboard", "portal", "fastapi", "python-framework"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+    "Topic :: Software Development :: User Interfaces",
+]
+
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "typer>=0.12.0",
+    "python-dotenv>=1.0.0",
+    "websockets>=12.0",
+    "starlette>=0.37.0",
+    "PyYAML>=6.0.0",
+]
+
+[project.optional-dependencies]
+databricks = [
+    "databricks-sdk>=0.20.0",
+    "databricks-sql-connector>=3.0.0",
+    "pandas>=2.0.0",
+]
+viz = [
+    "plotly>=5.0.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.27.0",
+    "ruff>=0.4.0",
+    "mypy>=1.10.0",
+]
+all = [
+    "bricksflowui[databricks,viz,dev]",
+]
+
+[project.scripts]
+brickflowui = "brickflowui.cli.main:app"
+bricksflowui = "bricksflowui.cli.main:app"
+
+[project.urls]
+Homepage = "https://github.com/brickflowui/bricksflowui"
+Documentation = "https://github.com/brickflowui/bricksflowui/tree/main/docs"
+Repository = "https://github.com/brickflowui/bricksflowui"
+Issues = "https://github.com/brickflowui/bricksflowui/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["brickflowui", "bricksflowui"]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"brickflowui/frontend/dist" = "brickflowui/frontend/dist"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/README.md",
+    "/LICENSE",
+    "/pyproject.toml",
+    "/brickflowui",
+    "/bricksflowui",
+    "/docs",
+    "/examples",
+    "/tests",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+strict = false
+ignore_missing_imports = true
