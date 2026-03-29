@@ -46,6 +46,27 @@ python -m twine check dist/*
 python -m twine upload dist/*
 ```
 
+## Trusted Publishing with GitHub Actions
+
+This repository includes a GitHub Actions workflow at:
+
+`/.github/workflows/publish.yml`
+
+When configuring a GitHub trusted publisher on PyPI, use:
+
+- repository owner: your GitHub username or org
+- repository name: your repository name
+- workflow filename: `publish.yml`
+- environment: `pypi`
+
+The workflow is configured to:
+
+- run tests
+- build the package
+- publish to PyPI with GitHub OIDC trusted publishing
+
+It runs when a GitHub Release is published, and can also be started manually with `workflow_dispatch`.
+
 ## Post-publish smoke test
 
 Users should be able to run:

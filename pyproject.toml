@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "bricksflowui"
+name = "brickflowui"
 version = "0.1.0"
 description = "A Databricks-first Python UI framework for building secure dashboards, portals, and web apps with pure Python."
 readme = "README.md"
