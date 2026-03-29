@@ -7,3 +7,5 @@ frontend/node_modules/
 *.egg-info/
 *.pyc
 __pycache__/
+tests/_tmp_cli/
+frontend/tsc_errors.txt
