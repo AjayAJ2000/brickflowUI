@@ -1,48 +1,77 @@
-# Getting Started
+# Quick Start
 
-## Install
+This guide gets a new user from zero to a running BricksFlowUI app as quickly as possible.
+
+## 1. Install
+
+Basic install:
 
 ```bash
 pip install bricksflowui
 ```
 
-With Databricks support:
+If you plan to use Databricks SQL helpers too:
 
 ```bash
 pip install "bricksflowui[databricks]"
 ```
 
-## Create a minimal app
+## 2. Know the package names
+
+- install package: `bricksflowui`
+- CLI command: `brickflowui`
+- Python import: `import brickflowui as db`
+
+That means install and import use different names on purpose.
+
+## 3. Create your first app
+
+Create an `app.py` file:
 
 ```python
 import brickflowui as db
 
-app = db.App(title="My App")
+app = db.App(title="My First App")
 
 @app.page("/", title="Home")
 def home():
+    count, set_count = db.use_state(0)
+
     return db.Column(
         [
-            db.Text("Hello from BricksFlowUI", variant="h1"),
-            db.Button("Click me"),
+            db.Text("My First App", variant="h1"),
+            db.Text("You are running a BricksFlowUI app.", muted=True),
+            db.Card(
+                [
+                    db.Text(f"Count: {count}", variant="h3"),
+                    db.Button("Increment", on_click=lambda: set_count(count + 1)),
+                ],
+                title="Counter",
+            ),
         ],
+        gap=5,
         padding=6,
-        gap=4,
     )
 
 if __name__ == "__main__":
     app.run()
 ```
 
-## Run it
+## 4. Run it
 
 ```bash
 python app.py
 ```
 
-Open `http://127.0.0.1:8050`.
+Open:
 
-## Create a scaffolded project
+```text
+http://127.0.0.1:8050
+```
+
+## 5. Create a scaffolded project instead
+
+If you want a starter project instead of writing files manually:
 
 ```bash
 brickflowui new my_app
@@ -50,15 +79,48 @@ cd my_app
 brickflowui dev
 ```
 
-## Install names vs import names
+## 6. Add another page
 
-- install package: `bricksflowui`
-- CLI: `brickflowui` or `bricksflowui`
-- standard Python import: `import brickflowui as db`
+BricksFlowUI supports multi-page apps out of the box.
 
-## Next docs
+```python
+@app.page("/reports", title="Reports")
+def reports():
+    return db.Column(
+        [
+            db.Text("Reports", variant="h1"),
+            db.Text("Your second page is live."),
+        ],
+        gap=4,
+        padding=6,
+    )
+```
 
-- [Tutorial](./TUTORIAL.md)
-- [Theming](./THEMING.md)
-- [API Reference](./API_REFERENCE.md)
-- [Publishing](./PUBLISHING.md)
+## 7. Add branding with YAML
+
+Create `branding.yaml`:
+
+```yaml
+branding:
+  title: "Acme Portal"
+
+colors:
+  primary: "#C81E5B"
+  background: "#F7F7F5"
+  surface: "#FFFFFF"
+  text: "#16161A"
+  border: "#E4E4E7"
+```
+
+Then load it:
+
+```python
+app = db.App(theme="branding.yaml")
+```
+
+## 8. What to learn next
+
+- [First App Tutorial](./TUTORIAL.md) for a more realistic app
+- [Theming](./THEMING.md) for branding and visual customization
+- [API Reference](./API_REFERENCE.md) for the full API
+- [Publishing](./PUBLISHING.md) for release and PyPI setup

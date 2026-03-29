@@ -1,4 +1,5 @@
 import shutil
+import uuid
 from pathlib import Path
 
 from typer.testing import CliRunner
@@ -22,18 +23,19 @@ def test_cli_help_only_shows_supported_commands():
 def test_new_command_scaffolds_default_app(monkeypatch):
     repo_root = Path(__file__).resolve().parents[1]
     scratch_dir = repo_root / "tests" / "_tmp_cli"
+    app_name = f"sample_app_{uuid.uuid4().hex[:8]}"
 
     shutil.rmtree(scratch_dir, ignore_errors=True)
     scratch_dir.mkdir(parents=True, exist_ok=True)
 
     try:
         monkeypatch.chdir(scratch_dir)
-        result = runner.invoke(app, ["new", "sample_app"], catch_exceptions=False)
+        result = runner.invoke(app, ["new", app_name], catch_exceptions=False)
 
         assert result.exit_code == 0
-        assert (scratch_dir / "sample_app" / "app.py").exists()
-        assert (scratch_dir / "sample_app" / "app.yaml").exists()
-        assert (scratch_dir / "sample_app" / "requirements.txt").exists()
-        assert (scratch_dir / "sample_app" / ".env.example").exists()
+        assert (scratch_dir / app_name / "app.py").exists()
+        assert (scratch_dir / app_name / "app.yaml").exists()
+        assert (scratch_dir / app_name / "requirements.txt").exists()
+        assert (scratch_dir / app_name / ".env.example").exists()
     finally:
         shutil.rmtree(scratch_dir, ignore_errors=True)

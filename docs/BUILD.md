@@ -68,6 +68,32 @@ If the checks pass, upload to PyPI:
 python -m twine upload dist/*
 ```
 
+## Build the documentation site locally
+
+Install docs tooling:
+
+```bash
+pip install -e ".[docs]"
+```
+
+Run the docs server:
+
+```bash
+mkdocs serve
+```
+
+Open:
+
+```text
+http://127.0.0.1:8000
+```
+
+Build the static docs site:
+
+```bash
+mkdocs build
+```
+
 ## What needs rebuilding?
 
 - Python-only changes: reinstall with `pip install -e ".[dev]"` if needed, then run tests.

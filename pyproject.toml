@@ -49,8 +49,12 @@ dev = [
     "ruff>=0.4.0",
     "mypy>=1.10.0",
 ]
+docs = [
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.6.0",
+]
 all = [
-    "bricksflowui[databricks,viz,dev]",
+    "bricksflowui[databricks,viz,dev,docs]",
 ]
 
 [project.scripts]
@@ -58,10 +62,10 @@ brickflowui = "brickflowui.cli.main:app"
 bricksflowui = "bricksflowui.cli.main:app"
 
 [project.urls]
-Homepage = "https://github.com/brickflowui/bricksflowui"
-Documentation = "https://github.com/brickflowui/bricksflowui/tree/main/docs"
-Repository = "https://github.com/brickflowui/bricksflowui"
-Issues = "https://github.com/brickflowui/bricksflowui/issues"
+Homepage = "https://github.com/AjayAJ2000/brickflowUI"
+Documentation = "https://github.com/AjayAJ2000/brickflowUI/tree/main/docs"
+Repository = "https://github.com/AjayAJ2000/brickflowUI"
+Issues = "https://github.com/AjayAJ2000/brickflowUI/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["brickflowui", "bricksflowui"]

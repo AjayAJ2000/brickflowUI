@@ -1,0 +1,38 @@
+site_name: BricksFlowUI
+site_description: Databricks-first Python UI framework for dashboards, portals, and internal web apps.
+site_url: https://ajayaj2000.github.io/brickflowUI/
+repo_url: https://github.com/AjayAJ2000/brickflowUI
+repo_name: AjayAJ2000/brickflowUI
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: red
+      accent: red
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.details
+  - tables
+
+nav:
+  - Home: index.md
+  - Quick Start: GETTING_STARTED.md
+  - First App Tutorial: TUTORIAL.md
+  - API Reference: API_REFERENCE.md
+  - Theming: THEMING.md
+  - Build Guide: BUILD.md
+  - Publishing: PUBLISHING.md
