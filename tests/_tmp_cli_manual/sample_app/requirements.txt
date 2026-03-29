@@ -1,5 +1,0 @@
-bricksflowui>=0.1.0
-
-# Optional Databricks integrations:
-# brickflowui[databricks]   — SQL connector + Unity Catalog + SDK
-# brickflowui[viz]          — Plotly visualization

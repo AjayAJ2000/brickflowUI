@@ -44,6 +44,8 @@ BricksFlowUI lets data engineers build beautiful, interactive Databricks Apps in
 - 🔒 **Databricks-native** — reads `DATABRICKS_APP_PORT`, Unity Catalog helpers, SQL warehouse wrappers
 - 🎨 **Beautiful dark theme** — Databricks-inspired design system, no CSS required
 
+BricksFlowUI is an independent project and is not affiliated with Nike's Brickflow workflow framework.
+
 ---
 
 ## Quick Start
