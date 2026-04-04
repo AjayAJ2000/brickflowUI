@@ -1,6 +1,6 @@
 # First App Tutorial
 
-This tutorial walks through a realistic BricksFlowUI app that includes:
+This tutorial walks through a realistic BrickflowUI app that includes:
 
 - layout
 - state
@@ -71,7 +71,7 @@ def overview():
     return db.Column(
         [
             db.Text("Operations Hub", variant="h1"),
-            db.Text("A simple multi-page dashboard built with BricksFlowUI.", muted=True),
+            db.Text("A simple multi-page dashboard built with BrickflowUI.", muted=True),
             db.Grid(
                 [
                     kpi("Output", "108 lots", "+6.9%", "increase"),
@@ -174,7 +174,7 @@ def overview():
     return db.Column(
         [
             db.Text("Operations Hub", variant="h1"),
-            db.Text("A simple multi-page dashboard built with BricksFlowUI.", muted=True),
+            db.Text("A simple multi-page dashboard built with BrickflowUI.", muted=True),
             db.Grid(
                 [
                     kpi("Output", "108 lots", "+6.9%", "increase"),

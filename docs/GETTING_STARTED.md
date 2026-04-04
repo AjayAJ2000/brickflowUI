@@ -1,6 +1,6 @@
 # Quick Start
 
-This guide gets a new user from zero to a running BricksFlowUI app as quickly as possible.
+This guide gets a new user from zero to a running BrickflowUI app as quickly as possible.
 
 ## 1. Install
 
@@ -40,7 +40,7 @@ def home():
     return db.Column(
         [
             db.Text("My First App", variant="h1"),
-            db.Text("You are running a BricksFlowUI app.", muted=True),
+            db.Text("You are running a BrickflowUI app.", muted=True),
             db.Card(
                 [
                     db.Text(f"Count: {count}", variant="h3"),
@@ -81,7 +81,7 @@ brickflowui dev
 
 ## 6. Add another page
 
-BricksFlowUI supports multi-page apps out of the box.
+BrickflowUI supports multi-page apps out of the box.
 
 ```python
 @app.page("/reports", title="Reports")
@@ -123,4 +123,6 @@ app = db.App(theme="branding.yaml")
 - [First App Tutorial](./TUTORIAL.md) for a more realistic app
 - [Theming](./THEMING.md) for branding and visual customization
 - [API Reference](./API_REFERENCE.md) for the full API
+- [Examples](./EXAMPLES.md) for runnable app patterns
+- [Databricks Apps](./DATABRICKS_APPS.md) for deployment and runtime troubleshooting
 - [Publishing](./PUBLISHING.md) for release and PyPI setup

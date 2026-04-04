@@ -76,8 +76,7 @@ from .components import (
     WarehouseSelector,
     JobTrigger,
 )
-
-__version__ = "0.1.0"
+from .version import __version__
 __all__ = [
     # Core
     "App",
@@ -138,4 +137,5 @@ __all__ = [
     "CatalogBrowser",
     "WarehouseSelector",
     "JobTrigger",
+    "__version__",
 ]

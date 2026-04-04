@@ -3,7 +3,7 @@ pytest-cache-files-*/
 .tmp/
 .venv/
 build/
-dist/
+/dist/
 frontend/node_modules/
 site/
 *.egg-info/

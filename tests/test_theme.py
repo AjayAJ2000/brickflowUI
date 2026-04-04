@@ -40,7 +40,7 @@ def test_theme_normalizes_branding_and_alias_keys():
 
 
 def test_app_uses_branding_from_theme_file_when_defaults_are_used():
-    theme_path = Path("tests/_branding_test.yaml")
+    theme_path = Path(__file__).parent / "_branding_test.yaml"
     try:
         theme_path.write_text(
             "\n".join(

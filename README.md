@@ -1,4 +1,4 @@
-# BricksFlowUI
+# BrickflowUI
 
 > Canonical package name: `brickflowui`
 >
@@ -35,16 +35,16 @@
 
 ---
 
-## What is BricksFlowUI?
+## What is BrickflowUI?
 
-BricksFlowUI lets data engineers build beautiful, interactive Databricks Apps in **pure Python**. It ships a pre-built React frontend and communicates over WebSocket, so you get:
+BrickflowUI lets data engineers build beautiful, interactive Databricks Apps in **pure Python**. It ships a pre-built React frontend and communicates over WebSocket, so you get:
 
 - ⚡ **No full-script reruns** — only changed components re-render (unlike Streamlit)
 - 🧩 **React-style component model** — composable functions, hooks, one-way data flow
 - 🔒 **Databricks-native** — reads `DATABRICKS_APP_PORT`, Unity Catalog helpers, SQL warehouse wrappers
 - 🎨 **Beautiful dark theme** — Databricks-inspired design system, no CSS required
 
-BricksFlowUI is an independent project and is not affiliated with Nike's Brickflow workflow framework.
+BrickflowUI is an independent project and is not affiliated with Nike's Brickflow workflow framework.
 
 ---
 
@@ -316,7 +316,7 @@ Then in the Databricks workspace:
 ### `requirements.txt`
 
 ```text
-brickflowui>=0.1.1
+brickflowui>=0.1.3
 # brickflowui[databricks]  # for SQL + Unity Catalog
 ```
 

@@ -24,8 +24,8 @@ DEFAULT_THEME = {
         "link": "#003087",
     },
     "typography": {
-        "sans": "'Inter', -apple-system, sans-serif",
-        "mono": "'Fira Code', monospace",
+        "sans": "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+        "mono": "ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace",
         "base-size": "14px",
     },
     "spacing": {

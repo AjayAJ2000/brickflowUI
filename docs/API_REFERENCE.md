@@ -1,5 +1,13 @@
 # API Reference
 
+Use this page when you already understand the overall framework shape and want to look up the exact API surface quickly.
+
+If you are still learning the library, pair this page with:
+
+- [Quick Start](./GETTING_STARTED.md)
+- [Examples](./EXAMPLES.md)
+- [How It Works](./HOW_IT_WORKS.md)
+
 ## Core
 
 ### `db.App(...)`
@@ -23,6 +31,12 @@ Methods:
 - `@app.route(path, methods=[...], access=..., roles=...)`
 - `app.mount(component)`
 - `app.run(host=None, port=None, reload=False)`
+
+Mental model:
+
+- `App` owns pages, custom routes, theme config, auth wiring, and runtime server options
+- `theme` can be a dict or a YAML/JSON file path
+- `auth_mode` chooses how the framework treats app identity vs user identity
 
 ## State Hooks
 

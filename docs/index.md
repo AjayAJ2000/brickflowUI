@@ -1,8 +1,8 @@
-# BricksFlowUI
+# BrickflowUI
 
 Build dashboards, portals, and internal web apps for Databricks using pure Python.
 
-BricksFlowUI is designed to feel simple for first-time users and structured enough for teams building larger apps with multiple pages, auth, theming, and data access.
+BrickflowUI is designed to feel simple for first-time users and structured enough for teams building larger apps with multiple pages, auth, theming, and data access.
 
 ## What you get
 
@@ -19,8 +19,10 @@ If you are new to the library, follow these in order:
 
 1. [Quick Start](./GETTING_STARTED.md) to install the package and run your first app
 2. [First App Tutorial](./TUTORIAL.md) to build a more realistic dashboard-style app
-3. [Theming](./THEMING.md) to brand your app
-4. [API Reference](./API_REFERENCE.md) when you want to explore the full surface area
+3. [Examples](./EXAMPLES.md) to start from something runnable
+4. [Databricks Apps](./DATABRICKS_APPS.md) for deployment details
+5. [Theming](./THEMING.md) to brand your app
+6. [API Reference](./API_REFERENCE.md) when you want to explore the full surface area
 
 ## Install
 
@@ -39,14 +41,14 @@ import brickflowui as db
 ```python
 import brickflowui as db
 
-app = db.App(title="Hello BricksFlowUI")
+app = db.App(title="Hello BrickflowUI")
 
 @app.page("/", title="Home")
 def home():
     count, set_count = db.use_state(0)
     return db.Column(
         [
-            db.Text("Hello BricksFlowUI", variant="h1"),
+            db.Text("Hello BrickflowUI", variant="h1"),
             db.Text(f"Count: {count}"),
             db.Button("Increment", on_click=lambda: set_count(count + 1)),
         ],

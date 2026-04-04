@@ -1,4 +1,4 @@
-site_name: BricksFlowUI
+site_name: BrickflowUI
 site_description: Databricks-first Python UI framework for dashboards, portals, and internal web apps.
 site_url: https://ajayaj2000.github.io/brickflowUI/
 repo_url: https://github.com/AjayAJ2000/brickflowUI
@@ -32,6 +32,11 @@ nav:
   - Home: index.md
   - Quick Start: GETTING_STARTED.md
   - First App Tutorial: TUTORIAL.md
+  - Examples: EXAMPLES.md
+  - Databricks Apps: DATABRICKS_APPS.md
+  - Troubleshooting: TROUBLESHOOTING.md
+  - FAQ: FAQ.md
+  - How It Works: HOW_IT_WORKS.md
   - API Reference: API_REFERENCE.md
   - Theming: THEMING.md
   - Build Guide: BUILD.md
