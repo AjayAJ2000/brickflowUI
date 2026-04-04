@@ -11,7 +11,33 @@ Use this page when you want to skip the docs theory and start from something run
 | Counter | `examples/counter/app.py` | Fastest possible sanity check |
 | Auth Portal | `examples/auth_portal/app.py` | Login, access control, protected routes |
 | Operations + Finance Portal | `examples/operations_finance_portal/app.py` | Executive dashboard with a traditional top nav |
+| Data Pipeline Command Center | `examples/data_pipeline_command_center/app.py` | Industry-style data engineering monitoring with filters, SLA controls, cost, freshness, and Databricks SQL handoff |
 | Workspace Studio | `examples/workspace_studio/app.py` | Rich app structure with filters, tables, tabs, forms, modal flows, charts, and a dedicated themes page |
+
+## Data Pipeline Command Center
+
+Use this example when your goal is to connect a real Databricks ingestion or transformation pipeline to an operations dashboard.
+
+- [app.py](/D:/Projects/brickflowUI/brickflowUI/examples/data_pipeline_command_center/app.py)
+- [app.yaml](/D:/Projects/brickflowUI/brickflowUI/examples/data_pipeline_command_center/app.yaml)
+- [requirements.txt](/D:/Projects/brickflowUI/brickflowUI/examples/data_pipeline_command_center/requirements.txt)
+
+It demonstrates:
+
+- multiple live controls on one dashboard
+- source switching between mock data and Databricks SQL
+- top navigation across executive, health, cost, and data model views
+- KPI cards for throughput, freshness, cost, and reliability
+- charts for SLA trend, incident mix, and cost concentration
+- guardrail controls like minimum success-rate threshold and critical-only filtering
+- a practical SQL shape for your pipeline metrics table
+
+This is a good starting point for:
+
+- lakehouse ingestion monitoring
+- bronze/silver/gold pipeline visibility
+- engineering + analytics stakeholder review dashboards
+- free-edition Databricks prototypes that later grow into team dashboards
 
 ## Workspace Studio
 
@@ -91,3 +117,4 @@ The most effective pattern is:
 - Choose `auth_portal` if your main concern is access control and protected pages.
 - Choose `operations_finance_portal` if you want a polished dashboard-style shell quickly.
 - Choose `workspace_studio` if you want the broadest example of how the library fits together.
+- Choose `data_pipeline_command_center` if your real goal is pipeline observability and operational dashboarding on Databricks.
