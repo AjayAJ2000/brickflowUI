@@ -489,6 +489,15 @@ body {
 
 @keyframes bf-fade-in { from { opacity: 0 } to { opacity: 1 } }
 @keyframes bf-slide-up { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes bf-fade-up { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes bf-soft-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@keyframes bf-soft-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(200, 30, 91, 0.0); }
+  50% { box-shadow: 0 0 0 10px rgba(200, 30, 91, 0.08); }
+}
 
 /* ── Form ────────────────────────────────────────────────────────────────── */
 .bf-form { display: flex; flex-direction: column; gap: var(--space-4); }
