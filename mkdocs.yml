@@ -18,6 +18,9 @@ theme:
       primary: red
       accent: red
 
+extra:
+  generator: false
+
 markdown_extensions:
   - admonition
   - toc:

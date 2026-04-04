@@ -67,18 +67,3 @@ python app.py
 ```
 
 Open `http://127.0.0.1:8050`.
-
-## Free hosting recommendation
-
-For a free public documentation site, the best fit for this project is:
-
-- MkDocs + Material for MkDocs for authoring and navigation
-- GitHub Pages for hosting
-- GitHub Actions for automatic deployment
-
-This repository already includes:
-
-- `mkdocs.yml`
-- `.github/workflows/docs.yml`
-
-Once GitHub Pages is enabled for the repository, pushes to `main` can publish the docs site automatically.
