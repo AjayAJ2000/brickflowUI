@@ -22,10 +22,11 @@ def test_cli_help_only_shows_supported_commands():
 
 def test_new_command_scaffolds_default_app(monkeypatch):
     repo_root = Path(__file__).resolve().parents[1]
-    scratch_dir = repo_root
     app_name = f"sample_app_{uuid.uuid4().hex[:8]}"
+    scratch_dir = repo_root / f"_tmp_cli_{uuid.uuid4().hex[:8]}"
 
     try:
+        scratch_dir.mkdir()
         monkeypatch.setattr(Path, "cwd", lambda: scratch_dir)
         result = runner.invoke(app, ["new", app_name], catch_exceptions=False)
 
