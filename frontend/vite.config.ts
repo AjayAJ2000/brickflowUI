@@ -9,9 +9,17 @@ export default defineConfig({
     emptyOutDir: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom'],
-          charts: ['recharts'],
+        manualChunks(id) {
+          if (id.includes('node_modules/recharts')) {
+            return 'charts'
+          }
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/')
+          ) {
+            return 'vendor'
+          }
+          return undefined
         },
       },
     },

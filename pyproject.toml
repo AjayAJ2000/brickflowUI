@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "brickflowui"
-version = "0.1.1"
+version = "0.1.2"
 description = "A Databricks-first Python UI framework for building secure dashboards, portals, and web apps with pure Python."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -69,8 +69,10 @@ Issues = "https://github.com/AjayAJ2000/brickflowUI/issues"
 [tool.hatch.build.targets.wheel]
 packages = ["brickflowui"]
 
-[tool.hatch.build.targets.wheel.shared-data]
-"brickflowui/frontend/dist" = "brickflowui/frontend/dist"
+[tool.hatch.build]
+artifacts = [
+  "brickflowui/frontend/dist/**",
+]
 
 [tool.hatch.build.targets.sdist]
 include = [
