@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import type { VNodeData } from './types'
 import {
   AreaChart, Area,
@@ -28,6 +28,8 @@ const LUCIDE_ICON_MAP: Record<string, string> = {
   XCircle: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM15 9l-6 6M9 9l6 6',
   PlayCircle: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM10 8l6 4-6 4V8z',
   Target: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM12 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM22 12h-2M2 12h2M12 2v2M12 22v-2',
+  Sparkles: 'M12 3l1.8 4.2L18 9l-4.2 1.8L12 15l-1.8-4.2L6 9l4.2-1.8L12 3zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15zM5 15l.9 2.1L8 18l-2.1.9L5 21l-.9-2.1L2 18l2.1-.9L5 15z',
+  Inbox: 'M4 4h16v10l-3 4H7l-3-4V4zM4 14h4l2 3h4l2-3h4',
   X: 'M18 6L6 18M6 6l12 12',
 }
 
@@ -59,6 +61,33 @@ function Icon({ name, size = 16 }: { name: string; size?: number }) {
         <path key={i} d={'M' + d} />
       ))}
     </svg>
+  )
+}
+
+function resolveMotionClass(props: Record<string, any>, base: string[] = []) {
+  const classes = [...base]
+  if (props.animated) classes.push('bf-animated')
+  if (props.elevated) classes.push('bf-elevated')
+  if (props.loading) classes.push('bf-is-loading')
+  if (props.animation) classes.push(`bf-anim-${props.animation}`)
+  return classes.filter(Boolean).join(' ')
+}
+
+function resolveMotionStyle(props: Record<string, any>) {
+  const style = { ...(props.style as object || {}) } as React.CSSProperties
+  if (props.animationDelay !== undefined && props.animationDelay !== null) {
+    style.animationDelay = `${props.animationDelay}s`
+  }
+  return style
+}
+
+function renderLoadingSkeleton(lines = 3) {
+  return (
+    <div className="bf-skeleton-stack">
+      {Array.from({ length: lines }).map((_, index) => (
+        <div key={index} className="bf-skeleton-line" />
+      ))}
+    </div>
   )
 }
 
@@ -112,17 +141,17 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       const alignMap: Record<string, string> = { start: 'flex-start', end: 'flex-end', center: 'center', stretch: 'stretch' }
       const justifyMap: Record<string, string> = { start: 'flex-start', end: 'flex-end', center: 'center', between: 'space-between', around: 'space-around' }
       return (
-        <div key={key} className="bf-row" style={{ display: 'flex', flexDirection: 'row', gap, flexWrap: p.wrap !== false ? 'wrap' : 'nowrap', alignItems: alignMap[p.align as string] || 'center', justifyContent: justifyMap[p.justify as string] || 'flex-start', width: '100%' }}>
+        <div key={key} className="bf-row" style={{ display: 'flex', flexDirection: 'row', gap, flexWrap: p.wrap !== false ? 'wrap' : 'nowrap', alignItems: alignMap[p.align as string] || 'center', justifyContent: justifyMap[p.justify as string] || 'flex-start', width: '100%', ...(p.style as object || {}) }}>
           {renderChildren(children, ctx, key)}
         </div>
       )
     }
 
     case 'Card': {
-      const cls = ['bf-card', p.bordered ? 'bordered' : '', p.hover ? 'hoverable' : ''].filter(Boolean).join(' ')
+      const cls = resolveMotionClass(p, ['bf-card', p.bordered ? 'bordered' : '', p.hover ? 'hoverable' : ''])
       const pad = ((p.padding as number) || 5) * 4
       return (
-        <div key={key} className={cls} style={{ padding: pad }}>
+        <div key={key} className={cls} style={{ padding: pad, ...resolveMotionStyle(p) }}>
           {(p.title || p.subtitle) ? (
             <div className="bf-card-header">
               {p.title ? <div className="bf-card-title">{p.title as string}</div> : null}
@@ -157,9 +186,10 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return (
         <button
           key={key}
-          className={`bf-btn bf-btn-${(p.variant as string) || 'primary'}`}
+          className={resolveMotionClass(p, ['bf-btn', `bf-btn-${(p.variant as string) || 'primary'}`])}
           disabled={(p.disabled as boolean) || (p.loading as boolean) || false}
           type={(p.htmlType as 'button' | 'submit' | 'reset') || 'button'}
+          style={resolveMotionStyle(p)}
           onClick={() => ev('click')}
         >
           {p.loading && <span className="bf-spinner bf-spinner-sm" />}
@@ -170,8 +200,9 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
     case 'Input':
       return (
-        <div key={key} className="bf-form-field">
+        <div key={key} className={resolveMotionClass(p, ['bf-form-field'])} style={resolveMotionStyle(p)}>
           {p.label && <label className="bf-label">{p.label as string}</label>}
+          {p.loading && <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div>}
           {p.inputType === 'textarea'
             ? <textarea
                 name={p.name as string}
@@ -195,10 +226,17 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
         </div>
       )
 
+    case 'DateRangePicker':
+      return <DateRangePickerComponent key={key} props={p} dispatch={(value) => ev('change', value)} />
+
+    case 'MultiSelect':
+      return <MultiSelectComponent key={key} props={p} dispatch={(value) => ev('change', value)} />
+
     case 'Select':
       return (
-        <div key={key} className="bf-form-field">
+        <div key={key} className={resolveMotionClass(p, ['bf-form-field'])} style={resolveMotionStyle(p)}>
           {p.label && <label className="bf-label">{p.label as string}</label>}
+          {p.loading && <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div>}
           <select
             name={p.name as string}
             className="bf-select"
@@ -252,6 +290,43 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       )
 
     // ── Data display ───────────────────────────────────────────────────────
+    case 'Breadcrumbs':
+      return (
+        <nav key={key} className="bf-breadcrumbs" aria-label="Breadcrumb">
+          {((p.items as Array<Record<string, any>>) || []).map((item, index, items) => {
+            const isLast = index === items.length - 1
+            return (
+              <React.Fragment key={`${key}-crumb-${index}`}>
+                {isLast || !item.path ? (
+                  <span className="bf-breadcrumb-current">{String(item.label ?? '')}</span>
+                ) : (
+                  <button type="button" className="bf-breadcrumb-link" onClick={() => ctx.navigate(String(item.path))}>
+                    {String(item.label ?? '')}
+                  </button>
+                )}
+                {!isLast ? <span className="bf-breadcrumb-sep">/</span> : null}
+              </React.Fragment>
+            )
+          })}
+        </nav>
+      )
+
+    case 'EmptyState':
+      return (
+        <div key={key} className="bf-empty-state">
+          <div className="bf-empty-state-icon">
+            <Icon name={(p.icon as string) || 'Inbox'} size={18} />
+          </div>
+          <div className="bf-empty-state-title">{p.title as string}</div>
+          <div className="bf-empty-state-message">{p.message as string}</div>
+          {(p.actions as VNodeData[] | undefined)?.length ? (
+            <div className="bf-empty-state-actions">
+              {renderChildren((p.actions as VNodeData[]) || [], ctx, `${key}-actions`)}
+            </div>
+          ) : null}
+        </div>
+      )
+
     case 'Table':
       return <TableComponent key={key} props={p} dispatch={ctx.dispatch} />
 
@@ -272,10 +347,10 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
     case 'Progress': {
       const pct = Math.min(100, (((p.value as number) / (p.max as number || 100)) * 100))
       return (
-        <div key={key} className="bf-progress-wrapper">
+        <div key={key} className={resolveMotionClass(p, ['bf-progress-wrapper'])} style={resolveMotionStyle(p)}>
           {p.label && <div className="bf-progress-label"><span>{p.label as string}</span><span>{Math.round(pct)}%</span></div>}
           <div className="bf-progress-track">
-            <div className="bf-progress-fill" style={{ width: `${pct}%`, background: `var(--db-${p.color || 'primary'})` }} />
+            <div className={`bf-progress-fill ${p.animated ? 'animated' : ''}`} style={{ width: `${pct}%`, background: `var(--db-${p.color || 'primary'})` }} />
           </div>
         </div>
       )
@@ -284,12 +359,12 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
     case 'Stat': {
       const deltaType = (p.deltaType as string) || 'neutral'
       return (
-        <div key={key} className="bf-stat">
+        <div key={key} className={resolveMotionClass(p, ['bf-stat'])} style={resolveMotionStyle(p)}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {p.icon && <Icon name={p.icon as string} size={16} />}
             <div className="bf-stat-label">{p.label as string}</div>
           </div>
-          <div className="bf-stat-value">{p.value as string}</div>
+          <AnimatedValue value={p.value as string} animated={Boolean(p.animated)} />
           {p.delta && <div className={`bf-stat-delta ${deltaType}`}>{deltaType === 'increase' ? '▲' : deltaType === 'decrease' ? '▼' : '—'} {p.delta as string}</div>}
         </div>
       )
@@ -345,6 +420,12 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return null // Rendered inside Tabs
 
     // ── Modal ──────────────────────────────────────────────────────────────
+    case 'Accordion':
+      return <AccordionComponent key={key} props={p} children={children} ctx={ctx} nodeKey={key} />
+
+    case 'AccordionItem':
+      return null
+
     case 'Modal':
       if (!p.visible) return null
       return (
@@ -360,6 +441,20 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       )
 
     // ── Form ───────────────────────────────────────────────────────────────
+    case 'Drawer':
+      if (!p.visible) return null
+      return (
+        <div key={key} className="bf-drawer-overlay" onClick={() => ev('close')}>
+          <div className={`bf-drawer bf-drawer-${(p.side as string) || 'right'}`} style={{ width: (p.width as string) || '420px' }} onClick={e => e.stopPropagation()}>
+            <div className="bf-drawer-header">
+              <span className="bf-drawer-title">{p.title as string}</span>
+              <button className="bf-modal-close" onClick={() => ev('close')}><Icon name="X" size={16} /></button>
+            </div>
+            <div className="bf-drawer-body">{renderChildren(children, ctx, key)}</div>
+          </div>
+        </div>
+      )
+
     case 'Form':
       return (
         <form
@@ -368,7 +463,15 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
           onSubmit={async (e) => {
             e.preventDefault()
             const data: Record<string, unknown> = {}
-            new FormData(e.currentTarget).forEach((v, k) => { data[k] = v })
+            new FormData(e.currentTarget).forEach((v, k) => {
+              if (k in data) {
+                const current = data[k]
+                if (Array.isArray(current)) current.push(v)
+                else data[k] = [current, v]
+              } else {
+                data[k] = v
+              }
+            })
             const resp = await fetch(p.action as string, {
               method: (p.method as string) || 'POST',
               credentials: 'same-origin',
@@ -391,11 +494,14 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
     // ── Charts ─────────────────────────────────────────────────────────────
     case 'AreaChart': {
       const yKeys = (p.yKeys as string[]) || []
+      const data = (p.data as object[]) || []
+      if (p.loading) return <div key={key} className="bf-chart-state">{renderLoadingSkeleton(4)}</div>
+      if (!data.length) return <div key={key} className="bf-chart-state">{(p.emptyMessage as string) || 'No chart data available'}</div>
       return (
         <div key={key} className="bf-chart-container">
           {p.title && <div className="bf-chart-title">{p.title as string}</div>}
           <ResponsiveContainer width="100%" height={(p.height as number) || 300}>
-            <AreaChart data={p.data as object[]}>
+            <AreaChart data={data} onClick={(state) => p.click && ev('click', state?.activePayload?.[0]?.payload ?? {})}>
               <defs>
                 {yKeys.map((yk, i) => (
                   <linearGradient key={yk} id={`agrad-${i}`} x1="0" y1="0" x2="0" y2="1">
@@ -419,11 +525,14 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
     case 'LineChart': {
       const yKeys = (p.yKeys as string[]) || []
+      const data = (p.data as object[]) || []
+      if (p.loading) return <div key={key} className="bf-chart-state">{renderLoadingSkeleton(4)}</div>
+      if (!data.length) return <div key={key} className="bf-chart-state">{(p.emptyMessage as string) || 'No chart data available'}</div>
       return (
         <div key={key} className="bf-chart-container">
           {p.title && <div className="bf-chart-title">{p.title as string}</div>}
           <ResponsiveContainer width="100%" height={(p.height as number) || 300}>
-            <LineChart data={p.data as object[]}>
+            <LineChart data={data} onClick={(state) => p.click && ev('click', state?.activePayload?.[0]?.payload ?? {})}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey={p.xKey as string} />
               <YAxis />
@@ -440,11 +549,14 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
     case 'BarChart': {
       const yKeys = (p.yKeys as string[]) || []
+      const data = (p.data as object[]) || []
+      if (p.loading) return <div key={key} className="bf-chart-state">{renderLoadingSkeleton(4)}</div>
+      if (!data.length) return <div key={key} className="bf-chart-state">{(p.emptyMessage as string) || 'No chart data available'}</div>
       return (
         <div key={key} className="bf-chart-container">
           {p.title && <div className="bf-chart-title">{p.title as string}</div>}
           <ResponsiveContainer width="100%" height={(p.height as number) || 300}>
-            <BarChart data={p.data as object[]} layout={p.horizontal ? 'vertical' : 'horizontal'}>
+            <BarChart data={data} layout={p.horizontal ? 'vertical' : 'horizontal'} onClick={(state) => p.click && ev('click', state?.activePayload?.[0]?.payload ?? {})}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey={p.horizontal ? undefined : p.xKey as string} type={p.horizontal ? 'number' : 'category'} />
               <YAxis dataKey={p.horizontal ? p.xKey as string : undefined} type={p.horizontal ? 'category' : 'number'} />
@@ -462,13 +574,15 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       const data = (p.data as Array<{ [k: string]: unknown }>) || []
       const vk = (p.valueKey as string) || 'value'
       const lk = (p.labelKey as string) || 'label'
+      if (p.loading) return <div key={key} className="bf-chart-state">{renderLoadingSkeleton(4)}</div>
+      if (!data.length) return <div key={key} className="bf-chart-state">{(p.emptyMessage as string) || 'No chart data available'}</div>
       return (
         <div key={key} className="bf-chart-container">
           {p.title && <div className="bf-chart-title">{p.title as string}</div>}
           <ResponsiveContainer width="100%" height={(p.height as number) || 300}>
             <PieChart>
-              <Pie data={data} cx="50%" cy="50%" innerRadius="55%" outerRadius="75%" dataKey={vk} nameKey={lk} paddingAngle={2}>
-                {data.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+              <Pie data={data} cx="50%" cy="50%" innerRadius="55%" outerRadius="75%" dataKey={vk} nameKey={lk} paddingAngle={2} onClick={(payload) => p.click && ev('click', payload?.payload ?? {})}>
+                {data.map((_, i) => <Cell key={i} fill={((p.colors as string[]) || [])[i] || CHART_COLORS[i % CHART_COLORS.length]} />)}
               </Pie>
               <Tooltip formatter={(value, name) => [value, name]} />
               <Legend />
@@ -477,6 +591,41 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
         </div>
       )
     }
+
+    case 'Toast':
+      if (!p.visible) return null
+      return (
+        <div key={key} className={`bf-toast bf-toast-${(p.alertType as string) || 'info'}`}>
+          {p.icon ? <Icon name={p.icon as string} size={16} /> : null}
+          <div className="bf-toast-content">
+            {p.title ? <div className="bf-toast-title">{p.title as string}</div> : null}
+            <div className="bf-toast-message">{p.message as string}</div>
+          </div>
+        </div>
+      )
+
+    case 'Timeline':
+      return (
+        <div key={key} className="bf-timeline">
+          {p.title ? <div className="bf-card-title" style={{ marginBottom: 12 }}>{p.title as string}</div> : null}
+          {((p.items as Array<Record<string, any>>) || []).map((item, index) => (
+            <div key={`${key}-timeline-${index}`} className="bf-timeline-item">
+              <div className="bf-timeline-dot" />
+              <div className="bf-timeline-content">
+                <div className="bf-timeline-row">
+                  <div className="bf-timeline-title">{String(item.title ?? '')}</div>
+                  {item.time ? <div className="bf-timeline-time">{String(item.time)}</div> : null}
+                </div>
+                {item.subtitle ? <div className="bf-timeline-subtitle">{String(item.subtitle)}</div> : null}
+                {item.description ? <div className="bf-timeline-description">{String(item.description)}</div> : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      )
+
+    case 'SparklineStat':
+      return <SparklineStatComponent key={key} props={p} />
 
     default:
       return (
@@ -501,6 +650,188 @@ function ToggleComponent({ props: p, dispatch }: { props: Record<string, any>; d
       <div className={`bf-toggle-switch ${checked ? 'checked' : ''}`} />
       {p.label as string}
     </label>
+  )
+}
+
+function AnimatedValue({ value, animated }: { value: string; animated: boolean }) {
+  const parseNumeric = (raw: string) => {
+    const match = raw.match(/-?\d+(?:\.\d+)?/)
+    if (!match) return null
+    return {
+      number: parseFloat(match[0]),
+      prefix: raw.slice(0, match.index ?? 0),
+      suffix: raw.slice((match.index ?? 0) + match[0].length),
+      decimals: match[0].includes('.') ? match[0].split('.')[1].length : 0,
+    }
+  }
+
+  const parsed = parseNumeric(value)
+  const [display, setDisplay] = useState(() => {
+    if (!animated || !parsed) return value
+    return `${parsed.prefix}${(0).toFixed(parsed.decimals)}${parsed.suffix}`
+  })
+
+  useEffect(() => {
+    if (!animated || !parsed) {
+      setDisplay(value)
+      return
+    }
+
+    const duration = 700
+    const start = performance.now()
+
+    let frame = 0
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration)
+      const eased = 1 - Math.pow(1 - progress, 3)
+      const current = parsed.number * eased
+      setDisplay(`${parsed.prefix}${current.toFixed(parsed.decimals)}${parsed.suffix}`)
+      if (progress < 1) frame = requestAnimationFrame(tick)
+    }
+
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [animated, parsed?.decimals, parsed?.number, parsed?.prefix, parsed?.suffix, value])
+
+  return <div className="bf-stat-value">{display}</div>
+}
+
+function DateRangePickerComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: Record<string, string>) => void }) {
+  const [start, setStart] = useState((p.start as string) || '')
+  const [end, setEnd] = useState((p.end as string) || '')
+
+  useEffect(() => {
+    setStart((p.start as string) || '')
+    setEnd((p.end as string) || '')
+  }, [p.start, p.end])
+
+  const emit = (nextStart: string, nextEnd: string) => dispatch({ start: nextStart, end: nextEnd })
+
+  return (
+    <div className="bf-form-field">
+      {p.label && <label className="bf-label">{p.label as string}</label>}
+      <div className="bf-date-range">
+        <input
+          className="bf-input"
+          type="date"
+          name={`${p.name as string}_start`}
+          value={start}
+          disabled={Boolean(p.disabled)}
+          onChange={(e) => {
+            const next = e.target.value
+            setStart(next)
+            emit(next, end)
+          }}
+        />
+        <span className="bf-date-range-sep">to</span>
+        <input
+          className="bf-input"
+          type="date"
+          name={`${p.name as string}_end`}
+          value={end}
+          disabled={Boolean(p.disabled)}
+          onChange={(e) => {
+            const next = e.target.value
+            setEnd(next)
+            emit(start, next)
+          }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function MultiSelectComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: string[]) => void }) {
+  const selected = new Set(((p.values as string[]) || []).map(String))
+  const options = (p.options as Array<{ label: string; value: string }>) || []
+
+  const toggleValue = (value: string) => {
+    if (selected.has(value)) selected.delete(value)
+    else selected.add(value)
+    dispatch(Array.from(selected))
+  }
+
+  return (
+    <div className="bf-form-field">
+      {p.label && <label className="bf-label">{p.label as string}</label>}
+      <div className="bf-multiselect">
+        {Array.from(selected).map((value) => (
+          <input key={`hidden-${value}`} type="hidden" name={p.name as string} value={value} />
+        ))}
+        {options.map((option) => {
+          const active = selected.has(option.value)
+          return (
+            <button
+              key={option.value}
+              type="button"
+              className={`bf-multiselect-chip ${active ? 'active' : ''}`}
+              disabled={Boolean(p.disabled)}
+              onClick={() => toggleValue(option.value)}
+            >
+              {option.label}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function AccordionComponent({ props: p, children, ctx, nodeKey }: { props: Record<string, any>; children: VNodeData[]; ctx: RenderCtx; nodeKey: string }) {
+  const defaultOpen = ((p.defaultOpen as number[]) || []).map(Number)
+  const [openItems, setOpenItems] = useState<number[]>(defaultOpen)
+  const allowMultiple = Boolean(p.allowMultiple)
+
+  const toggle = (index: number) => {
+    setOpenItems((prev) => {
+      if (prev.includes(index)) return prev.filter((item) => item !== index)
+      if (allowMultiple) return [...prev, index]
+      return [index]
+    })
+  }
+
+  return (
+    <div className="bf-accordion">
+      {children.map((child, index) => {
+        const cp = child.props as Record<string, any>
+        const open = openItems.includes(index)
+        return (
+          <div key={`${nodeKey}-${index}`} className={`bf-accordion-item ${open ? 'open' : ''}`}>
+            <button type="button" className="bf-accordion-trigger" onClick={() => toggle(index)}>
+              <div className="bf-accordion-trigger-main">
+                {cp.icon ? <Icon name={cp.icon as string} size={15} /> : null}
+                <div>
+                  <div className="bf-accordion-title">{cp.title as string}</div>
+                  {cp.subtitle ? <div className="bf-accordion-subtitle">{cp.subtitle as string}</div> : null}
+                </div>
+              </div>
+              <span className="bf-accordion-chevron">{open ? '−' : '+'}</span>
+            </button>
+            {open ? <div className="bf-accordion-content">{renderChildren(child.children, ctx, `${nodeKey}-accordion-${index}`)}</div> : null}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function SparklineStatComponent({ props: p }: { props: Record<string, any> }) {
+  const color = (p.color as string) || 'var(--db-primary)'
+  return (
+    <div className="bf-sparkline-stat">
+      <div className="bf-sparkline-header">
+        <div className="bf-stat-label">{p.label as string}</div>
+        {p.delta ? <div className={`bf-stat-delta ${((p.deltaType as string) || 'neutral')}`}>{p.delta as string}</div> : null}
+      </div>
+      <div className="bf-stat-value">{p.value as string}</div>
+      <div className="bf-sparkline-chart">
+        <ResponsiveContainer width="100%" height={70}>
+          <LineChart data={(p.data as object[]) || []}>
+            <Line dataKey={p.yKey as string} stroke={color} strokeWidth={2} dot={false} />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   )
 }
 
@@ -530,6 +861,26 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
     setPage(0)
   }
 
+  const exportCsv = () => {
+    const header = columns.map((col) => col.label).join(',')
+    const rows = sorted.map((row) =>
+      columns
+        .map((col) => {
+          const raw = String(row[col.key] ?? '')
+          return `"${raw.replaceAll('"', '""')}"`
+        })
+        .join(',')
+    )
+    const csv = [header, ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'brickflowui-table-export.csv'
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (p.loading) return (
     <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
       <div className="bf-spinner bf-spinner-lg" />
@@ -542,6 +893,13 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
 
   return (
     <div>
+      {p.exportable && (
+        <div className="bf-table-toolbar">
+          <button type="button" className="bf-btn bf-btn-secondary" style={{ padding: '6px 12px', fontSize: 12 }} onClick={exportCsv}>
+            Export CSV
+          </button>
+        </div>
+      )}
       <div className="bf-table-wrapper">
         <table className="bf-table">
           <thead>

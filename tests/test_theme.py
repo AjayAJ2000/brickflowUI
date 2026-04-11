@@ -27,6 +27,16 @@ def test_theme_normalizes_branding_and_alias_keys():
             "borders": {
                 "radius": "14px",
             },
+            "surfaces": {
+                "background": "#fafafa",
+            },
+            "shadows": {
+                "medium": "0 8px 30px rgba(0,0,0,0.1)",
+            },
+            "motion": {
+                "duration_normal": "260ms",
+                "easing_standard": "ease-in-out",
+            },
         }
     )
 
@@ -37,6 +47,26 @@ def test_theme_normalizes_branding_and_alias_keys():
     assert theme.config["typography"]["sans"] == "'IBM Plex Sans', sans-serif"
     assert theme.config["spacing"]["base"] == "6px"
     assert theme.config["radius"]["md"] == "14px"
+    assert theme.config["surfaces"]["canvas"] == "#fafafa"
+    assert theme.config["shadows"]["md"] == "0 8px 30px rgba(0,0,0,0.1)"
+    assert theme.config["motion"]["duration-normal"] == "260ms"
+
+
+def test_theme_css_variables_include_surface_shadow_and_motion_tokens():
+    theme = Theme(
+        {
+            "surfaces": {"overlay": "rgba(255,255,255,0.9)"},
+            "shadows": {"large": "0 20px 50px rgba(0,0,0,0.12)"},
+            "motion": {"duration_normal": "280ms", "easing_standard": "ease"},
+        }
+    )
+
+    css = theme.to_css_variables()
+
+    assert "--db-surface-overlay: rgba(255,255,255,0.9);" in css
+    assert "--shadow-lg: 0 20px 50px rgba(0,0,0,0.12);" in css
+    assert "--motion-duration-normal: 280ms;" in css
+    assert "--transition: var(--transition-duration) var(--transition-easing);" in css
 
 
 def test_app_uses_branding_from_theme_file_when_defaults_are_used():

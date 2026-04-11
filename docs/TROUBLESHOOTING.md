@@ -17,7 +17,7 @@ Common causes:
 
 Recommended fixes:
 
-- use `brickflowui>=0.1.3`
+- use `brickflowui>=0.1.4`
 - hard refresh the page
 - keep `app.yaml` minimal
 - avoid relying on third-party frontend assets
@@ -33,7 +33,7 @@ pip install brickflowui
 or:
 
 ```bash
-pip install "brickflowui @ git+https://github.com/AjayAJ2000/brickflowUI.git@v0.1.3"
+pip install "brickflowui @ git+https://github.com/AjayAJ2000/brickflowUI.git@v0.1.4"
 ```
 
 ## I changed frontend code, but my package still behaves the same

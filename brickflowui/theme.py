@@ -23,6 +23,11 @@ DEFAULT_THEME = {
         "error": "#ef4444",
         "link": "#003087",
     },
+    "surfaces": {
+        "canvas": "#f8f9fa",
+        "muted": "#f1f3f5",
+        "overlay": "rgba(255, 255, 255, 0.88)",
+    },
     "typography": {
         "sans": "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
         "mono": "ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace",
@@ -36,6 +41,18 @@ DEFAULT_THEME = {
         "md": "8px",
         "lg": "12px",
     },
+    "shadows": {
+        "sm": "0 1px 2px rgba(0,0,0,0.05)",
+        "md": "0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
+        "lg": "0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04)",
+    },
+    "motion": {
+        "duration-fast": "140ms",
+        "duration-normal": "220ms",
+        "duration-slow": "360ms",
+        "easing-standard": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "stagger-step": "40ms",
+    },
 }
 
 _SECTION_ALIASES = {
@@ -46,6 +63,9 @@ _SECTION_ALIASES = {
     "spacing": "spacing",
     "radius": "radius",
     "borders": "radius",
+    "surfaces": "surfaces",
+    "shadows": "shadows",
+    "motion": "motion",
 }
 
 _KEY_ALIASES = {
@@ -70,6 +90,22 @@ _KEY_ALIASES = {
     },
     "radius": {
         "radius": "md",
+    },
+    "surfaces": {
+        "background": "canvas",
+        "surface": "muted",
+    },
+    "shadows": {
+        "small": "sm",
+        "medium": "md",
+        "large": "lg",
+    },
+    "motion": {
+        "duration_fast": "duration-fast",
+        "duration_normal": "duration-normal",
+        "duration_slow": "duration-slow",
+        "easing_standard": "easing-standard",
+        "stagger_step": "stagger-step",
     },
 }
 
@@ -145,6 +181,10 @@ class Theme:
         for key, val in self.config.get("colors", {}).items():
             lines.append(f"  --db-{key}: {val};")
 
+        # Surface variants
+        for key, val in self.config.get("surfaces", {}).items():
+            lines.append(f"  --db-surface-{key}: {val};")
+
         # Typography
         for key, val in self.config.get("typography", {}).items():
             lines.append(f"  --font-{key}: {val};")
@@ -158,6 +198,24 @@ class Theme:
         # Radius
         for key, val in self.config.get("radius", {}).items():
             lines.append(f"  --radius-{key}: {val};")
+
+        # Shadows
+        for key, val in self.config.get("shadows", {}).items():
+            lines.append(f"  --shadow-{key}: {val};")
+
+        # Motion
+        motion = self.config.get("motion", {})
+        for key, val in motion.items():
+            lines.append(f"  --motion-{key}: {val};")
+
+        if "duration-normal" in motion:
+            lines.append(f"  --transition-duration: {motion['duration-normal']};")
+        if "easing-standard" in motion:
+            lines.append(f"  --transition-easing: {motion['easing-standard']};")
+        if "duration-normal" in motion and "easing-standard" in motion:
+            lines.append(
+                "  --transition: var(--transition-duration) var(--transition-easing);"
+            )
 
         lines.append("}")
         return "\n".join(lines)

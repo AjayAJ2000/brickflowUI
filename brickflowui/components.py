@@ -65,12 +65,27 @@ def Card(
     bordered: bool = True,
     padding: int = 4,
     hover: bool = False,
+    elevated: bool = False,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
     **kwargs,
 ) -> VNode:
     """A surface card container."""
     return VNode(
         type="Card",
-        props={"title": title, "subtitle": subtitle, "bordered": bordered, "padding": padding, "hover": hover, **kwargs},
+        props={
+            "title": title,
+            "subtitle": subtitle,
+            "bordered": bordered,
+            "padding": padding,
+            "hover": hover,
+            "elevated": elevated,
+            "animated": animated,
+            "animation": animation,
+            "animationDelay": animation_delay,
+            **kwargs,
+        },
         children=children,
     )
 
@@ -131,6 +146,9 @@ def Button(
     icon: Optional[str] = None,
     disabled: bool = False,
     loading: bool = False,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
     html_type: Literal["button", "submit", "reset"] = "button",
     **kwargs,
 ) -> VNode:
@@ -139,7 +157,18 @@ def Button(
         handlers["click"] = on_click
     return VNode(
         type="Button",
-        props={"label": label, "variant": variant, "icon": icon, "disabled": disabled, "loading": loading, "htmlType": html_type, **kwargs},
+        props={
+            "label": label,
+            "variant": variant,
+            "icon": icon,
+            "disabled": disabled,
+            "loading": loading,
+            "animated": animated,
+            "animation": animation,
+            "animationDelay": animation_delay,
+            "htmlType": html_type,
+            **kwargs,
+        },
         event_handlers=handlers,
     )
 
@@ -154,6 +183,7 @@ def Input(
     disabled: bool = False,
     required: bool = False,
     error: Optional[str] = None,
+    loading: bool = False,
 ) -> VNode:
     handlers: Dict[str, EventHandler] = {}
     if on_change:
@@ -161,7 +191,7 @@ def Input(
     return VNode(
         type="Input",
         props={"name": name, "label": label, "inputType": type, "placeholder": placeholder,
-               "value": value, "disabled": disabled, "required": required, "error": error},
+               "value": value, "disabled": disabled, "required": required, "error": error, "loading": loading},
         event_handlers=handlers,
     )
 
@@ -174,6 +204,7 @@ def Select(
     placeholder: str = "Select an option",
     on_change: Optional[Callable[[str], None]] = None,
     disabled: bool = False,
+    loading: bool = False,
 ) -> VNode:
     """Dropdown select. options = [{"label": "...", "value": "..."}]"""
     handlers: Dict[str, EventHandler] = {}
@@ -182,7 +213,7 @@ def Select(
     return VNode(
         type="Select",
         props={"name": name, "options": options, "label": label, "value": value,
-               "placeholder": placeholder, "disabled": disabled},
+               "placeholder": placeholder, "disabled": disabled, "loading": loading},
         event_handlers=handlers,
     )
 
@@ -251,6 +282,7 @@ def Table(
     editable: bool = False,
     loading: bool = False,
     empty_message: str = "No data available",
+    exportable: bool = False,
 ) -> VNode:
     """
     Data table. columns = [{"key": "col", "label": "Column", "sortable": True}]
@@ -264,7 +296,7 @@ def Table(
     return VNode(
         type="Table",
         props={"data": data, "columns": columns or [], "pagination": pagination,
-               "editable": editable, "loading": loading, "emptyMessage": empty_message},
+               "editable": editable, "loading": loading, "emptyMessage": empty_message, "exportable": exportable},
         event_handlers=handlers,
     )
 
@@ -291,7 +323,7 @@ def Spinner(size: Literal["sm", "md", "lg"] = "md") -> VNode:
 
 def Progress(value: float, max: float = 100, label: Optional[str] = None, color: str = "blue") -> VNode:
     """Progress bar. value and max are numbers."""
-    return VNode(type="Progress", props={"value": value, "max": max, "label": label, "color": color})
+    return VNode(type="Progress", props={"value": value, "max": max, "label": label, "color": color, "animated": True})
 
 
 def Stat(
@@ -300,11 +332,23 @@ def Stat(
     delta: Optional[str] = None,
     delta_type: Literal["increase", "decrease", "neutral"] = "neutral",
     icon: Optional[str] = None,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     """KPI stat card (number + label + optional delta)."""
     return VNode(
         type="Stat",
-        props={"label": label, "value": value, "delta": delta, "deltaType": delta_type, "icon": icon},
+        props={
+            "label": label,
+            "value": value,
+            "delta": delta,
+            "deltaType": delta_type,
+            "icon": icon,
+            "animated": animated,
+            "animation": animation,
+            "animationDelay": animation_delay,
+        },
     )
 
 
@@ -373,6 +417,137 @@ def Modal(
     )
 
 
+def Drawer(
+    visible: bool,
+    title: str,
+    children: List[VNode],
+    on_close: Optional[EventHandler] = None,
+    side: Literal["left", "right"] = "right",
+    width: str = "420px",
+) -> VNode:
+    handlers: Dict[str, EventHandler] = {}
+    if on_close:
+        handlers["close"] = on_close
+    return VNode(
+        type="Drawer",
+        props={"visible": visible, "title": title, "side": side, "width": width},
+        children=children,
+        event_handlers=handlers,
+    )
+
+
+def Accordion(
+    items: List[VNode],
+    default_open: Optional[List[int]] = None,
+    allow_multiple: bool = False,
+) -> VNode:
+    return VNode(
+        type="Accordion",
+        props={"defaultOpen": default_open or [], "allowMultiple": allow_multiple},
+        children=items,
+    )
+
+
+def AccordionItem(
+    title: str,
+    children: List[VNode],
+    subtitle: Optional[str] = None,
+    icon: Optional[str] = None,
+) -> VNode:
+    return VNode(type="AccordionItem", props={"title": title, "subtitle": subtitle, "icon": icon}, children=children)
+
+
+def EmptyState(
+    title: str,
+    message: str,
+    icon: Optional[str] = None,
+    actions: Optional[List[VNode]] = None,
+) -> VNode:
+    return VNode(type="EmptyState", props={"title": title, "message": message, "icon": icon, "actions": actions or []})
+
+
+def Breadcrumbs(items: List[Dict[str, Any]]) -> VNode:
+    return VNode(type="Breadcrumbs", props={"items": items})
+
+
+def DateRangePicker(
+    name: str,
+    label: Optional[str] = None,
+    start: str = "",
+    end: str = "",
+    on_change: Optional[Callable[[Dict[str, str]], None]] = None,
+    disabled: bool = False,
+) -> VNode:
+    handlers: Dict[str, EventHandler] = {}
+    if on_change:
+        handlers["change"] = on_change
+    return VNode(
+        type="DateRangePicker",
+        props={"name": name, "label": label, "start": start, "end": end, "disabled": disabled},
+        event_handlers=handlers,
+    )
+
+
+def MultiSelect(
+    name: str,
+    options: List[Dict[str, str]],
+    label: Optional[str] = None,
+    values: Optional[List[str]] = None,
+    on_change: Optional[Callable[[List[str]], None]] = None,
+    disabled: bool = False,
+) -> VNode:
+    handlers: Dict[str, EventHandler] = {}
+    if on_change:
+        handlers["change"] = on_change
+    return VNode(
+        type="MultiSelect",
+        props={"name": name, "options": options, "label": label, "values": values or [], "disabled": disabled},
+        event_handlers=handlers,
+    )
+
+
+def Toast(
+    message: str,
+    title: Optional[str] = None,
+    type: AlertType = "info",
+    visible: bool = True,
+    icon: Optional[str] = None,
+) -> VNode:
+    return VNode(
+        type="Toast",
+        props={"message": message, "title": title, "alertType": type, "visible": visible, "icon": icon},
+    )
+
+
+def Timeline(items: List[Dict[str, Any]], title: Optional[str] = None) -> VNode:
+    return VNode(type="Timeline", props={"items": items, "title": title})
+
+
+def SparklineStat(
+    label: str,
+    value: str,
+    data: List[Dict[str, Any]],
+    x_key: str,
+    y_key: str,
+    delta: Optional[str] = None,
+    delta_type: Literal["increase", "decrease", "neutral"] = "neutral",
+    color: Optional[str] = None,
+) -> VNode:
+    return VNode(
+        type="SparklineStat",
+        props={
+            "label": label,
+            "value": value,
+            "data": data,
+            "xKey": x_key,
+            "yKey": y_key,
+            "delta": delta,
+            "deltaType": delta_type,
+            "color": color,
+        },
+    )
+
+
 # ── Data Visualization ──────────────────────────────────────────────────────
 
 
@@ -392,8 +567,14 @@ def AreaChart(
     title: Optional[str] = None,
     colors: Optional[List[str]] = None,
     height: int = 300,
+    loading: bool = False,
+    empty_message: str = "No chart data available",
+    on_click: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> VNode:
-    return VNode(type="AreaChart", props={"data": data, "xKey": x_key, "yKeys": y_keys, "title": title, "colors": colors, "height": height})
+    handlers: Dict[str, EventHandler] = {}
+    if on_click:
+        handlers["click"] = on_click
+    return VNode(type="AreaChart", props={"data": data, "xKey": x_key, "yKeys": y_keys, "title": title, "colors": colors, "height": height, "loading": loading, "emptyMessage": empty_message}, event_handlers=handlers)
 
 
 def BarChart(
@@ -404,8 +585,14 @@ def BarChart(
     colors: Optional[List[str]] = None,
     horizontal: bool = False,
     height: int = 300,
+    loading: bool = False,
+    empty_message: str = "No chart data available",
+    on_click: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> VNode:
-    return VNode(type="BarChart", props={"data": data, "xKey": x_key, "yKeys": y_keys, "title": title, "colors": colors, "horizontal": horizontal, "height": height})
+    handlers: Dict[str, EventHandler] = {}
+    if on_click:
+        handlers["click"] = on_click
+    return VNode(type="BarChart", props={"data": data, "xKey": x_key, "yKeys": y_keys, "title": title, "colors": colors, "horizontal": horizontal, "height": height, "loading": loading, "emptyMessage": empty_message}, event_handlers=handlers)
 
 
 def LineChart(
@@ -415,8 +602,14 @@ def LineChart(
     title: Optional[str] = None,
     colors: Optional[List[str]] = None,
     height: int = 300,
+    loading: bool = False,
+    empty_message: str = "No chart data available",
+    on_click: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> VNode:
-    return VNode(type="LineChart", props={"data": data, "xKey": x_key, "yKeys": y_keys, "title": title, "colors": colors, "height": height})
+    handlers: Dict[str, EventHandler] = {}
+    if on_click:
+        handlers["click"] = on_click
+    return VNode(type="LineChart", props={"data": data, "xKey": x_key, "yKeys": y_keys, "title": title, "colors": colors, "height": height, "loading": loading, "emptyMessage": empty_message}, event_handlers=handlers)
 
 
 def DonutChart(
@@ -425,8 +618,14 @@ def DonutChart(
     label_key: str = "label",
     title: Optional[str] = None,
     height: int = 300,
+    loading: bool = False,
+    empty_message: str = "No chart data available",
+    on_click: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> VNode:
-    return VNode(type="DonutChart", props={"data": data, "valueKey": value_key, "labelKey": label_key, "title": title, "height": height})
+    handlers: Dict[str, EventHandler] = {}
+    if on_click:
+        handlers["click"] = on_click
+    return VNode(type="DonutChart", props={"data": data, "valueKey": value_key, "labelKey": label_key, "title": title, "height": height, "loading": loading, "emptyMessage": empty_message}, event_handlers=handlers)
 
 
 # ── Forms ────────────────────────────────────────────────────────────────────

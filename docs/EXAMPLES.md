@@ -12,15 +12,17 @@ Use this page when you want to skip the docs theory and start from something run
 | Auth Portal | `examples/auth_portal/app.py` | Login, access control, protected routes |
 | Operations + Finance Portal | `examples/operations_finance_portal/app.py` | Executive dashboard with a traditional top nav |
 | Data Pipeline Command Center | `examples/data_pipeline_command_center/app.py` | Industry-style data engineering monitoring with filters, SLA controls, cost, freshness, and Databricks SQL handoff |
+| Chatbot Workspace | `examples/chatbot_workspace/app.py` | Assistant-style UI with drawers, toast, timelines, and multi-value inputs |
+| Landing Site | `examples/landing_site/app.py` | Product-style landing page and launch-site composition |
 | Workspace Studio | `examples/workspace_studio/app.py` | Rich app structure with filters, tables, tabs, forms, modal flows, charts, and a dedicated themes page |
 
 ## Data Pipeline Command Center
 
 Use this example when your goal is to connect a real Databricks ingestion or transformation pipeline to an operations dashboard.
 
-- [app.py](/D:/Projects/brickflowUI/brickflowUI/examples/data_pipeline_command_center/app.py)
-- [app.yaml](/D:/Projects/brickflowUI/brickflowUI/examples/data_pipeline_command_center/app.yaml)
-- [requirements.txt](/D:/Projects/brickflowUI/brickflowUI/examples/data_pipeline_command_center/requirements.txt)
+- `examples/data_pipeline_command_center/app.py`
+- `examples/data_pipeline_command_center/app.yaml`
+- `examples/data_pipeline_command_center/requirements.txt`
 
 It demonstrates:
 
@@ -43,9 +45,9 @@ This is a good starting point for:
 
 The most complete example right now is:
 
-- [app.py](/D:/Projects/brickflowUI/brickflowUI/examples/workspace_studio/app.py)
-- [app.yaml](/D:/Projects/brickflowUI/brickflowUI/examples/workspace_studio/app.yaml)
-- [requirements.txt](/D:/Projects/brickflowUI/brickflowUI/examples/workspace_studio/requirements.txt)
+- `examples/workspace_studio/app.py`
+- `examples/workspace_studio/app.yaml`
+- `examples/workspace_studio/requirements.txt`
 
 It demonstrates:
 
@@ -61,6 +63,41 @@ It demonstrates:
 - `Modal` for secondary flows without leaving the current page
 - a dedicated `Themes` section that shows token mapping and theme-driven UI behavior
 - inline theming for Databricks-friendly deployment
+
+## Chatbot Workspace
+
+Use this example when you want to prove BrickflowUI can power assistant-style interfaces as well as dashboards.
+
+- `examples/chatbot_workspace/app.py`
+- `examples/chatbot_workspace/app.yaml`
+- `examples/chatbot_workspace/requirements.txt`
+
+It demonstrates:
+
+- conversation layouts built with standard cards and rows
+- `DateRangePicker` for structured prompt scope
+- `MultiSelect` for answer mode selection
+- `Toast` for interaction feedback
+- `Drawer` for sources, trace, or tool output
+- `Timeline` for execution trace storytelling
+- `Accordion` for prompt guidance and tool context
+
+## Landing Site
+
+Use this example when you want a product or launch-style page rather than a traditional dashboard.
+
+- `examples/landing_site/app.py`
+- `examples/landing_site/app.yaml`
+- `examples/landing_site/requirements.txt`
+
+It demonstrates:
+
+- hero-card composition
+- feature grids with elevated surfaces
+- FAQ via `Accordion`
+- roadmap storytelling via `Timeline`
+- launch feedback via `Toast`
+- supporting narrative in a `Drawer`
 
 ## Run Workspace Studio locally
 
@@ -86,7 +123,7 @@ Put these three files in your Databricks App project:
 `requirements.txt`:
 
 ```text
-brickflowui>=0.1.3
+brickflowui>=0.1.4
 ```
 
 `app.yaml`:
@@ -116,5 +153,7 @@ The most effective pattern is:
 - Choose `counter` if you just want to verify installation and runtime.
 - Choose `auth_portal` if your main concern is access control and protected pages.
 - Choose `operations_finance_portal` if you want a polished dashboard-style shell quickly.
+- Choose `chatbot_workspace` if you want an assistant-style interface with real UI controls around it.
+- Choose `landing_site` if you want a cleaner marketing or internal product-launch layout.
 - Choose `workspace_studio` if you want the broadest example of how the library fits together.
 - Choose `data_pipeline_command_center` if your real goal is pipeline observability and operational dashboarding on Databricks.

@@ -110,13 +110,19 @@ db.Select(name="w", options=[{"label": "A", "value": "a"}], on_change=setter)
 db.Checkbox(name="x", label="Enable", on_change=setter)
 db.Toggle(name="y", label="Dark mode", on_change=setter)
 db.Slider(name="s", min=0, max=100, on_change=setter)
+db.DateRangePicker(name="window", on_change=setter)
+db.MultiSelect(name="layers", options=[...], values=["gold"], on_change=setter)
 
 # Data
-db.Table(data=rows, columns=[{"key": "id", "label": "ID"}], pagination=20)
+db.Table(data=rows, columns=[{"key": "id", "label": "ID"}], pagination=20, exportable=True)
 db.Badge("Active", color="green")
 db.Alert("Something went wrong", type="error")
 db.Progress(value=65, max=100)
 db.Stat(label="Queries", value="248K", delta="+12%", delta_type="increase")
+db.EmptyState("No data", "Adjust filters or connect a source")
+db.Toast("Saved", title="Success")
+db.Timeline([{"title": "Run started", "time": "09:30"}])
+db.SparklineStat(label="Freshness", value="17 min", data=rows, x_key="week", y_key="value")
 
 # Charts
 db.AreaChart(data=rows, x_key="date", y_keys=["value"], colors=["#FF3621"])
@@ -128,6 +134,9 @@ db.DonutChart(data=rows, value_key="count", label_key="name")
 db.Tabs([db.TabItem("Tab A", [db.Text("Content A")]), ...])
 db.Sidebar([db.NavItem("Home", "/", icon="Home"), ...], brand_name="My App")
 db.Modal(visible=True, title="Confirm", children=[...], on_close=handler)
+db.Drawer(visible=True, title="Details", children=[...], on_close=handler)
+db.Accordion([db.AccordionItem("Section", [db.Text("Body")])])
+db.Breadcrumbs([{"label": "Home", "path": "/"}, {"label": "Reports"}])
 
 # Forms
 db.Form(action="/api/submit", success_redirect="/", children=[
@@ -241,9 +250,12 @@ Supported theme model sections:
 
 - `branding`: `title`, `logo`, `favicon`
 - `colors`: `primary`, `primary_hover`, `background`, `surface`, `text`, `text_muted`, `border`, `success`, `warning`, `error`, `link`
+- `surfaces`: `background`, `surface`, `overlay`
 - `typography`: `font_family`, `font_mono`, `base_size`
 - `spacing`: `unit`
 - `borders`: `radius`
+- `shadows`: `small`, `medium`, `large`
+- `motion`: `duration_fast`, `duration_normal`, `duration_slow`, `easing_standard`, `stagger_step`
 
 You can also keep using the lower-level internal keys like `primary-hover`, `bg`, `text-muted`, `sans`, and `base-size` if you prefer.
 
@@ -316,7 +328,7 @@ Then in the Databricks workspace:
 ### `requirements.txt`
 
 ```text
-brickflowui>=0.1.3
+brickflowui>=0.1.4
 # brickflowui[databricks]  # for SQL + Unity Catalog
 ```
 

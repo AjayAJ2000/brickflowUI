@@ -147,7 +147,9 @@ export default function App() {
 
   return (
     <>
-      <Renderer node={vdom} dispatch={dispatch} navigate={navigate} />
+      <div className="bf-page-shell">
+        <Renderer node={vdom} dispatch={dispatch} navigate={navigate} />
+      </div>
       {status === 'disconnected' && (
         <div className="bf-connection-banner">⚠ Reconnecting to server…</div>
       )}

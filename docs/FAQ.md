@@ -11,13 +11,13 @@ Use:
 ## How do I install directly from GitHub?
 
 ```bash
-pip install "brickflowui @ git+https://github.com/AjayAJ2000/brickflowUI.git@v0.1.3"
+pip install "brickflowui @ git+https://github.com/AjayAJ2000/brickflowUI.git@v0.1.4"
 ```
 
 ## How do I put the GitHub version in `requirements.txt`?
 
 ```text
-brickflowui @ git+https://github.com/AjayAJ2000/brickflowUI.git@v0.1.3
+brickflowui @ git+https://github.com/AjayAJ2000/brickflowUI.git@v0.1.4
 ```
 
 ## How do I use it in Databricks Apps?
@@ -33,7 +33,7 @@ command:
 and:
 
 ```text
-brickflowui>=0.1.3
+brickflowui>=0.1.4
 ```
 
 ## Does BrickflowUI depend on Nike's Brickflow?

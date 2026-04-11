@@ -29,6 +29,11 @@ colors:
   error: "#DC2626"
   link: "#1D4ED8"
 
+surfaces:
+  background: "#F7F7F5"
+  surface: "#F1F5F9"
+  overlay: "rgba(255,255,255,0.88)"
+
 typography:
   font_family: "'IBM Plex Sans', sans-serif"
   font_mono: "'IBM Plex Mono', monospace"
@@ -39,6 +44,18 @@ spacing:
 
 borders:
   radius: "14px"
+
+shadows:
+  small: "0 1px 2px rgba(0,0,0,0.05)"
+  medium: "0 10px 30px rgba(0,0,0,0.08)"
+  large: "0 18px 45px rgba(0,0,0,0.12)"
+
+motion:
+  duration_fast: "140ms"
+  duration_normal: "220ms"
+  duration_slow: "420ms"
+  easing_standard: "cubic-bezier(0.4, 0, 0.2, 1)"
+  stagger_step: "40ms"
 ```
 
 ## Notes
@@ -53,6 +70,27 @@ borders:
   - `font_family` maps to `sans`
   - `base_size` maps to `base-size`
   - `borders.radius` maps to the default corner radius token
+  - `surfaces.background` maps to `canvas`
+  - `surfaces.surface` maps to `muted`
+  - `shadows.medium` maps to `md`
+  - `motion.duration_normal` maps to `duration-normal`
+
+## Polish-Oriented Tokens
+
+For `0.1.4`, the theme surface is broad enough to support more than dashboards:
+
+- `colors.*` for brand identity and semantics
+- `surfaces.*` for softer backgrounds and overlay layers
+- `shadows.*` for depth and premium card treatments
+- `motion.*` for transitions and stagger timing
+
+That makes it easier to style:
+
+- dashboards
+- pipeline command centers
+- chatbot surfaces
+- landing pages
+- internal launch or product sites
 
 ## Recommendation
 

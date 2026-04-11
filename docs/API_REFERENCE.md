@@ -1,12 +1,13 @@
 # API Reference
 
-Use this page when you already understand the overall framework shape and want to look up the exact API surface quickly.
+Use this page when you already understand the overall framework shape and want the current public surface in one place.
 
-If you are still learning the library, pair this page with:
+Pair this page with:
 
 - [Quick Start](./GETTING_STARTED.md)
 - [Examples](./EXAMPLES.md)
 - [How It Works](./HOW_IT_WORKS.md)
+- [Polish Guide](./POLISH_GUIDE.md)
 
 ## Core
 
@@ -15,6 +16,7 @@ If you are still learning the library, pair this page with:
 Main application object.
 
 Important parameters:
+
 - `title`
 - `theme`
 - `theme_color`
@@ -27,16 +29,11 @@ Important parameters:
 - `websocket_origins`
 
 Methods:
+
 - `@app.page(path, title=..., icon=..., access=..., roles=...)`
 - `@app.route(path, methods=[...], access=..., roles=...)`
 - `app.mount(component)`
 - `app.run(host=None, port=None, reload=False)`
-
-Mental model:
-
-- `App` owns pages, custom routes, theme config, auth wiring, and runtime server options
-- `theme` can be a dict or a YAML/JSON file path
-- `auth_mode` chooses how the framework treats app identity vs user identity
 
 ## State Hooks
 
@@ -67,6 +64,11 @@ Mental model:
 - `db.Divider`
 - `db.Spacer`
 
+Useful additive props:
+
+- `Card(..., elevated=True, animated=True, animation="fade-up", animation_delay=0.1)`
+- `Button(..., animated=True, animation="pulse")`
+
 ## Content Components
 
 - `db.Text`
@@ -76,6 +78,15 @@ Mental model:
 - `db.Stat`
 - `db.Progress`
 - `db.Spinner`
+- `db.EmptyState`
+- `db.Toast`
+- `db.Timeline`
+- `db.SparklineStat`
+
+Useful additive props:
+
+- `Stat(..., animated=True)`
+- `Toast(..., visible=True)`
 
 ## Input Components
 
@@ -85,19 +96,39 @@ Mental model:
 - `db.Checkbox`
 - `db.Toggle`
 - `db.Slider`
+- `db.DateRangePicker`
+- `db.MultiSelect`
 - `db.Form`
 
-## Navigation Components
+Notes:
+
+- `Input(..., loading=True)` and `Select(..., loading=True)` show inline loading affordances
+- `DateRangePicker` emits `{"start": "...", "end": "..."}` to its `on_change`
+- `MultiSelect` emits `list[str]` to its `on_change`
+- `Form` preserves repeated field names as arrays when posting JSON
+
+## Navigation And Surface Components
 
 - `db.Sidebar`
 - `db.NavItem`
+- `db.Breadcrumbs`
 - `db.Tabs`
 - `db.TabItem`
 - `db.Modal`
+- `db.Drawer`
+- `db.Accordion`
+- `db.AccordionItem`
 
 ## Data Components
 
 - `db.Table`
+
+Useful additive props:
+
+- `Table(..., loading=True)`
+- `Table(..., empty_message="No rows yet")`
+- `Table(..., exportable=True)`
+- `Table(..., on_row_click=handler)`
 
 ## Chart Components
 
@@ -106,6 +137,52 @@ Mental model:
 - `db.BarChart`
 - `db.LineChart`
 - `db.DonutChart`
+
+Useful additive props:
+
+- `loading`
+- `empty_message`
+- `on_click`
+- `colors`
+
+Example:
+
+```python
+db.BarChart(
+    data=rows,
+    x_key="week",
+    y_keys=["runs", "failures"],
+    title="Pipeline trend",
+    loading=is_loading,
+    empty_message="No pipeline data available",
+    on_click=handle_bar_click,
+)
+```
+
+## Theme Surface
+
+Supported theme sections:
+
+- `branding`
+- `colors`
+- `surfaces`
+- `typography`
+- `spacing`
+- `borders`
+- `shadows`
+- `motion`
+
+Useful aliases:
+
+- `background -> bg`
+- `primary_hover -> primary-hover`
+- `text_muted -> text-muted`
+- `font_family -> sans`
+- `base_size -> base-size`
+- `surfaces.background -> canvas`
+- `surfaces.surface -> muted`
+- `shadows.medium -> md`
+- `motion.duration_normal -> duration-normal`
 
 ## Databricks Helpers
 

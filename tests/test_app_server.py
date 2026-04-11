@@ -1,9 +1,31 @@
 import pytest
 from fastapi.testclient import TestClient
+import brickflowui as db
 from brickflowui.app import App
 from brickflowui.auth import HeaderAuthProvider, current_user
 from brickflowui.server import create_asgi_app
 from brickflowui.vdom import VNode
+
+
+def _find_node_by_type(node: dict, node_type: str) -> dict | None:
+    if node.get("type") == node_type:
+        return node
+    for child in node.get("children", []):
+        found = _find_node_by_type(child, node_type)
+        if found:
+            return found
+    for value in node.get("props", {}).values():
+        if isinstance(value, dict):
+            found = _find_node_by_type(value, node_type)
+            if found:
+                return found
+        elif isinstance(value, list):
+            for item in value:
+                if isinstance(item, dict):
+                    found = _find_node_by_type(item, node_type)
+                    if found:
+                        return found
+    return None
 
 def test_app_page_registration():
     app = App(title="Test App")
@@ -149,4 +171,89 @@ def test_extract_event_payload_unwraps_single_value():
 
     assert _extract_event_payload({"value": "abc"}) == "abc"
     assert _extract_event_payload({"row": {"id": 1}}) == {"id": 1}
+    assert _extract_event_payload({"value": ["bronze", "silver"]}) == ["bronze", "silver"]
+    assert _extract_event_payload({"value": {"start": "2026-04-01", "end": "2026-04-07"}}) == {"start": "2026-04-01", "end": "2026-04-07"}
     assert _extract_event_payload({"a": 1, "b": 2}) == {"a": 1, "b": 2}
+
+
+def test_multiselect_event_payload_updates_state_and_rerenders():
+    app = App()
+
+    @app.page("/")
+    def home():
+        values, set_values = db.use_state([])
+        return db.Column(
+            [
+                db.Text(",".join(values) if values else "none"),
+                db.MultiSelect(
+                    name="layers",
+                    label="Layers",
+                    options=[
+                        {"label": "Bronze", "value": "bronze"},
+                        {"label": "Silver", "value": "silver"},
+                    ],
+                    values=values,
+                    on_change=set_values,
+                ),
+            ]
+        )
+
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events") as websocket:
+        full = websocket.receive_json()
+        control = _find_node_by_type(full["tree"], "MultiSelect")
+        assert control is not None
+
+        websocket.send_json(
+            {
+                "type": "event",
+                "event_id": control["props"]["change"],
+                "data": {"value": ["bronze", "silver"]},
+            }
+        )
+        patch = websocket.receive_json()
+
+    assert patch["type"] == "patch"
+    text_patch = next(item for item in patch["patches"] if item["path"] == [0])
+    assert text_patch["props"]["value"] == "bronze,silver"
+
+
+def test_date_range_event_payload_updates_state_and_rerenders():
+    app = App()
+
+    @app.page("/")
+    def home():
+        selected, set_selected = db.use_state({"start": "", "end": ""})
+        return db.Column(
+            [
+                db.Text(f"{selected['start']}->{selected['end']}"),
+                db.DateRangePicker(
+                    name="window",
+                    label="Window",
+                    start=selected["start"],
+                    end=selected["end"],
+                    on_change=set_selected,
+                ),
+            ]
+        )
+
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events") as websocket:
+        full = websocket.receive_json()
+        control = _find_node_by_type(full["tree"], "DateRangePicker")
+        assert control is not None
+
+        websocket.send_json(
+            {
+                "type": "event",
+                "event_id": control["props"]["change"],
+                "data": {"value": {"start": "2026-04-01", "end": "2026-04-07"}},
+            }
+        )
+        patch = websocket.receive_json()
+
+    assert patch["type"] == "patch"
+    text_patch = next(item for item in patch["patches"] if item["path"] == [0])
+    assert text_patch["props"]["value"] == "2026-04-01->2026-04-07"

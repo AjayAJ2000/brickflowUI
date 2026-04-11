@@ -37,6 +37,7 @@ from .auth import (
 from .state import RenderContext
 from .vdom import VNode
 from .theme import Theme
+from .version import __version__
 
 logger = logging.getLogger("brickflowui.app")
 
@@ -295,7 +296,7 @@ class App:
         from .server import run_server
 
         host, port = resolve_host_port(host, port)
-        logger.info(f"BrickflowUI v0.1.0 — starting on http://{host}:{port}")
+        logger.info(f"BrickflowUI v{__version__} — starting on http://{host}:{port}")
         logger.info(f"Pages: {list(self._pages.keys())}")
 
         if not self._pages and self._root_fn is None:
