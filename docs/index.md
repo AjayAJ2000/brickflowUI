@@ -18,12 +18,13 @@ BrickflowUI is designed to feel simple for first-time users and structured enoug
 
 If you are new to the library, follow these in order:
 
-1. [Quick Start](./GETTING_STARTED.md) to install the package and run your first app
-2. [First App Tutorial](./TUTORIAL.md) to build a more realistic dashboard-style app
-3. [Examples](./EXAMPLES.md) to start from something runnable
-4. [Databricks Apps](./DATABRICKS_APPS.md) for deployment details
-5. [Theming](./THEMING.md) to brand your app
-6. [API Reference](./API_REFERENCE.md) when you want to explore the full surface area
+1. [Learn BrickflowUI](./learning/index.md) if you want a structured onboarding path
+2. [Quick Start](./GETTING_STARTED.md) to install the package and run your first app
+3. [First App Tutorial](./TUTORIAL.md) to build a more realistic dashboard-style app
+4. [Examples](./EXAMPLES.md) to start from something runnable
+5. [Databricks Apps](./DATABRICKS_APPS.md) for deployment details
+6. [Theming](./THEMING.md) to brand your app
+7. [API Reference](./API_REFERENCE.md) when you want to explore the full surface area
 
 For the newest dashboard and pipeline visuals, see [Visualizations And Pipelines](./VISUALIZATIONS.md).
 
