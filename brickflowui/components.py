@@ -548,6 +548,124 @@ def SparklineStat(
     )
 
 
+def Hero(
+    title: str,
+    subtitle: Optional[str] = None,
+    eyebrow: Optional[str] = None,
+    actions: Optional[List[VNode]] = None,
+    badges: Optional[List[VNode]] = None,
+    visual: Optional[VNode] = None,
+    animated: bool = True,
+) -> VNode:
+    """Premium landing/dashboard hero section."""
+    return VNode(
+        type="Hero",
+        props={
+            "title": title,
+            "subtitle": subtitle,
+            "eyebrow": eyebrow,
+            "actions": actions or [],
+            "badges": badges or [],
+            "animated": animated,
+        },
+        children=[visual] if visual else [],
+    )
+
+
+def SectionHeader(
+    title: str,
+    subtitle: Optional[str] = None,
+    actions: Optional[List[VNode]] = None,
+    eyebrow: Optional[str] = None,
+) -> VNode:
+    """Reusable section title with optional actions."""
+    return VNode(
+        type="SectionHeader",
+        props={"title": title, "subtitle": subtitle, "actions": actions or [], "eyebrow": eyebrow},
+    )
+
+
+def StatusStrip(
+    items: List[Dict[str, Any]],
+    title: Optional[str] = None,
+    columns: int = 4,
+) -> VNode:
+    """Compact signal cards for health, freshness, latency, SLA, and cost."""
+    return VNode(type="StatusStrip", props={"items": items, "title": title, "columns": columns})
+
+
+def Stepper(
+    steps: List[Dict[str, Any]],
+    active: int = 0,
+    orientation: Literal["horizontal", "vertical"] = "horizontal",
+) -> VNode:
+    """Process stepper for setup, deployments, releases, and approvals."""
+    return VNode(type="Stepper", props={"steps": steps, "active": active, "orientation": orientation})
+
+
+def KanbanBoard(
+    columns: List[Dict[str, Any]],
+    on_card_click: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> VNode:
+    """Kanban board for work queues, triage boards, or pipeline issues."""
+    handlers: Dict[str, EventHandler] = {}
+    if on_card_click:
+        handlers["cardClick"] = on_card_click
+    return VNode(type="KanbanBoard", props={"columns": columns}, event_handlers=handlers)
+
+
+def ChatMessage(
+    role: Literal["user", "assistant", "system", "tool"],
+    content: str,
+    name: Optional[str] = None,
+    timestamp: Optional[str] = None,
+    avatar: Optional[str] = None,
+    tone: Literal["default", "success", "warning", "error", "info"] = "default",
+) -> VNode:
+    """Single chat transcript message for assistant/copilot style apps."""
+    return VNode(
+        type="ChatMessage",
+        props={
+            "role": role,
+            "content": content,
+            "name": name,
+            "timestamp": timestamp,
+            "avatar": avatar,
+            "tone": tone,
+        },
+    )
+
+
+def ChatInput(
+    name: str = "message",
+    value: str = "",
+    placeholder: str = "Ask a question",
+    on_change: Optional[Callable[[str], None]] = None,
+    on_submit: Optional[Callable[[str], None]] = None,
+    disabled: bool = False,
+    loading: bool = False,
+    submit_label: str = "Send",
+) -> VNode:
+    """Controlled chat input with change and submit callbacks."""
+    handlers: Dict[str, EventHandler] = {}
+    if on_change:
+        handlers["change"] = on_change
+    if on_submit:
+        handlers["submit"] = on_submit
+    return VNode(
+        type="ChatInput",
+        props={
+            "name": name,
+            "value": value,
+            "placeholder": placeholder,
+            "disabled": disabled,
+            "loading": loading,
+            "submitLabel": submit_label,
+        },
+        event_handlers=handlers,
+    )
+
+
 # ── Data Visualization ──────────────────────────────────────────────────────
 
 
@@ -626,6 +744,221 @@ def DonutChart(
     if on_click:
         handlers["click"] = on_click
     return VNode(type="DonutChart", props={"data": data, "valueKey": value_key, "labelKey": label_key, "title": title, "height": height, "loading": loading, "emptyMessage": empty_message}, event_handlers=handlers)
+
+
+def ScatterChart(
+    data: List[Dict[str, Any]],
+    x_key: str,
+    y_key: str,
+    title: Optional[str] = None,
+    group_key: Optional[str] = None,
+    color: Optional[str] = None,
+    height: int = 300,
+    loading: bool = False,
+    empty_message: str = "No chart data available",
+    on_click: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> VNode:
+    """Scatter plot for correlation, anomaly, and cluster views."""
+    handlers: Dict[str, EventHandler] = {}
+    if on_click:
+        handlers["click"] = on_click
+    return VNode(
+        type="ScatterChart",
+        props={
+            "data": data,
+            "xKey": x_key,
+            "yKey": y_key,
+            "groupKey": group_key,
+            "title": title,
+            "color": color,
+            "height": height,
+            "loading": loading,
+            "emptyMessage": empty_message,
+        },
+        event_handlers=handlers,
+    )
+
+
+def ComposedChart(
+    data: List[Dict[str, Any]],
+    x_key: str,
+    bar_keys: Optional[List[str]] = None,
+    line_keys: Optional[List[str]] = None,
+    area_keys: Optional[List[str]] = None,
+    title: Optional[str] = None,
+    colors: Optional[List[str]] = None,
+    height: int = 320,
+    loading: bool = False,
+    empty_message: str = "No chart data available",
+    on_click: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> VNode:
+    """Mixed bar/line/area chart for throughput vs SLA, cost vs volume, etc."""
+    handlers: Dict[str, EventHandler] = {}
+    if on_click:
+        handlers["click"] = on_click
+    return VNode(
+        type="ComposedChart",
+        props={
+            "data": data,
+            "xKey": x_key,
+            "barKeys": bar_keys or [],
+            "lineKeys": line_keys or [],
+            "areaKeys": area_keys or [],
+            "title": title,
+            "colors": colors,
+            "height": height,
+            "loading": loading,
+            "emptyMessage": empty_message,
+        },
+        event_handlers=handlers,
+    )
+
+
+def GaugeChart(
+    value: float,
+    min: float = 0,
+    max: float = 100,
+    title: Optional[str] = None,
+    label: Optional[str] = None,
+    color: Optional[str] = None,
+    height: int = 220,
+) -> VNode:
+    """Gauge for freshness, SLA, quality score, or reliability indicators."""
+    return VNode(
+        type="GaugeChart",
+        props={"value": value, "min": min, "max": max, "title": title, "label": label, "color": color, "height": height},
+    )
+
+
+def RadarChart(
+    data: List[Dict[str, Any]],
+    angle_key: str,
+    value_keys: List[str],
+    title: Optional[str] = None,
+    colors: Optional[List[str]] = None,
+    height: int = 320,
+    loading: bool = False,
+    empty_message: str = "No chart data available",
+) -> VNode:
+    """Radar chart for scorecards and capability comparisons."""
+    return VNode(
+        type="RadarChart",
+        props={
+            "data": data,
+            "angleKey": angle_key,
+            "valueKeys": value_keys,
+            "title": title,
+            "colors": colors,
+            "height": height,
+            "loading": loading,
+            "emptyMessage": empty_message,
+        },
+    )
+
+
+def Heatmap(
+    data: List[Dict[str, Any]],
+    x_key: str,
+    y_key: str,
+    value_key: str,
+    title: Optional[str] = None,
+    color: Optional[str] = None,
+    empty_message: str = "No heatmap data available",
+    on_click: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> VNode:
+    """Grid heatmap for freshness, failures, latency, and utilization."""
+    handlers: Dict[str, EventHandler] = {}
+    if on_click:
+        handlers["click"] = on_click
+    return VNode(
+        type="Heatmap",
+        props={
+            "data": data,
+            "xKey": x_key,
+            "yKey": y_key,
+            "valueKey": value_key,
+            "title": title,
+            "color": color,
+            "emptyMessage": empty_message,
+        },
+        event_handlers=handlers,
+    )
+
+
+def FunnelChart(
+    data: List[Dict[str, Any]],
+    value_key: str = "value",
+    label_key: str = "label",
+    title: Optional[str] = None,
+    colors: Optional[List[str]] = None,
+    height: int = 300,
+    loading: bool = False,
+    empty_message: str = "No chart data available",
+    on_click: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> VNode:
+    """Funnel chart for conversion, quality gates, or pipeline stage drop-off."""
+    handlers: Dict[str, EventHandler] = {}
+    if on_click:
+        handlers["click"] = on_click
+    return VNode(
+        type="FunnelChart",
+        props={"data": data, "valueKey": value_key, "labelKey": label_key, "title": title, "colors": colors, "height": height, "loading": loading, "emptyMessage": empty_message},
+        event_handlers=handlers,
+    )
+
+
+def TreeMap(
+    data: List[Dict[str, Any]],
+    value_key: str = "value",
+    name_key: str = "name",
+    title: Optional[str] = None,
+    colors: Optional[List[str]] = None,
+    height: int = 300,
+    loading: bool = False,
+    empty_message: str = "No chart data available",
+    on_click: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> VNode:
+    """Treemap for cost, storage, workload, or ownership breakdowns."""
+    handlers: Dict[str, EventHandler] = {}
+    if on_click:
+        handlers["click"] = on_click
+    return VNode(
+        type="TreeMap",
+        props={"data": data, "valueKey": value_key, "nameKey": name_key, "title": title, "colors": colors, "height": height, "loading": loading, "emptyMessage": empty_message},
+        event_handlers=handlers,
+    )
+
+
+def PipelineGraph(
+    nodes: List[Dict[str, Any]],
+    edges: List[Dict[str, Any]],
+    title: Optional[str] = None,
+    layout: Literal["left-to-right", "top-to-bottom"] = "left-to-right",
+    animated: bool = True,
+    empty_message: str = "No pipeline nodes available",
+    on_node_click: Optional[Callable[[Dict[str, Any]], None]] = None,
+) -> VNode:
+    """
+    Visual pipeline/DAG graph.
+
+    nodes = [{"id": "bronze", "label": "Bronze", "status": "success", "layer": "bronze"}]
+    edges = [{"from": "bronze", "to": "silver"}]
+    """
+    handlers: Dict[str, EventHandler] = {}
+    if on_node_click:
+        handlers["nodeClick"] = on_node_click
+    return VNode(
+        type="PipelineGraph",
+        props={
+            "nodes": nodes,
+            "edges": edges,
+            "title": title,
+            "layout": layout,
+            "animated": animated,
+            "emptyMessage": empty_message,
+        },
+        event_handlers=handlers,
+    )
 
 
 # ── Forms ────────────────────────────────────────────────────────────────────

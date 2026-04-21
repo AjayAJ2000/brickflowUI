@@ -4,6 +4,11 @@ import {
   AreaChart, Area,
   BarChart, Bar,
   LineChart, Line,
+  ScatterChart as ReScatterChart, Scatter,
+  ComposedChart as ReComposedChart,
+  RadarChart as ReRadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  FunnelChart as ReFunnelChart, Funnel,
+  Treemap,
   PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer
@@ -89,6 +94,31 @@ function renderLoadingSkeleton(lines = 3) {
       ))}
     </div>
   )
+}
+
+function chartShell(key: string, props: Record<string, any>, content: React.ReactNode) {
+  return (
+    <div key={key} className="bf-chart-container bf-chart-enter">
+      {props.title && <div className="bf-chart-title">{props.title as string}</div>}
+      {content}
+    </div>
+  )
+}
+
+function chartState(key: string, props: Record<string, any>) {
+  if (props.loading) return <div key={key} className="bf-chart-state">{renderLoadingSkeleton(4)}</div>
+  const data = (props.data as unknown[]) || []
+  if (!data.length) return <div key={key} className="bf-chart-state">{(props.emptyMessage as string) || 'No chart data available'}</div>
+  return null
+}
+
+function statusTone(status?: unknown) {
+  const normalized = String(status || 'neutral').toLowerCase()
+  if (['success', 'healthy', 'ok', 'running', 'passed', 'complete', 'completed'].includes(normalized)) return 'success'
+  if (['warning', 'watch', 'delayed', 'queued', 'degraded'].includes(normalized)) return 'warning'
+  if (['error', 'failed', 'critical', 'blocked', 'at risk', 'atrisk'].includes(normalized)) return 'error'
+  if (['info', 'active', 'processing'].includes(normalized)) return 'info'
+  return 'neutral'
 }
 
 // ── Main recursive renderer ────────────────────────────────────────────────
@@ -592,6 +622,151 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       )
     }
 
+    case 'ScatterChart': {
+      const state = chartState(key, p)
+      if (state) return state
+      return chartShell(key, p,
+        <ResponsiveContainer width="100%" height={(p.height as number) || 300}>
+          <ReScatterChart data={(p.data as object[]) || []} onClick={(state) => p.click && ev('click', state?.activePayload?.[0]?.payload ?? {})}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey={p.xKey as string} type="number" name={p.xKey as string} />
+            <YAxis dataKey={p.yKey as string} type="number" name={p.yKey as string} />
+            <Tooltip cursor={{ strokeDasharray: '3 3' }} />
+            <Scatter dataKey={p.yKey as string} fill={(p.color as string) || CHART_COLORS[0]} />
+          </ReScatterChart>
+        </ResponsiveContainer>
+      )
+    }
+
+    case 'ComposedChart': {
+      const state = chartState(key, p)
+      if (state) return state
+      const colors = (p.colors as string[]) || CHART_COLORS
+      return chartShell(key, p,
+        <ResponsiveContainer width="100%" height={(p.height as number) || 320}>
+          <ReComposedChart data={(p.data as object[]) || []} onClick={(state) => p.click && ev('click', state?.activePayload?.[0]?.payload ?? {})}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey={p.xKey as string} />
+            <YAxis />
+            <Tooltip />
+            <Legend />
+            {((p.areaKeys as string[]) || []).map((yk, i) => (
+              <Area key={`area-${yk}`} type="monotone" dataKey={yk} fill={colors[i % colors.length]} stroke={colors[i % colors.length]} fillOpacity={0.18} />
+            ))}
+            {((p.barKeys as string[]) || []).map((yk, i) => (
+              <Bar key={`bar-${yk}`} dataKey={yk} fill={colors[(i + 2) % colors.length]} radius={[3, 3, 0, 0]} />
+            ))}
+            {((p.lineKeys as string[]) || []).map((yk, i) => (
+              <Line key={`line-${yk}`} type="monotone" dataKey={yk} stroke={colors[(i + 4) % colors.length]} strokeWidth={2} dot={false} />
+            ))}
+          </ReComposedChart>
+        </ResponsiveContainer>
+      )
+    }
+
+    case 'GaugeChart':
+      return <GaugeChartComponent key={key} props={p} />
+
+    case 'RadarChart': {
+      const state = chartState(key, p)
+      if (state) return state
+      const colors = (p.colors as string[]) || CHART_COLORS
+      return chartShell(key, p,
+        <ResponsiveContainer width="100%" height={(p.height as number) || 320}>
+          <ReRadarChart data={(p.data as object[]) || []}>
+            <PolarGrid />
+            <PolarAngleAxis dataKey={p.angleKey as string} />
+            <PolarRadiusAxis />
+            <Tooltip />
+            <Legend />
+            {((p.valueKeys as string[]) || []).map((yk, i) => (
+              <Radar key={yk} name={yk} dataKey={yk} stroke={colors[i % colors.length]} fill={colors[i % colors.length]} fillOpacity={0.18} />
+            ))}
+          </ReRadarChart>
+        </ResponsiveContainer>
+      )
+    }
+
+    case 'Heatmap':
+      return <HeatmapComponent key={key} props={p} dispatch={(value) => ev('click', value)} />
+
+    case 'FunnelChart': {
+      const state = chartState(key, p)
+      if (state) return state
+      const data = (p.data as Array<Record<string, unknown>>) || []
+      return chartShell(key, p,
+        <ResponsiveContainer width="100%" height={(p.height as number) || 300}>
+          <ReFunnelChart>
+            <Tooltip />
+            <Funnel dataKey={(p.valueKey as string) || 'value'} nameKey={(p.labelKey as string) || 'label'} data={data} isAnimationActive onClick={(payload) => p.click && ev('click', payload?.payload ?? {})}>
+              {data.map((_, i) => <Cell key={i} fill={((p.colors as string[]) || [])[i] || CHART_COLORS[i % CHART_COLORS.length]} />)}
+            </Funnel>
+          </ReFunnelChart>
+        </ResponsiveContainer>
+      )
+    }
+
+    case 'TreeMap': {
+      const state = chartState(key, p)
+      if (state) return state
+      return chartShell(key, p,
+        <ResponsiveContainer width="100%" height={(p.height as number) || 300}>
+          <Treemap
+            data={(p.data as object[]) || []}
+            dataKey={(p.valueKey as string) || 'value'}
+            nameKey={(p.nameKey as string) || 'name'}
+            stroke="var(--db-surface)"
+            fill={((p.colors as string[]) || [])[0] || CHART_COLORS[0]}
+            onClick={(payload) => p.click && ev('click', payload?.payload ?? payload ?? {})}
+          />
+        </ResponsiveContainer>
+      )
+    }
+
+    case 'PipelineGraph':
+      return <PipelineGraphComponent key={key} props={p} dispatch={(value) => ev('nodeClick', value)} />
+
+    case 'Hero':
+      return (
+        <section key={key} className={`bf-hero ${p.animated ? 'bf-animated' : ''}`}>
+          <div className="bf-hero-content">
+            {p.eyebrow ? <div className="bf-hero-eyebrow">{p.eyebrow as string}</div> : null}
+            <h1 className="bf-hero-title">{p.title as string}</h1>
+            {p.subtitle ? <p className="bf-hero-subtitle">{p.subtitle as string}</p> : null}
+            {(p.badges as VNodeData[] | undefined)?.length ? <div className="bf-hero-badges">{renderChildren((p.badges as VNodeData[]) || [], ctx, `${key}-badges`)}</div> : null}
+            {(p.actions as VNodeData[] | undefined)?.length ? <div className="bf-hero-actions">{renderChildren((p.actions as VNodeData[]) || [], ctx, `${key}-actions`)}</div> : null}
+          </div>
+          {children.length ? <div className="bf-hero-visual">{renderChildren(children, ctx, `${key}-visual`)}</div> : null}
+        </section>
+      )
+
+    case 'SectionHeader':
+      return (
+        <div key={key} className="bf-section-header">
+          <div>
+            {p.eyebrow ? <div className="bf-section-eyebrow">{p.eyebrow as string}</div> : null}
+            <div className="bf-section-title">{p.title as string}</div>
+            {p.subtitle ? <div className="bf-section-subtitle">{p.subtitle as string}</div> : null}
+          </div>
+          {(p.actions as VNodeData[] | undefined)?.length ? <div className="bf-section-actions">{renderChildren((p.actions as VNodeData[]) || [], ctx, `${key}-actions`)}</div> : null}
+        </div>
+      )
+
+    case 'StatusStrip':
+      return <StatusStripComponent key={key} props={p} />
+
+    case 'Stepper':
+      return <StepperComponent key={key} props={p} />
+
+    case 'KanbanBoard':
+      return <KanbanBoardComponent key={key} props={p} dispatch={(value) => ev('cardClick', value)} />
+
+    case 'ChatMessage':
+      return <ChatMessageComponent key={key} props={p} />
+
+    case 'ChatInput':
+      return <ChatInputComponent key={key} props={p} dispatchChange={(value) => ev('change', value)} dispatchSubmit={(value) => ev('submit', value)} />
+
     case 'Toast':
       if (!p.visible) return null
       return (
@@ -831,6 +1006,221 @@ function SparklineStatComponent({ props: p }: { props: Record<string, any> }) {
           </LineChart>
         </ResponsiveContainer>
       </div>
+    </div>
+  )
+}
+
+function GaugeChartComponent({ props: p }: { props: Record<string, any> }) {
+  const min = Number(p.min ?? 0)
+  const max = Number(p.max ?? 100)
+  const value = Number(p.value ?? 0)
+  const pct = Math.max(0, Math.min(1, (value - min) / Math.max(1, max - min)))
+  const degrees = -90 + pct * 180
+
+  return chartShell(String(p.title || 'gauge'), p,
+    <div className="bf-gauge" style={{ minHeight: (p.height as number) || 220 }}>
+      <div className="bf-gauge-arc">
+        <div className="bf-gauge-fill" style={{ '--bf-gauge-pct': pct, background: (p.color as string) || 'var(--db-primary)' } as React.CSSProperties} />
+        <div className="bf-gauge-needle" style={{ transform: `rotate(${degrees}deg)` }} />
+      </div>
+      <div className="bf-gauge-value">{value.toLocaleString()}</div>
+      {p.label ? <div className="bf-gauge-label">{p.label as string}</div> : null}
+    </div>
+  )
+}
+
+function HeatmapComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: Record<string, unknown>) => void }) {
+  const data = (p.data as Array<Record<string, any>>) || []
+  if (!data.length) return <div className="bf-chart-state">{(p.emptyMessage as string) || 'No heatmap data available'}</div>
+
+  const xKey = p.xKey as string
+  const yKey = p.yKey as string
+  const valueKey = p.valueKey as string
+  const xs = Array.from(new Set(data.map((row) => String(row[xKey] ?? ''))))
+  const ys = Array.from(new Set(data.map((row) => String(row[yKey] ?? ''))))
+  const max = Math.max(1, ...data.map((row) => Number(row[valueKey] ?? 0)))
+  const lookup = new Map(data.map((row) => [`${row[xKey]}::${row[yKey]}`, row]))
+
+  return chartShell('heatmap', p,
+    <div className="bf-heatmap" style={{ '--bf-heatmap-cols': xs.length + 1 } as React.CSSProperties}>
+      <div className="bf-heatmap-corner" />
+      {xs.map((x) => <div key={`x-${x}`} className="bf-heatmap-axis">{x}</div>)}
+      {ys.map((y) => (
+        <React.Fragment key={`row-${y}`}>
+          <div className="bf-heatmap-axis y">{y}</div>
+          {xs.map((x) => {
+            const row = lookup.get(`${x}::${y}`)
+            const value = Number(row?.[valueKey] ?? 0)
+            const alpha = Math.max(0.08, Math.min(0.9, value / max))
+            return (
+              <button
+                key={`${x}-${y}`}
+                type="button"
+                className="bf-heatmap-cell"
+                title={`${x} / ${y}: ${value}`}
+                style={{ background: `color-mix(in srgb, ${(p.color as string) || 'var(--db-primary)'} ${Math.round(alpha * 100)}%, var(--db-surface))` }}
+                onClick={() => row && dispatch(row)}
+              >
+                {value}
+              </button>
+            )
+          })}
+        </React.Fragment>
+      ))}
+    </div>
+  )
+}
+
+function PipelineGraphComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: Record<string, unknown>) => void }) {
+  const nodes = (p.nodes as Array<Record<string, any>>) || []
+  const edges = (p.edges as Array<Record<string, any>>) || []
+  const vertical = p.layout === 'top-to-bottom'
+  if (!nodes.length) return <div className="bf-chart-state">{(p.emptyMessage as string) || 'No pipeline nodes available'}</div>
+
+  return (
+    <div className={`bf-pipeline ${vertical ? 'vertical' : 'horizontal'} ${p.animated ? 'animated' : ''}`}>
+      {p.title ? <div className="bf-chart-title">{p.title as string}</div> : null}
+      <div className="bf-pipeline-canvas">
+        {nodes.map((node, index) => {
+          const incoming = edges.filter((edge) => edge.to === node.id).length
+          const outgoing = edges.filter((edge) => edge.from === node.id).length
+          const tone = statusTone(node.status)
+          return (
+            <React.Fragment key={String(node.id ?? index)}>
+              <button type="button" className={`bf-pipeline-node ${tone}`} onClick={() => dispatch(node)}>
+                <span className="bf-pipeline-node-layer">{String(node.layer ?? node.type ?? 'step')}</span>
+                <span className="bf-pipeline-node-title">{String(node.label ?? node.id ?? '')}</span>
+                <span className="bf-pipeline-node-meta">{String(node.status ?? 'unknown')}</span>
+                <span className="bf-pipeline-node-flow">{incoming} in / {outgoing} out</span>
+              </button>
+              {index < nodes.length - 1 ? <div className={`bf-pipeline-edge ${p.animated ? 'pulse' : ''}`} /> : null}
+            </React.Fragment>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function StatusStripComponent({ props: p }: { props: Record<string, any> }) {
+  const items = (p.items as Array<Record<string, any>>) || []
+  return (
+    <div className="bf-status-strip">
+      {p.title ? <div className="bf-card-title">{p.title as string}</div> : null}
+      <div className="bf-status-strip-grid" style={{ '--bf-status-cols': Number(p.columns || 4) } as React.CSSProperties}>
+        {items.map((item, index) => {
+          const tone = statusTone(item.status || item.tone)
+          return (
+            <div key={index} className={`bf-signal-card ${tone}`}>
+              <div className="bf-signal-label">{String(item.label ?? '')}</div>
+              <div className="bf-signal-value">{String(item.value ?? '')}</div>
+              {item.detail ? <div className="bf-signal-detail">{String(item.detail)}</div> : null}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function StepperComponent({ props: p }: { props: Record<string, any> }) {
+  const steps = (p.steps as Array<Record<string, any>>) || []
+  const active = Number(p.active || 0)
+  return (
+    <div className={`bf-stepper bf-stepper-${(p.orientation as string) || 'horizontal'}`}>
+      {steps.map((step, index) => {
+        const state = index < active ? 'complete' : index === active ? 'active' : 'pending'
+        return (
+          <div key={index} className={`bf-stepper-step ${state}`}>
+            <div className="bf-stepper-dot">{index + 1}</div>
+            <div>
+              <div className="bf-stepper-title">{String(step.label ?? step.title ?? '')}</div>
+              {step.description ? <div className="bf-stepper-description">{String(step.description)}</div> : null}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function KanbanBoardComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: Record<string, unknown>) => void }) {
+  const columns = (p.columns as Array<Record<string, any>>) || []
+  return (
+    <div className="bf-kanban">
+      {columns.map((column, columnIndex) => {
+        const cards = (column.cards as Array<Record<string, any>>) || []
+        return (
+          <div key={String(column.id ?? columnIndex)} className="bf-kanban-column">
+            <div className="bf-kanban-header">
+              <span>{String(column.label ?? column.title ?? '')}</span>
+              <span className="bf-kanban-count">{cards.length}</span>
+            </div>
+            <div className="bf-kanban-cards">
+              {cards.map((card, cardIndex) => (
+                <button key={String(card.id ?? cardIndex)} type="button" className={`bf-kanban-card ${statusTone(card.status)}`} onClick={() => dispatch({ ...card, column: column.id ?? column.label })}>
+                  <span className="bf-kanban-card-title">{String(card.title ?? '')}</span>
+                  {card.subtitle ? <span className="bf-kanban-card-subtitle">{String(card.subtitle)}</span> : null}
+                  {card.status ? <span className="bf-kanban-card-status">{String(card.status)}</span> : null}
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function ChatMessageComponent({ props: p }: { props: Record<string, any> }) {
+  const role = (p.role as string) || 'assistant'
+  return (
+    <div className={`bf-chat-message ${role} ${statusTone(p.tone)}`}>
+      <div className="bf-chat-avatar">{p.avatar ? String(p.avatar) : role.slice(0, 1).toUpperCase()}</div>
+      <div className="bf-chat-bubble">
+        <div className="bf-chat-meta">
+          <span>{String(p.name ?? role)}</span>
+          {p.timestamp ? <span>{String(p.timestamp)}</span> : null}
+        </div>
+        <div className="bf-chat-content">{String(p.content ?? '')}</div>
+      </div>
+    </div>
+  )
+}
+
+function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }: { props: Record<string, any>; dispatchChange: (v: string) => void; dispatchSubmit: (v: string) => void }) {
+  const [value, setValue] = useState((p.value as string) || '')
+
+  useEffect(() => {
+    setValue((p.value as string) || '')
+  }, [p.value])
+
+  const submit = () => {
+    const next = value.trim()
+    if (!next || p.disabled || p.loading) return
+    dispatchSubmit(next)
+  }
+
+  return (
+    <div className="bf-chat-input">
+      <input
+        className="bf-input"
+        name={(p.name as string) || 'message'}
+        value={value}
+        placeholder={(p.placeholder as string) || 'Ask a question'}
+        disabled={Boolean(p.disabled)}
+        onChange={(event) => {
+          setValue(event.target.value)
+          dispatchChange(event.target.value)
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') submit()
+        }}
+      />
+      <button type="button" className="bf-btn bf-btn-primary" disabled={Boolean(p.disabled) || Boolean(p.loading) || !value.trim()} onClick={submit}>
+        {p.loading ? <span className="bf-spinner bf-spinner-sm" /> : null}
+        {(p.submitLabel as string) || 'Send'}
+      </button>
     </div>
   )
 }

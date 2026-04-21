@@ -10,6 +10,7 @@ BrickflowUI is designed to feel simple for first-time users and structured enoug
 - Reactive state with hooks like `use_state`
 - Multi-page apps with routing
 - Built-in components for layout, forms, tables, charts, and navigation
+- Pipeline graph, chatbot UI, kanban triage, and richer chart primitives for operational dashboards
 - Auth-ready app structure for public, user-only, and app-only pages
 - YAML-based branding and theme customization
 
@@ -23,6 +24,8 @@ If you are new to the library, follow these in order:
 4. [Databricks Apps](./DATABRICKS_APPS.md) for deployment details
 5. [Theming](./THEMING.md) to brand your app
 6. [API Reference](./API_REFERENCE.md) when you want to explore the full surface area
+
+For the newest dashboard and pipeline visuals, see [Visualizations And Pipelines](./VISUALIZATIONS.md).
 
 ## Install
 

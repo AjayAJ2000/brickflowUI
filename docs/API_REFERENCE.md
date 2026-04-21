@@ -82,6 +82,13 @@ Useful additive props:
 - `db.Toast`
 - `db.Timeline`
 - `db.SparklineStat`
+- `db.Hero`
+- `db.SectionHeader`
+- `db.StatusStrip`
+- `db.Stepper`
+- `db.KanbanBoard`
+- `db.ChatMessage`
+- `db.ChatInput`
 
 Useful additive props:
 
@@ -137,6 +144,14 @@ Useful additive props:
 - `db.BarChart`
 - `db.LineChart`
 - `db.DonutChart`
+- `db.ScatterChart`
+- `db.ComposedChart`
+- `db.GaugeChart`
+- `db.RadarChart`
+- `db.Heatmap`
+- `db.FunnelChart`
+- `db.TreeMap`
+- `db.PipelineGraph`
 
 Useful additive props:
 
@@ -156,6 +171,47 @@ db.BarChart(
     loading=is_loading,
     empty_message="No pipeline data available",
     on_click=handle_bar_click,
+)
+```
+
+## Pipeline And App Composition Components
+
+These components were added for richer `0.1.5` dashboards and internal apps:
+
+- `db.PipelineGraph(nodes, edges, on_node_click=...)` renders a simple pipeline/DAG-style flow from plain dictionaries.
+- `db.StatusStrip(items=[...])` renders compact signal cards for freshness, SLA, cost, latency, and incident counts.
+- `db.KanbanBoard(columns=[...], on_card_click=...)` renders operational triage boards.
+- `db.Stepper(steps=[...], active=...)` renders release, setup, or pipeline-stage progress.
+- `db.ChatMessage(...)` and `db.ChatInput(...)` render chatbot/copilot-style experiences.
+- `db.Hero(...)` and `db.SectionHeader(...)` provide polished landing-page and dashboard section patterns.
+
+Example pipeline graph:
+
+```python
+db.PipelineGraph(
+    nodes=[
+        {"id": "bronze", "label": "Bronze Orders", "layer": "bronze", "status": "running"},
+        {"id": "silver", "label": "Silver Quality", "layer": "silver", "status": "watch"},
+        {"id": "gold", "label": "Gold Mart", "layer": "gold", "status": "healthy"},
+    ],
+    edges=[
+        {"from": "bronze", "to": "silver"},
+        {"from": "silver", "to": "gold"},
+    ],
+    on_node_click=lambda node: set_selected(node["id"]),
+)
+```
+
+Example chat input:
+
+```python
+message, set_message = db.use_state("")
+
+db.ChatInput(
+    value=message,
+    placeholder="Ask about failed pipelines",
+    on_change=set_message,
+    on_submit=lambda prompt: set_answer(f"Investigating: {prompt}"),
 )
 ```
 

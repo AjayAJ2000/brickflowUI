@@ -257,3 +257,79 @@ def test_date_range_event_payload_updates_state_and_rerenders():
     assert patch["type"] == "patch"
     text_patch = next(item for item in patch["patches"] if item["path"] == [0])
     assert text_patch["props"]["value"] == "2026-04-01->2026-04-07"
+
+
+def test_chat_input_submit_payload_updates_state_and_rerenders():
+    app = App()
+
+    @app.page("/")
+    def home():
+        message, set_message = db.use_state("empty")
+        return db.Column(
+            [
+                db.Text(message),
+                db.ChatInput(on_submit=set_message),
+            ]
+        )
+
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events") as websocket:
+        full = websocket.receive_json()
+        control = _find_node_by_type(full["tree"], "ChatInput")
+        assert control is not None
+
+        websocket.send_json(
+            {
+                "type": "event",
+                "event_id": control["props"]["submit"],
+                "data": {"value": "show failed pipelines"},
+            }
+        )
+        patch = websocket.receive_json()
+
+    assert patch["type"] == "patch"
+    text_patch = next(item for item in patch["patches"] if item["path"] == [0])
+    assert text_patch["props"]["value"] == "show failed pipelines"
+
+
+def test_pipeline_node_click_payload_updates_state_and_rerenders():
+    app = App()
+
+    @app.page("/")
+    def home():
+        selected, set_selected = db.use_state("none")
+
+        def select_node(payload):
+            set_selected(payload["id"])
+
+        return db.Column(
+            [
+                db.Text(selected),
+                db.PipelineGraph(
+                    nodes=[{"id": "bronze", "label": "Bronze", "status": "running"}],
+                    edges=[],
+                    on_node_click=select_node,
+                ),
+            ]
+        )
+
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events") as websocket:
+        full = websocket.receive_json()
+        control = _find_node_by_type(full["tree"], "PipelineGraph")
+        assert control is not None
+
+        websocket.send_json(
+            {
+                "type": "event",
+                "event_id": control["props"]["nodeClick"],
+                "data": {"value": {"id": "bronze", "status": "running"}},
+            }
+        )
+        patch = websocket.receive_json()
+
+    assert patch["type"] == "patch"
+    text_patch = next(item for item in patch["patches"] if item["path"] == [0])
+    assert text_patch["props"]["value"] == "bronze"

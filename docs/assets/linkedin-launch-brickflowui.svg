@@ -32,7 +32,7 @@
   <rect x="64" y="56" width="155" height="44" rx="22" fill="url(#chip)" stroke="#FFFFFF" stroke-opacity="0.16"/>
   <text x="141.5" y="84" fill="#F8FAFC" font-size="20" font-family="Segoe UI, Arial, sans-serif" text-anchor="middle" font-weight="700">Now Live</text>
 
-  <text x="64" y="176" fill="#F8FAFC" font-size="72" font-family="Segoe UI, Arial, sans-serif" font-weight="800">BricksFlowUI</text>
+  <text x="64" y="176" fill="#F8FAFC" font-size="72" font-family="Segoe UI, Arial, sans-serif" font-weight="800">BrickflowUI</text>
   <text x="64" y="238" fill="#CBD5E1" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="500">
     Build Databricks dashboards, portals, and internal web apps
   </text>

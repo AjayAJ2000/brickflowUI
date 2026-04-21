@@ -90,3 +90,79 @@ def test_table_can_be_marked_exportable():
     payload = table.serialize({})
 
     assert payload["props"]["exportable"] is True
+
+
+def test_015_visual_components_serialize_callbacks_and_props():
+    node = db.Column(
+        [
+            db.Hero(
+                "Pipeline command center",
+                subtitle="Observe jobs, tables, and SLAs.",
+                eyebrow="Data platform",
+                badges=[db.Badge("Live", color="green")],
+                actions=[db.Button("Refresh")],
+            ),
+            db.SectionHeader("Lakehouse health", actions=[db.Button("Export")]),
+            db.StatusStrip([{"label": "Freshness", "value": "11m", "status": "healthy"}]),
+            db.Stepper([{"label": "Bronze"}, {"label": "Silver"}], active=1),
+            db.KanbanBoard(
+                [{"id": "todo", "label": "Todo", "cards": [{"id": "a", "title": "Fix SLA"}]}],
+                on_card_click=lambda payload: payload,
+            ),
+            db.ChatMessage("assistant", "I found two delayed jobs.", name="Ops Copilot"),
+            db.ChatInput(on_change=lambda value: value, on_submit=lambda value: value),
+        ]
+    )
+
+    registry = {}
+    payload = node.serialize(registry)
+    rendered_types = [child["type"] for child in payload["children"]]
+
+    assert "Hero" in rendered_types
+    assert "SectionHeader" in rendered_types
+    assert "StatusStrip" in rendered_types
+    assert "Stepper" in rendered_types
+    assert "KanbanBoard" in rendered_types
+    assert "ChatMessage" in rendered_types
+    assert "ChatInput" in rendered_types
+
+    kanban = next(child for child in payload["children"] if child["type"] == "KanbanBoard")
+    chat_input = next(child for child in payload["children"] if child["type"] == "ChatInput")
+
+    assert kanban["props"]["cardClick"] in registry
+    assert chat_input["props"]["change"] in registry
+    assert chat_input["props"]["submit"] in registry
+
+
+def test_015_chart_and_pipeline_components_serialize_expected_props():
+    charts = [
+        db.ScatterChart([{"x": 1, "y": 2}], x_key="x", y_key="y", on_click=lambda payload: payload),
+        db.ComposedChart([{"day": "Mon", "runs": 10, "sla": 96}], x_key="day", bar_keys=["runs"], line_keys=["sla"]),
+        db.GaugeChart(91, label="Reliability"),
+        db.RadarChart([{"metric": "Freshness", "score": 90}], angle_key="metric", value_keys=["score"]),
+        db.Heatmap([{"hour": "09", "layer": "Bronze", "failures": 1}], x_key="hour", y_key="layer", value_key="failures"),
+        db.FunnelChart([{"label": "Raw", "value": 100}]),
+        db.TreeMap([{"name": "Storage", "value": 42}]),
+        db.PipelineGraph(
+            nodes=[{"id": "bronze", "label": "Bronze", "status": "running"}],
+            edges=[],
+            on_node_click=lambda payload: payload,
+        ),
+    ]
+
+    registry = {}
+    payloads = [chart.serialize(registry) for chart in charts]
+    types = [payload["type"] for payload in payloads]
+
+    assert types == [
+        "ScatterChart",
+        "ComposedChart",
+        "GaugeChart",
+        "RadarChart",
+        "Heatmap",
+        "FunnelChart",
+        "TreeMap",
+        "PipelineGraph",
+    ]
+    assert payloads[0]["props"]["click"] in registry
+    assert payloads[-1]["props"]["nodeClick"] in registry

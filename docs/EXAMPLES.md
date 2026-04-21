@@ -12,6 +12,7 @@ Use this page when you want to skip the docs theory and start from something run
 | Auth Portal | `examples/auth_portal/app.py` | Login, access control, protected routes |
 | Operations + Finance Portal | `examples/operations_finance_portal/app.py` | Executive dashboard with a traditional top nav |
 | Data Pipeline Command Center | `examples/data_pipeline_command_center/app.py` | Industry-style data engineering monitoring with filters, SLA controls, cost, freshness, and Databricks SQL handoff |
+| Pipeline Observability 0.1.5 | `examples/pipeline_observability_015/app.py` | New 0.1.5 showcase with pipeline graph, chatbot UI, heatmap, treemap, funnel, radar, gauge, kanban, and table export |
 | Chatbot Workspace | `examples/chatbot_workspace/app.py` | Assistant-style UI with drawers, toast, timelines, and multi-value inputs |
 | Landing Site | `examples/landing_site/app.py` | Product-style landing page and launch-site composition |
 | Workspace Studio | `examples/workspace_studio/app.py` | Rich app structure with filters, tables, tabs, forms, modal flows, charts, and a dedicated themes page |
@@ -40,6 +41,31 @@ This is a good starting point for:
 - bronze/silver/gold pipeline visibility
 - engineering + analytics stakeholder review dashboards
 - free-edition Databricks prototypes that later grow into team dashboards
+
+## Pipeline Observability 0.1.5
+
+Use this example when you want to test the newest visual toolkit and confirm user inputs drive real state changes.
+
+- `examples/pipeline_observability_015/app.py`
+- `examples/pipeline_observability_015/app.yaml`
+- `examples/pipeline_observability_015/requirements.txt`
+
+It demonstrates:
+
+- `PipelineGraph` with node click drilldowns
+- `ChatMessage` and `ChatInput` for a copilot-style dashboard assistant
+- `StatusStrip`, `Hero`, and `SectionHeader` for polished dashboard composition
+- `ComposedChart`, `ScatterChart`, `GaugeChart`, `RadarChart`, `Heatmap`, `FunnelChart`, and `TreeMap`
+- `KanbanBoard` for operational triage
+- multiple controls driving charts, tables, graph, and chat output
+- `Table(exportable=True)` for CSV export
+
+Run it locally:
+
+```bash
+cd examples/pipeline_observability_015
+python app.py
+```
 
 ## Workspace Studio
 
@@ -126,6 +152,12 @@ Put these three files in your Databricks App project:
 brickflowui>=0.1.4
 ```
 
+For the 0.1.5 visualization showcase, use:
+
+```text
+brickflowui>=0.1.5
+```
+
 `app.yaml`:
 
 ```yaml
@@ -157,3 +189,4 @@ The most effective pattern is:
 - Choose `landing_site` if you want a cleaner marketing or internal product-launch layout.
 - Choose `workspace_studio` if you want the broadest example of how the library fits together.
 - Choose `data_pipeline_command_center` if your real goal is pipeline observability and operational dashboarding on Databricks.
+- Choose `pipeline_observability_015` if you want the newest chart, pipeline graph, kanban, and chatbot UI primitives.

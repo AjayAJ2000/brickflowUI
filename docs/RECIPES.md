@@ -25,8 +25,8 @@ Good examples:
 
 Use:
 
-- `Input`
-- `Button`
+- `ChatMessage`
+- `ChatInput`
 - `Card`
 - `Toast`
 - `Drawer`
@@ -40,6 +40,7 @@ Recommended pattern:
 2. Use `Card` blocks for user and assistant messages.
 3. Use a `Drawer` for traces, sources, or tool results.
 4. Use `Toast` for completion or send-state feedback.
+5. Use `ChatInput.on_submit` for the action that calls your model, job, or backend route.
 
 ## Landing page or internal product site
 
@@ -65,6 +66,12 @@ Recommended pattern:
 
 Use:
 
+- `PipelineGraph`
+- `StatusStrip`
+- `GaugeChart`
+- `ComposedChart`
+- `Heatmap`
+- `ScatterChart`
 - `Stat`
 - `AreaChart`
 - `BarChart`
@@ -81,3 +88,32 @@ Recommended pattern:
 2. Keep every metric visible as plain values and charts.
 3. Add drilldown with row click or chart click.
 4. Use `empty_message` and `loading` aggressively so the app stays honest while data loads.
+5. Use `PipelineGraph.on_node_click` to open a drawer, select a node, or filter a table.
+
+## Pipeline graph plus triage board
+
+Use:
+
+- `PipelineGraph`
+- `KanbanBoard`
+- `Drawer`
+- `Table`
+- `Alert`
+
+Recommended pattern:
+
+1. Keep pipeline nodes as dictionaries with `id`, `label`, `layer`, and `status`.
+2. Keep edges as dictionaries with `from` and `to`.
+3. Store the selected node in `use_state`.
+4. Send delayed or failed nodes into `KanbanBoard` columns.
+5. Use a `Drawer` or `Card` to show details for the selected node/card.
+
+```python
+selected, set_selected = db.use_state("No node selected")
+
+db.PipelineGraph(
+    nodes=nodes,
+    edges=edges,
+    on_node_click=lambda node: set_selected(node["id"]),
+)
+```

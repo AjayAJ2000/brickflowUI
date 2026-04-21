@@ -79,7 +79,7 @@ pip install -e ".[docs]"
 Run the docs server:
 
 ```bash
-mkdocs serve
+python -m mkdocs serve
 ```
 
 Open:
@@ -91,7 +91,15 @@ http://127.0.0.1:8000
 Build the static docs site:
 
 ```bash
-mkdocs build
+python -m mkdocs build
+```
+
+If `mkdocs serve` is not recognized, use the `python -m mkdocs ...` form above. That runs MkDocs from the same Python environment where the docs extra was installed and avoids PATH issues on Windows.
+
+If Windows reports access denied while cleaning `site/`, close any process serving the docs and run:
+
+```bash
+python -m mkdocs build
 ```
 
 ## What needs rebuilding?
