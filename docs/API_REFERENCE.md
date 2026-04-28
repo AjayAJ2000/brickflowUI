@@ -81,6 +81,7 @@ Useful additive props:
 - `db.EmptyState`
 - `db.Toast`
 - `db.Timeline`
+- `db.Image`
 - `db.SparklineStat`
 - `db.Hero`
 - `db.SectionHeader`
@@ -123,6 +124,7 @@ Notes:
 - `db.TabItem`
 - `db.Modal`
 - `db.Drawer`
+- `db.Popup`
 - `db.Accordion`
 - `db.AccordionItem`
 
@@ -176,7 +178,7 @@ db.BarChart(
 
 ## Pipeline And App Composition Components
 
-These components were added for richer `0.1.5` dashboards and internal apps:
+These components were added for richer `0.1.6` dashboards and internal apps:
 
 - `db.PipelineGraph(nodes, edges, on_node_click=...)` renders a simple pipeline/DAG-style flow from plain dictionaries.
 - `db.StatusStrip(items=[...])` renders compact signal cards for freshness, SLA, cost, latency, and incident counts.
@@ -184,6 +186,8 @@ These components were added for richer `0.1.5` dashboards and internal apps:
 - `db.Stepper(steps=[...], active=...)` renders release, setup, or pipeline-stage progress.
 - `db.ChatMessage(...)` and `db.ChatInput(...)` render chatbot/copilot-style experiences.
 - `db.Hero(...)` and `db.SectionHeader(...)` provide polished landing-page and dashboard section patterns.
+- `db.Popup(...)` provides a lightweight overlay for helper flows and quick confirmations.
+- `db.Image(...)` renders screenshots, diagrams, and branded media inside apps.
 
 Example pipeline graph:
 

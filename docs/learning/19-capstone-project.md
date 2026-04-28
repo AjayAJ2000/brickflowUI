@@ -138,7 +138,7 @@ db.Table(filtered_rows, exportable=True, empty_message="No pipelines match your 
 `requirements.txt`:
 
 ```text
-brickflowui>=0.1.5
+brickflowui>=0.1.6
 ```
 
 `app.yaml`:

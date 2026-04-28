@@ -72,7 +72,7 @@ requirements.txt
 Example `requirements.txt`:
 
 ```text
-brickflowui>=0.1.5
+brickflowui>=0.1.6
 ```
 
 Example `app.yaml`:

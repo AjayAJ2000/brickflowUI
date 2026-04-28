@@ -1,6 +1,6 @@
 # Polish Guide
 
-BrickflowUI `0.1.4` is focused on making the existing framework more dependable and noticeably more polished without forcing API churn.
+BrickflowUI `0.1.6` is focused on making the framework more dependable, more polished, and more capable without forcing API churn.
 
 ## What changed
 

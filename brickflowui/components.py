@@ -436,6 +436,26 @@ def Drawer(
     )
 
 
+def Popup(
+    visible: bool,
+    title: str,
+    children: List[VNode],
+    on_close: Optional[EventHandler] = None,
+    size: Literal["sm", "md", "lg"] = "sm",
+    backdrop: bool = True,
+    placement: Literal["center"] = "center",
+) -> VNode:
+    handlers: Dict[str, EventHandler] = {}
+    if on_close:
+        handlers["close"] = on_close
+    return VNode(
+        type="Popup",
+        props={"visible": visible, "title": title, "size": size, "backdrop": backdrop, "placement": placement},
+        children=children,
+        event_handlers=handlers,
+    )
+
+
 def Accordion(
     items: List[VNode],
     default_open: Optional[List[int]] = None,
@@ -512,15 +532,55 @@ def Toast(
     type: AlertType = "info",
     visible: bool = True,
     icon: Optional[str] = None,
+    on_close: Optional[EventHandler] = None,
+    dismissible: bool = True,
+    auto_hide_ms: Optional[int] = None,
 ) -> VNode:
+    handlers: Dict[str, EventHandler] = {}
+    if on_close:
+        handlers["close"] = on_close
     return VNode(
         type="Toast",
-        props={"message": message, "title": title, "alertType": type, "visible": visible, "icon": icon},
+        props={
+            "message": message,
+            "title": title,
+            "alertType": type,
+            "visible": visible,
+            "icon": icon,
+            "dismissible": dismissible,
+            "autoHideMs": auto_hide_ms,
+        },
+        event_handlers=handlers,
     )
 
 
 def Timeline(items: List[Dict[str, Any]], title: Optional[str] = None) -> VNode:
     return VNode(type="Timeline", props={"items": items, "title": title})
+
+
+def Image(
+    src: str,
+    alt: str = "",
+    width: str = "100%",
+    height: str = "auto",
+    fit: Literal["cover", "contain", "fill", "none", "scale-down"] = "cover",
+    caption: Optional[str] = None,
+    radius: str = "var(--radius-lg)",
+    loading: Literal["lazy", "eager"] = "lazy",
+) -> VNode:
+    return VNode(
+        type="Image",
+        props={
+            "src": src,
+            "alt": alt,
+            "width": width,
+            "height": height,
+            "fit": fit,
+            "caption": caption,
+            "radius": radius,
+            "loadingMode": loading,
+        },
+    )
 
 
 def SparklineStat(

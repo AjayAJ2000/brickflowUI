@@ -138,7 +138,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
   const ev = (eventName: string, arg?: unknown) => {
     const eventId = p[eventName] as string | undefined
-    if (eventId) ctx.dispatch(eventId, arg ? { value: arg } : {})
+    if (eventId) ctx.dispatch(eventId, arg === undefined ? {} : { value: arg })
   }
 
   switch (type) {
@@ -364,12 +364,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return <span key={key} className={`bf-badge bf-badge-${(p.color as string) || 'blue'}`}>{p.label as string}</span>
 
     case 'Alert':
-      return (
-        <div key={key} className={`bf-alert bf-alert-${(p.alertType as string) || 'info'}`}>
-          {p.title && <div className="bf-alert-title">{p.title as string}</div>}
-          {p.message as string}
-        </div>
-      )
+      return <AlertComponent key={key} props={p} />
 
     case 'Spinner':
       return <div key={key} className={`bf-spinner bf-spinner-${(p.size as string) || 'md'}`} />
@@ -401,37 +396,8 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
     }
 
     // ── Navigation ──────────────────────────────────────────────────────────
-    case 'Sidebar': {
-      const activePath = window.location.pathname
-      return (
-        <aside key={key} className="bf-sidebar">
-          <div className="bf-sidebar-brand">
-            {p.logo
-              ? <img src={p.logo as string} alt="logo" width={28} height={28} style={{ borderRadius: 6 }} />
-              : <div className="bf-sidebar-brand-logo">{((p.brandName as string) || 'B').charAt(0)}</div>
-            }
-            <span className="bf-sidebar-brand-name">{p.brandName as string}</span>
-          </div>
-          <nav className="bf-nav-section">
-            {children.map((child, i) => {
-              const cp = child.props as Record<string, any>
-              const isActive = activePath === (cp.path as string)
-              return (
-                <button
-                  key={i}
-                  className={`bf-nav-item ${isActive ? 'active' : ''}`}
-                  onClick={() => ctx.navigate(cp.path as string)}
-                >
-                  {cp.icon && <span className="bf-nav-icon"><Icon name={cp.icon as string} size={16} /></span>}
-                  {cp.label as string}
-                  {cp.badge && <span className="bf-nav-badge">{cp.badge as string}</span>}
-                </button>
-              )
-            })}
-          </nav>
-        </aside>
-      )
-    }
+    case 'Sidebar':
+      return <SidebarComponent key={key} props={p} children={children} ctx={ctx} />
 
     // NavItem is rendered as part of Sidebar above; standalone fallback:
     case 'NavItem':
@@ -463,7 +429,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
           <div className={`bf-modal bf-modal-${(p.size as string) || 'md'}`} onClick={e => e.stopPropagation()}>
             <div className="bf-modal-header">
               <span className="bf-modal-title">{p.title as string}</span>
-              <button className="bf-modal-close" onClick={() => ev('close')}><Icon name="X" size={16} /></button>
+              <button type="button" className="bf-modal-close" onClick={() => ev('close')}><Icon name="X" size={16} /></button>
             </div>
             <div className="bf-modal-body">{renderChildren(children, ctx, key)}</div>
           </div>
@@ -478,9 +444,24 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
           <div className={`bf-drawer bf-drawer-${(p.side as string) || 'right'}`} style={{ width: (p.width as string) || '420px' }} onClick={e => e.stopPropagation()}>
             <div className="bf-drawer-header">
               <span className="bf-drawer-title">{p.title as string}</span>
-              <button className="bf-modal-close" onClick={() => ev('close')}><Icon name="X" size={16} /></button>
+              <button type="button" className="bf-modal-close" onClick={() => ev('close')}><Icon name="X" size={16} /></button>
             </div>
             <div className="bf-drawer-body">{renderChildren(children, ctx, key)}</div>
+          </div>
+        </div>
+      )
+
+    case 'Popup':
+      if (!p.visible) return null
+      return (
+        <div key={key} className={`bf-popup-shell bf-popup-${(p.placement as string) || 'center'}`}>
+          {Boolean(p.backdrop) ? <button type="button" className="bf-popup-backdrop" onClick={() => ev('close')} aria-label="Close popup" /> : null}
+          <div className={`bf-popup bf-popup-${(p.size as string) || 'sm'}`} onClick={e => e.stopPropagation()}>
+            <div className="bf-popup-header">
+              <span className="bf-popup-title">{p.title as string}</span>
+              <button type="button" className="bf-modal-close" onClick={() => ev('close')}><Icon name="X" size={16} /></button>
+            </div>
+            <div className="bf-popup-body">{renderChildren(children, ctx, key)}</div>
           </div>
         </div>
       )
@@ -768,16 +749,10 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return <ChatInputComponent key={key} props={p} dispatchChange={(value) => ev('change', value)} dispatchSubmit={(value) => ev('submit', value)} />
 
     case 'Toast':
-      if (!p.visible) return null
-      return (
-        <div key={key} className={`bf-toast bf-toast-${(p.alertType as string) || 'info'}`}>
-          {p.icon ? <Icon name={p.icon as string} size={16} /> : null}
-          <div className="bf-toast-content">
-            {p.title ? <div className="bf-toast-title">{p.title as string}</div> : null}
-            <div className="bf-toast-message">{p.message as string}</div>
-          </div>
-        </div>
-      )
+      return <ToastComponent key={key} props={p} dispatchClose={() => ev('close')} />
+
+    case 'Image':
+      return <ImageComponent key={key} props={p} />
 
     case 'Timeline':
       return (
@@ -825,6 +800,85 @@ function ToggleComponent({ props: p, dispatch }: { props: Record<string, any>; d
       <div className={`bf-toggle-switch ${checked ? 'checked' : ''}`} />
       {p.label as string}
     </label>
+  )
+}
+
+function AlertComponent({ props: p }: { props: Record<string, any> }) {
+  const [dismissed, setDismissed] = useState(false)
+
+  useEffect(() => {
+    setDismissed(false)
+  }, [p.message, p.title, p.alertType])
+
+  if (dismissed) return null
+
+  return (
+    <div className={`bf-alert bf-alert-${(p.alertType as string) || 'info'}`}>
+      <div className="bf-alert-body">
+        {p.title ? <div className="bf-alert-title">{p.title as string}</div> : null}
+        <div>{p.message as string}</div>
+      </div>
+      {Boolean(p.dismissible) ? (
+        <button type="button" className="bf-alert-close" onClick={() => setDismissed(true)} aria-label="Dismiss alert">
+          <Icon name="X" size={14} />
+        </button>
+      ) : null}
+    </div>
+  )
+}
+
+function ImageComponent({ props: p }: { props: Record<string, any> }) {
+  return (
+    <figure className={`bf-image-shell ${p.caption ? 'has-caption' : ''}`}>
+      <img
+        className="bf-image"
+        src={p.src as string}
+        alt={(p.alt as string) || ''}
+        loading={(p.loadingMode as 'lazy' | 'eager') || 'lazy'}
+        style={{
+          width: (p.width as string) || '100%',
+          height: (p.height as string) || 'auto',
+          objectFit: (p.fit as React.CSSProperties['objectFit']) || 'cover',
+          borderRadius: (p.radius as string) || 'var(--radius-lg)',
+        }}
+      />
+      {p.caption ? <figcaption className="bf-image-caption">{p.caption as string}</figcaption> : null}
+    </figure>
+  )
+}
+
+function ToastComponent({ props: p, dispatchClose }: { props: Record<string, any>; dispatchClose: () => void }) {
+  const [dismissed, setDismissed] = useState(false)
+  const close = () => {
+    setDismissed(true)
+    if (p.close) dispatchClose()
+  }
+
+  useEffect(() => {
+    setDismissed(false)
+  }, [p.visible, p.message, p.title, p.alertType])
+
+  useEffect(() => {
+    if (!p.autoHideMs || dismissed || p.visible === false) return
+    const timer = window.setTimeout(() => close(), Number(p.autoHideMs))
+    return () => window.clearTimeout(timer)
+  }, [dismissed, p.autoHideMs, p.visible, p.message, p.title])
+
+  if (p.visible === false || dismissed) return null
+
+  return (
+    <div className={`bf-toast bf-toast-${(p.alertType as string) || 'info'}`}>
+      {p.icon ? <Icon name={p.icon as string} size={16} /> : null}
+      <div className="bf-toast-content">
+        {p.title ? <div className="bf-toast-title">{p.title as string}</div> : null}
+        <div className="bf-toast-message">{p.message as string}</div>
+      </div>
+      {p.dismissible !== false ? (
+        <button type="button" className="bf-toast-close" onClick={close} aria-label="Dismiss notification">
+          <Icon name="X" size={14} />
+        </button>
+      ) : null}
+    </div>
   )
 }
 
@@ -949,6 +1003,56 @@ function MultiSelectComponent({ props: p, dispatch }: { props: Record<string, an
         })}
       </div>
     </div>
+  )
+}
+
+function SidebarComponent({ props: p, children, ctx }: { props: Record<string, any>; children: VNodeData[]; ctx: RenderCtx }) {
+  const activePath = window.location.pathname
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const closeSidebar = () => setMobileOpen(false)
+
+  return (
+    <>
+      <div className="bf-mobile-nav">
+        <button type="button" className="bf-mobile-nav-toggle" onClick={() => setMobileOpen((open) => !open)}>
+          <Icon name="LayoutDashboard" size={16} />
+          <span>{p.brandName as string}</span>
+        </button>
+      </div>
+      {mobileOpen ? <button type="button" className="bf-sidebar-backdrop" onClick={closeSidebar} aria-label="Close navigation" /> : null}
+      <aside className={`bf-sidebar ${mobileOpen ? 'open' : ''}`}>
+        <div className="bf-sidebar-brand">
+          {p.logo
+            ? <img src={p.logo as string} alt="logo" width={28} height={28} style={{ borderRadius: 6 }} />
+            : <div className="bf-sidebar-brand-logo">{((p.brandName as string) || 'B').charAt(0)}</div>
+          }
+          <span className="bf-sidebar-brand-name">{p.brandName as string}</span>
+          <button type="button" className="bf-sidebar-close" onClick={closeSidebar} aria-label="Close navigation">
+            <Icon name="X" size={16} />
+          </button>
+        </div>
+        <nav className="bf-nav-section">
+          {children.map((child, index) => {
+            const cp = child.props as Record<string, any>
+            const isActive = activePath === (cp.path as string)
+            return (
+              <button
+                key={`${cp.path as string}-${index}`}
+                className={`bf-nav-item ${isActive ? 'active' : ''}`}
+                onClick={() => {
+                  closeSidebar()
+                  ctx.navigate(cp.path as string)
+                }}
+              >
+                {cp.icon ? <span className="bf-nav-icon"><Icon name={cp.icon as string} size={16} /></span> : null}
+                {cp.label as string}
+                {cp.badge ? <span className="bf-nav-badge">{cp.badge as string}</span> : null}
+              </button>
+            )
+          })}
+        </nav>
+      </aside>
+    </>
   )
 }
 

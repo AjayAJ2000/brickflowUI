@@ -31,7 +31,9 @@ def test_new_components_serialize_expected_props_and_nested_actions():
                 options=[{"label": "Bronze", "value": "bronze"}],
                 values=["bronze"],
             ),
-            db.Toast("Saved", title="Success"),
+            db.Popup(visible=True, title="Quick action", children=[db.Text("Body")]),
+            db.Toast("Saved", title="Success", on_close=lambda: None, auto_hide_ms=1500),
+            db.Image("https://example.com/preview.png", alt="Preview", caption="Example image"),
             db.Timeline([{"title": "Run started", "time": "09:30"}]),
             db.SparklineStat(
                 label="Freshness",
@@ -52,13 +54,22 @@ def test_new_components_serialize_expected_props_and_nested_actions():
     assert "Accordion" in rendered_types
     assert "DateRangePicker" in rendered_types
     assert "MultiSelect" in rendered_types
+    assert "Popup" in rendered_types
     assert "Toast" in rendered_types
+    assert "Image" in rendered_types
     assert "Timeline" in rendered_types
     assert "SparklineStat" in rendered_types
 
     empty_state = next(child for child in payload["children"] if child["type"] == "EmptyState")
+    popup = next(child for child in payload["children"] if child["type"] == "Popup")
+    toast = next(child for child in payload["children"] if child["type"] == "Toast")
+    image = next(child for child in payload["children"] if child["type"] == "Image")
     assert empty_state["props"]["title"] == "No pipelines"
     assert empty_state["props"]["actions"][0]["type"] == "Button"
+    assert popup["props"]["title"] == "Quick action"
+    assert "close" in toast["props"]
+    assert toast["props"]["autoHideMs"] == 1500
+    assert image["props"]["caption"] == "Example image"
 
 
 def test_chart_components_expose_loading_empty_and_click_handlers():

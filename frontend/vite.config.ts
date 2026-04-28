@@ -6,7 +6,10 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: '../brickflowui/frontend/dist',
-    emptyOutDir: true,
+    emptyOutDir: false,
+    minify: false,
+    cssMinify: false,
+    sourcemap: true,
     rollupOptions: {
       output: {
         manualChunks(id) {

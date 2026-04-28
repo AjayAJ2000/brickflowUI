@@ -1,398 +1,237 @@
 # BrickflowUI
 
-> Canonical package name: `brickflowui`
->
-> Install with:
->
-> ```bash
-> pip install brickflowui
-> ```
->
-> Import with:
->
-> ```python
-> import brickflowui as db
-> ```
->
-> Start here:
-> - [Getting Started](./docs/GETTING_STARTED.md)
-> - [Build Guide](./docs/BUILD.md)
-> - [API Reference](./docs/API_REFERENCE.md)
-> - [Theming](./docs/THEMING.md)
-> - [Publishing](./docs/PUBLISHING.md)
+![BrickflowUI](https://raw.githubusercontent.com/AjayAJ2000/brickflowUI/main/docs/assets/brickflowui-logo.svg)
 
-## Release Notes
+Databricks-first Python UI framework for building dashboards, portals, chatbot workspaces, landing pages, and internal web apps with pure Python.
 
-- PyPI package name is `brickflowui`
-- CLI command: `brickflowui`
-- Standard Python import remains `brickflowui`
-- Source distributions and wheels include bundled frontend assets plus docs/examples
+Canonical package name: `brickflowui`
 
-> **Databricks-first, React-style Python UI library** for building composable, production-ready Databricks Apps — without writing a single line of JavaScript.
-
-[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://python.org)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-
----
-
-## What is BrickflowUI?
-
-BrickflowUI lets data engineers build beautiful, interactive Databricks Apps in **pure Python**. It ships a pre-built React frontend and communicates over WebSocket, so you get:
-
-- ⚡ **No full-script reruns** — only changed components re-render (unlike Streamlit)
-- 🧩 **React-style component model** — composable functions, hooks, one-way data flow
-- 🔒 **Databricks-native** — reads `DATABRICKS_APP_PORT`, Unity Catalog helpers, SQL warehouse wrappers
-- 🎨 **Beautiful dark theme** — Databricks-inspired design system, no CSS required
-
-BrickflowUI is an independent project and is not affiliated with Nike's Brickflow workflow framework.
-
----
-
-## Quick Start
+Install:
 
 ```bash
 pip install brickflowui
-
-# Scaffold a new app
-brickflowui new my_app
-cd my_app
-
-# Run locally
-brickflowui dev
-# → open http://localhost:8050
 ```
 
-Or manually:
+Import:
 
 ```python
-# app.py
+import brickflowui as db
+```
+
+Documentation:
+
+- [Docs site](https://ajayaj2000.github.io/brickflowUI/)
+- [Learn BrickflowUI](https://ajayaj2000.github.io/brickflowUI/learning/)
+- [Component Gallery](https://ajayaj2000.github.io/brickflowUI/components/)
+- [Architecture](https://ajayaj2000.github.io/brickflowUI/ARCHITECTURE/)
+
+## What BrickflowUI is for
+
+Use BrickflowUI when you want to stay in Python and still ship a serious interactive app.
+
+Good fits:
+
+- executive dashboards
+- data engineering pipeline portals
+- Databricks App experiences
+- internal ops tools
+- chatbot and copilot UIs
+- product-style landing pages
+
+## Why teams use it
+
+- Python-first authoring model
+- session-scoped reactive state
+- multi-page routing and app shell support
+- built-in tables, forms, overlays, charts, pipeline graphs, workflow boards, and chat patterns
+- packaged frontend assets that work in stricter CSP environments
+- branding and theme tokens for enterprise rollout
+
+## Quick start
+
+Scaffold a new app:
+
+```bash
+brickflowui new my_app
+cd my_app
+brickflowui dev
+```
+
+Or write one manually:
+
+```python
 import brickflowui as db
 
-app = db.App(title="My Databricks App")
+app = db.App(title="Hello BrickflowUI")
 
-@app.page("/", title="Home", icon="Home")
+@app.page("/", title="Home")
 def home():
     count, set_count = db.use_state(0)
-    return db.Column([
-        db.Text("Counter", variant="h1"),
-        db.Text(f"Count: {count}", variant="h3"),
-        db.Button("Increment", on_click=lambda: set_count(count + 1)),
-    ], padding=6)
+    return db.Column(
+        [
+            db.Text("Hello BrickflowUI", variant="h1"),
+            db.Text(f"Count: {count}"),
+            db.Button("Increment", on_click=lambda: set_count(count + 1)),
+        ],
+        gap=4,
+        padding=6,
+    )
 
 if __name__ == "__main__":
     app.run()
 ```
 
----
+## Core concepts
 
-## Core Concepts
+BrickflowUI works as:
 
-### Components
+1. Python page functions produce a `VNode` tree.
+2. The server serializes that tree and sends it over WebSocket.
+3. The frontend renders it and returns interaction events.
+4. Python handlers update state and trigger rerenders.
 
-Every UI element is a plain Python function returning a `VNode`:
+This gives you a React-style interaction model without requiring users to write frontend code.
 
-```python
-import brickflowui as db
+## Current component surface
 
-# Layout
-db.Column(children, gap=4, padding=6)
-db.Row(children, gap=2, justify="between")
-db.Grid(children, cols=3, gap=4)
-db.Card(children, title="My Card")
+### Layout and app structure
 
-# Typography
-db.Text("Hello!", variant="h1")   # h1, h2, h3, h4, body, caption, label, code
+- `Column`
+- `Row`
+- `Grid`
+- `Card`
+- `Divider`
+- `Spacer`
+- `Hero`
+- `SectionHeader`
+- `StatusStrip`
 
-# Controls
-db.Button("Click me", on_click=handler, variant="primary")
-db.Input(name="q", label="Search", on_change=setter)
-db.Select(name="w", options=[{"label": "A", "value": "a"}], on_change=setter)
-db.Checkbox(name="x", label="Enable", on_change=setter)
-db.Toggle(name="y", label="Dark mode", on_change=setter)
-db.Slider(name="s", min=0, max=100, on_change=setter)
-db.DateRangePicker(name="window", on_change=setter)
-db.MultiSelect(name="layers", options=[...], values=["gold"], on_change=setter)
+### Inputs and overlays
 
-# Data
-db.Table(data=rows, columns=[{"key": "id", "label": "ID"}], pagination=20, exportable=True)
-db.Badge("Active", color="green")
-db.Alert("Something went wrong", type="error")
-db.Progress(value=65, max=100)
-db.Stat(label="Queries", value="248K", delta="+12%", delta_type="increase")
-db.EmptyState("No data", "Adjust filters or connect a source")
-db.Toast("Saved", title="Success")
-db.Timeline([{"title": "Run started", "time": "09:30"}])
-db.SparklineStat(label="Freshness", value="17 min", data=rows, x_key="week", y_key="value")
+- `Button`
+- `Input`
+- `Select`
+- `Checkbox`
+- `Toggle`
+- `Slider`
+- `DateRangePicker`
+- `MultiSelect`
+- `Form`
+- `Modal`
+- `Drawer`
+- `Popup`
 
-# Charts
-db.AreaChart(data=rows, x_key="date", y_keys=["value"], colors=["#FF3621"])
-db.BarChart(data=rows, x_key="category", y_keys=["count"])
-db.LineChart(data=rows, x_key="day", y_keys=["metric"])
-db.DonutChart(data=rows, value_key="count", label_key="name")
+### Data and workflow
 
-# Navigation
-db.Tabs([db.TabItem("Tab A", [db.Text("Content A")]), ...])
-db.Sidebar([db.NavItem("Home", "/", icon="Home"), ...], brand_name="My App")
-db.Modal(visible=True, title="Confirm", children=[...], on_close=handler)
-db.Drawer(visible=True, title="Details", children=[...], on_close=handler)
-db.Accordion([db.AccordionItem("Section", [db.Text("Body")])])
-db.Breadcrumbs([{"label": "Home", "path": "/"}, {"label": "Reports"}])
+- `Table`
+- `Timeline`
+- `SparklineStat`
+- `Stepper`
+- `KanbanBoard`
+- `ChatMessage`
+- `ChatInput`
+- `PipelineGraph`
 
-# Forms
-db.Form(action="/api/submit", success_redirect="/", children=[
-    db.Input(name="username", label="Username"),
-    db.Button("Submit", html_type="submit"),
-])
+### Charts
 
-# Databricks-specific
-db.CatalogBrowser(on_select=handler)
-db.WarehouseSelector(on_select=handler)
-db.JobTrigger(job_id="123", label="Run Pipeline")
+- `Plot`
+- `AreaChart`
+- `BarChart`
+- `LineChart`
+- `DonutChart`
+- `ScatterChart`
+- `ComposedChart`
+- `GaugeChart`
+- `RadarChart`
+- `Heatmap`
+- `FunnelChart`
+- `TreeMap`
+
+## Databricks Apps
+
+Use this minimum setup:
+
+`requirements.txt`
+
+```text
+brickflowui>=0.1.6
 ```
 
-### State (Hooks)
+Install from GitHub instead:
 
-```python
-@app.page("/")
-def my_page():
-    count, set_count = db.use_state(0)          # local state
-    data = db.use_memo(load_data, deps=[count])  # memoized compute
-    db.use_effect(lambda: print("mounted"), [])  # side effects
-    theme = db.use_context("theme")              # session context
-
-    return db.Button(str(count), on_click=lambda: set_count(count + 1))
+```text
+brickflowui @ git+https://github.com/AjayAJ2000/brickflowUI.git@main
 ```
 
-### Multi-page Apps
-
-```python
-app = db.App(title="Ops Hub")
-
-@app.page("/", title="Dashboard", icon="LayoutDashboard")
-def dashboard(): ...
-
-@app.page("/tables", title="Tables", icon="Database")
-def tables(): ...
-
-@app.page("/settings", title="Settings", icon="Settings")
-def settings(): ...
-```
-
-### Auth And Access Control
-
-```python
-import brickflowui as db
-
-app = db.App(
-    title="Ops Hub",
-    auth_mode="hybrid",  # "app", "user", or "hybrid"
-    auth_provider=db.HeaderAuthProvider(),
-)
-
-@app.page("/", title="Home")
-def home():
-    principal = db.current_principal()
-    return db.Text(f"Hello {principal.display_name or principal.subject}")
-
-@app.page("/admin", title="Admin", access="user", roles=["admin"])
-def admin():
-    user = db.require_role("admin")
-    return db.Text(f"Welcome, {user.subject}")
-
-@app.route("/api/profile", methods=["GET"], access="user")
-async def profile():
-    user = db.require_auth()
-    return {"user": user.subject, "roles": list(user.roles)}
-```
-
-`access` supports:
-
-- `public` â€” anyone can access it
-- `authenticated` â€” any authenticated principal
-- `user` â€” requires a signed-in user identity
-- `app` â€” restricted to the shared application identity
-
-### Branding And Themes
-
-```python
-app = db.App(theme="branding.yaml")
-```
-
-Example `branding.yaml`:
-
-```yaml
-branding:
-  title: "Acme Ops Portal"
-  logo: "/static/acme-logo.svg"
-  favicon: "/static/acme-favicon.ico"
-
-colors:
-  primary: "#FF5F2E"
-  primary_hover: "#D9481C"
-  background: "#F7F7F5"
-  surface: "#FFFFFF"
-  text: "#18181B"
-  text_muted: "#71717A"
-  border: "#E4E4E7"
-
-typography:
-  font_family: "'IBM Plex Sans', sans-serif"
-  base_size: "15px"
-
-spacing:
-  unit: "6px"
-
-borders:
-  radius: "14px"
-```
-
-Supported theme model sections:
-
-- `branding`: `title`, `logo`, `favicon`
-- `colors`: `primary`, `primary_hover`, `background`, `surface`, `text`, `text_muted`, `border`, `success`, `warning`, `error`, `link`
-- `surfaces`: `background`, `surface`, `overlay`
-- `typography`: `font_family`, `font_mono`, `base_size`
-- `spacing`: `unit`
-- `borders`: `radius`
-- `shadows`: `small`, `medium`, `large`
-- `motion`: `duration_fast`, `duration_normal`, `duration_slow`, `easing_standard`, `stagger_step`
-
-You can also keep using the lower-level internal keys like `primary-hover`, `bg`, `text-muted`, `sans`, and `base-size` if you prefer.
-
-### Custom API Routes
-
-```python
-@app.route("/api/submit", methods=["POST"])
-async def submit_handler():
-    from fastapi.responses import JSONResponse
-    return JSONResponse({"status": "ok"})
-```
-
----
-
-## Databricks Integration
-
-### SQL Queries
-
-```python
-from brickflowui.databricks import sql
-
-# Returns a pandas DataFrame
-df = sql.query("SELECT * FROM catalog.schema.table LIMIT 100")
-
-# Returns list[dict] (for db.Table component)
-rows = sql.query_to_records("SELECT id, name FROM my_table")
-return db.Table(data=rows)
-```
-
-Set environment variables (or use `app.yaml`):
-
-```env
-DATABRICKS_HOST=https://adb-xxx.azuredatabricks.net
-DATABRICKS_TOKEN=dapiXXXXXXXX
-DATABRICKS_WAREHOUSE_ID=your-warehouse-id
-```
-
-### Unity Catalog
-
-```python
-from brickflowui.databricks import uc
-
-catalogs = uc.list_catalogs()
-schemas  = uc.list_schemas("main")
-tables   = uc.list_tables("main", "gold")
-rows     = uc.get_table("main", "gold", "fact_orders", limit=50)
-```
-
----
-
-## Deploying to Databricks Apps
-
-### `app.yaml`
+`app.yaml`
 
 ```yaml
 command:
   - python
   - app.py
-
-env:
-  - name: DATABRICKS_WAREHOUSE_ID
-    value: your-warehouse-id
 ```
 
-Then in the Databricks workspace:
-1. Create a new Databricks App
-2. Upload your project as a ZIP (include `app.py`, `app.yaml`, `requirements.txt`)
-3. The app binds to `DATABRICKS_APP_PORT` automatically
+Important packaging rule:
 
-### `requirements.txt`
+The installed package must contain:
 
 ```text
-brickflowui>=0.1.4
-# brickflowui[databricks]  # for SQL + Unity Catalog
+brickflowui/frontend/dist/index.html
+brickflowui/frontend/dist/assets/*
 ```
 
----
+If those files are missing, Databricks Apps often stop at the loading shell.
 
-## CLI Reference
+## Local development
 
-| Command | Description |
-|---------|-------------|
-| `brickflowui new <name>` | Scaffold a new app |
-| `brickflowui dev` | Run local dev server (hot reload) |
+Framework tests:
 
----
+```bash
+python -m pytest -q
+```
 
-## Project Structure
+Frontend build:
+
+```bash
+cd frontend
+npm run build
+```
+
+Docs build:
+
+```bash
+python -m mkdocs build
+```
+
+Package build:
+
+```bash
+python -m build
+```
+
+## Repo map
 
 ```text
 brickflowui/
-├── __init__.py          # Public API
-├── app.py               # App class
-├── vdom.py              # Virtual DOM + diff algorithm
-├── state.py             # Hooks (use_state, use_effect, use_memo)
-├── components.py        # All component primitives
-├── server.py            # FastAPI ASGI + WebSocket server
-├── cli/
-│   ├── main.py          # CLI (typer)
-│   └── templates/       # App scaffolding templates
-├── databricks/
-│   ├── env.py           # DATABRICKS_* env helpers
-│   ├── sql.py           # SQL connector wrappers
-│   └── uc.py            # Unity Catalog helpers
-└── frontend/
-    └── dist/            # Pre-built React bundle (served automatically)
+  app.py
+  components.py
+  server.py
+  state.py
+  vdom.py
+  frontend/dist/
+  cli/
+  databricks/
 
-examples/
-├── counter/             # Minimal Counter example
-└── demo_app/            # Full multi-page dashboard demo
-    ├── app.py
-    ├── app.yaml
-    └── requirements.txt
+frontend/
+  src/
+  vite.config.ts
+
+docs/
+  learning/
+  components/
+  ARCHITECTURE.md
 ```
-
----
-
-## Architecture
-
-```
-Python App (app.py)
-    │
-    │  Component tree (VNode)
-    ▼
-BrickflowUI Runtime
-    │  FastAPI ASGI Server
-    │  WS /events   ──── JSON patches ────▶  React Frontend
-    │  GET /         ◀─── HTML shell ──────
-    │  GET /static/* ◀─── React bundle ────
-    │
-    ▼
-Databricks Runtime
-    (DATABRICKS_APP_PORT, SQL warehouse, Unity Catalog)
-```
-
----
 
 ## License
 
-MIT © BrickflowUI Contributors
+MIT

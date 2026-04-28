@@ -1,40 +1,52 @@
 # BrickflowUI
 
-Build dashboards, portals, and internal web apps for Databricks using pure Python.
+![BrickflowUI](assets/brickflowui-logo.svg)
 
-BrickflowUI is designed to feel simple for first-time users and structured enough for teams building larger apps with multiple pages, auth, theming, and data access.
+Build dashboards, landing pages, chatbot workspaces, internal tools, and Databricks Apps in pure Python.
 
-## What you get
+BrickflowUI is designed for teams that want a Python-first authoring experience without giving up structured UI composition, interactivity, theming, or packaged deployment.
 
-- Python-first UI building with no frontend framework required
-- Reactive state with hooks like `use_state`
-- Multi-page apps with routing
-- Built-in components for layout, forms, tables, charts, and navigation
-- Pipeline graph, chatbot UI, kanban triage, and richer chart primitives for operational dashboards
-- Auth-ready app structure for public, user-only, and app-only pages
-- YAML-based branding and theme customization
+## What you can build
+
+- executive dashboards
+- data pipeline command centers
+- chatbot and copilot workspaces
+- landing pages and internal product sites
+- Databricks App portals
+- operational triage and release management tools
 
 ## Start here
 
 If you are new to the library, follow these in order:
 
-1. [Learn BrickflowUI](./learning/index.md) if you want a structured onboarding path
-2. [Quick Start](./GETTING_STARTED.md) to install the package and run your first app
-3. [First App Tutorial](./TUTORIAL.md) to build a more realistic dashboard-style app
-4. [Examples](./EXAMPLES.md) to start from something runnable
-5. [Databricks Apps](./DATABRICKS_APPS.md) for deployment details
-6. [Theming](./THEMING.md) to brand your app
-7. [API Reference](./API_REFERENCE.md) when you want to explore the full surface area
+1. [Learn BrickflowUI](./learning/index.md)
+2. [Quick Start](./GETTING_STARTED.md)
+3. [Architecture](./ARCHITECTURE.md)
+4. [Component Gallery](./components/index.md)
+5. [Examples](./EXAMPLES.md)
+6. [Databricks Apps Guide](./DATABRICKS_APPS.md)
 
-For the newest dashboard and pipeline visuals, see [Visualizations And Pipelines](./VISUALIZATIONS.md).
+## Why teams choose it
+
+- Python-first UI authoring with no frontend code required for common use cases
+- session-scoped state with reactive rerenders
+- built-in layout, forms, tables, charts, overlays, and workflow patterns
+- packaged frontend assets that work in stricter environments like Databricks Apps
+- theming and branding support for enterprise rollout
+
+## Key documentation paths
+
+- [Architecture](./ARCHITECTURE.md) for the runtime model and packaging details
+- [Component Gallery](./components/index.md) for component-by-component learning
+- [Visualizations And Pipelines](./VISUALIZATIONS.md) for the modern chart and graph surface
+- [Theming](./THEMING.md) for branding and design tokens
+- [Troubleshooting](./TROUBLESHOOTING.md) for the common deployment and runtime problems
 
 ## Install
 
 ```bash
 pip install brickflowui
 ```
-
-Then import it with:
 
 ```python
 import brickflowui as db
@@ -63,11 +75,3 @@ def home():
 if __name__ == "__main__":
     app.run()
 ```
-
-Run it with:
-
-```bash
-python app.py
-```
-
-Open `http://127.0.0.1:8050`.

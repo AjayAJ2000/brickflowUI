@@ -4,6 +4,8 @@ This page explains the runtime model behind BrickflowUI so you can reason about 
 
 If you only want to build an app quickly, start with [Quick Start](./GETTING_STARTED.md). If you want to understand why the framework behaves the way it does, read this page.
 
+For the full production architecture, packaging expectations, and deployment-critical paths, also read [Architecture](./ARCHITECTURE.md).
+
 ## Mental model
 
 BrickflowUI is a Python runtime plus a prebuilt frontend.

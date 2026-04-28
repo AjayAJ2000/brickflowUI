@@ -34,7 +34,7 @@ npm run build
 Then check the wheel:
 
 ```bash
-python -m zipfile -l dist/brickflowui-0.1.5-py3-none-any.whl
+python -m zipfile -l dist/brickflowui-0.1.6-py3-none-any.whl
 ```
 
 ## User Input Not Updating
@@ -67,7 +67,7 @@ npm run build
 cd ..
 python -m mkdocs build
 python -m build
-python -m twine check dist/brickflowui-0.1.5*
+python -m twine check dist/brickflowui-0.1.6*
 ```
 
 On Windows, prefer:

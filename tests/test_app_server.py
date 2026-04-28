@@ -293,6 +293,78 @@ def test_chat_input_submit_payload_updates_state_and_rerenders():
     assert text_patch["props"]["value"] == "show failed pipelines"
 
 
+def test_checkbox_false_payload_updates_state_and_rerenders():
+    app = App()
+
+    @app.page("/")
+    def home():
+        enabled, set_enabled = db.use_state(True)
+        return db.Column(
+            [
+                db.Text("enabled" if enabled else "disabled"),
+                db.Checkbox(name="enabled", label="Enabled", checked=enabled, on_change=set_enabled),
+            ]
+        )
+
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events") as websocket:
+        full = websocket.receive_json()
+        control = _find_node_by_type(full["tree"], "Checkbox")
+        assert control is not None
+
+        websocket.send_json(
+            {
+                "type": "event",
+                "event_id": control["props"]["change"],
+                "data": {"value": False},
+            }
+        )
+        patch = websocket.receive_json()
+
+    assert patch["type"] == "patch"
+    text_patch = next(item for item in patch["patches"] if item["path"] == [0])
+    checkbox_patch = next(item for item in patch["patches"] if item["path"] == [1])
+    assert text_patch["props"]["value"] == "disabled"
+    assert checkbox_patch["props"]["checked"] is False
+
+
+def test_input_empty_string_payload_updates_state_and_rerenders():
+    app = App()
+
+    @app.page("/")
+    def home():
+        query, set_query = db.use_state("seed")
+        return db.Column(
+            [
+                db.Text(query or "empty"),
+                db.Input(name="query", label="Query", value=query, on_change=set_query),
+            ]
+        )
+
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events") as websocket:
+        full = websocket.receive_json()
+        control = _find_node_by_type(full["tree"], "Input")
+        assert control is not None
+
+        websocket.send_json(
+            {
+                "type": "event",
+                "event_id": control["props"]["change"],
+                "data": {"value": ""},
+            }
+        )
+        patch = websocket.receive_json()
+
+    assert patch["type"] == "patch"
+    text_patch = next(item for item in patch["patches"] if item["path"] == [0])
+    input_patch = next(item for item in patch["patches"] if item["path"] == [1])
+    assert text_patch["props"]["value"] == "empty"
+    assert input_patch["props"]["value"] == ""
+
+
 def test_pipeline_node_click_payload_updates_state_and_rerenders():
     app = App()
 

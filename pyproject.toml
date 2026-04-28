@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "brickflowui"
-version = "0.1.5"
+version = "0.1.6"
 description = "A Databricks-first Python UI framework for building secure dashboards, portals, and web apps with pure Python."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -27,7 +27,7 @@ dependencies = [
     "fastapi>=0.110.0",
     "uvicorn[standard]>=0.29.0",
     "typer>=0.12.0",
-    "python-dotenv>=1.0.0",
+    "python-dotenv>=1.2.2",
     "websockets>=12.0",
     "starlette>=0.37.0",
     "PyYAML>=6.0.0",
@@ -43,7 +43,7 @@ viz = [
     "plotly>=5.0.0",
 ]
 dev = [
-    "pytest>=8.0.0",
+    "pytest>=9.0.3",
     "pytest-asyncio>=0.23.0",
     "httpx>=0.27.0",
     "ruff>=0.4.0",
@@ -62,7 +62,7 @@ brickflowui = "brickflowui.cli.main:app"
 
 [project.urls]
 Homepage = "https://github.com/AjayAJ2000/brickflowUI"
-Documentation = "https://github.com/AjayAJ2000/brickflowUI/tree/main/docs"
+Documentation = "https://ajayaj2000.github.io/brickflowUI/"
 Repository = "https://github.com/AjayAJ2000/brickflowUI"
 Issues = "https://github.com/AjayAJ2000/brickflowUI/issues"
 

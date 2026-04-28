@@ -77,7 +77,7 @@ motion:
 
 ## Polish-Oriented Tokens
 
-For `0.1.4`, the theme surface is broad enough to support more than dashboards:
+For `0.1.6`, the theme surface is broad enough to support more than dashboards:
 
 - `colors.*` for brand identity and semantics
 - `surfaces.*` for softer backgrounds and overlay layers

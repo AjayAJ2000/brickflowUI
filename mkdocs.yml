@@ -6,6 +6,8 @@ repo_name: AjayAJ2000/brickflowUI
 
 theme:
   name: material
+  logo: assets/brickflowui-mark.svg
+  favicon: assets/brickflowui-mark.svg
   features:
     - navigation.tabs
     - navigation.sections
@@ -33,6 +35,7 @@ markdown_extensions:
 
 nav:
   - Home: index.md
+  - Architecture: ARCHITECTURE.md
   - Learn BrickflowUI:
       - Overview: learning/index.md
       - What Is BrickflowUI: learning/01-what-is-brickflowui.md
@@ -56,6 +59,16 @@ nav:
       - Capstone Project: learning/19-capstone-project.md
       - Glossary: learning/glossary.md
   - Quick Start: GETTING_STARTED.md
+  - Component Gallery:
+      - Overview: components/index.md
+      - Layout And Surfaces: components/layout-and-surfaces.md
+      - Content And Feedback: components/content-and-feedback.md
+      - Inputs And Forms: components/inputs-and-forms.md
+      - Navigation And Overlays: components/navigation-and-overlays.md
+      - Tables And Data: components/tables-and-data.md
+      - Charts And Visualizations: components/charts-and-visualizations.md
+      - Workflow Patterns: components/workflow-patterns.md
+      - Databricks Components: components/databricks-components.md
   - First App Tutorial: TUTORIAL.md
   - Examples: EXAMPLES.md
   - Databricks Apps: DATABRICKS_APPS.md
