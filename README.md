@@ -1,7 +1,5 @@
 # BrickflowUI
 
-![BrickflowUI](https://raw.githubusercontent.com/AjayAJ2000/brickflowUI/main/docs/assets/brickflowui-logo.svg)
-
 Databricks-first Python UI framework for building dashboards, portals, chatbot workspaces, landing pages, and internal web apps with pure Python.
 
 Canonical package name: `brickflowui`
