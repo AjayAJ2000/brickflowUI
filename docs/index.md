@@ -1,6 +1,5 @@
 # BrickflowUI
 
-![BrickflowUI](assets/brickflowui-logo.svg)
 
 Build dashboards, landing pages, chatbot workspaces, internal tools, and Databricks Apps in pure Python.
 
