@@ -1,3 +1,5 @@
+![BrickFlowUI](/docs/assets/brickflowui-hero.png)
+
 # BrickflowUI
 
 Databricks-first Python UI framework for building dashboards, portals, chatbot workspaces, landing pages, and internal web apps with pure Python.
