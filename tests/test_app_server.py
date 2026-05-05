@@ -5,6 +5,7 @@ from brickflowui.app import App
 from brickflowui.auth import HeaderAuthProvider, current_user
 from brickflowui.server import create_asgi_app
 from brickflowui.vdom import VNode
+from pathlib import Path
 
 
 def _find_node_by_type(node: dict, node_type: str) -> dict | None:
@@ -26,6 +27,7 @@ def _find_node_by_type(node: dict, node_type: str) -> dict | None:
                     if found:
                         return found
     return None
+
 
 def test_app_page_registration():
     app = App(title="Test App")
@@ -74,6 +76,33 @@ def test_server_spa_shell():
     response = client.get("/")
     assert response.status_code == 200
     assert "BrickflowUI App" in response.text
+
+
+def test_shell_bootstrap_and_local_asset_route():
+    asset = Path("docs/assets/brickflowui-mark.svg").resolve()
+
+    app = App(
+        title="Asset App",
+        favicon=str(asset),
+        loading={
+            "asset": str(asset),
+            "message": "Booting secure workspace",
+            "animation": "pulse",
+        },
+    )
+    app.mount(lambda: VNode(type="div"))
+    client = TestClient(create_asgi_app(app))
+
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "__BRICKFLOW_BOOTSTRAP__" in response.text
+    assert "Booting secure workspace" in response.text
+    assert "/__brickflow_asset__/" in response.text
+
+    asset_url = app.asset_url(str(asset))
+    asset_response = client.get(asset_url)
+    assert asset_response.status_code == 200
+    assert b"<svg" in asset_response.content
 
 def test_custom_api_route():
     app = App()
@@ -363,6 +392,35 @@ def test_input_empty_string_payload_updates_state_and_rerenders():
     input_patch = next(item for item in patch["patches"] if item["path"] == [1])
     assert text_patch["props"]["value"] == "empty"
     assert input_patch["props"]["value"] == ""
+
+
+def test_websocket_serializes_local_media_paths_as_asset_urls():
+    image_asset = Path("docs/assets/brickflowui-mark.svg").resolve()
+    video_asset = Path("README.md").resolve()
+
+    app = App()
+
+    @app.page("/")
+    def home():
+        return db.Column(
+            [
+                db.Image(str(image_asset), alt="Preview"),
+                db.Video(str(video_asset), caption="Demo"),
+            ]
+        )
+
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events") as websocket:
+        payload = websocket.receive_json()
+
+    assert payload["type"] == "full"
+    image_node = _find_node_by_type(payload["tree"], "Image")
+    video_node = _find_node_by_type(payload["tree"], "Video")
+    assert image_node is not None
+    assert video_node is not None
+    assert str(image_node["props"]["src"]).startswith("/__brickflow_asset__/")
+    assert str(video_node["props"]["src"]).startswith("/__brickflow_asset__/")
 
 
 def test_pipeline_node_click_payload_updates_state_and_rerenders():

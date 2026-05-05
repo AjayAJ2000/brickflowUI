@@ -9,6 +9,11 @@ DEFAULT_THEME = {
         "logo": None,
         "favicon": None,
     },
+    "loading": {
+        "title": "BrickflowUI",
+        "message": "Connecting to runtime...",
+        "animation": "spinner",
+    },
     "colors": {
         "primary": "#003087",
         "primary-hover": "#00205b",
@@ -21,6 +26,7 @@ DEFAULT_THEME = {
         "success": "#10b981",
         "warning": "#f59e0b",
         "error": "#ef4444",
+        "info": "#0ea5e9",
         "link": "#003087",
     },
     "surfaces": {
@@ -59,6 +65,7 @@ _SECTION_ALIASES = {
     "brand": "branding",
     "branding": "branding",
     "colors": "colors",
+    "loading": "loading",
     "typography": "typography",
     "spacing": "spacing",
     "radius": "radius",

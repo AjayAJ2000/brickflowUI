@@ -22,8 +22,10 @@ If you are new to the library, follow these in order:
 2. [Quick Start](./GETTING_STARTED.md)
 3. [Architecture](./ARCHITECTURE.md)
 4. [Component Gallery](./components/index.md)
-5. [Examples](./EXAMPLES.md)
-6. [Databricks Apps Guide](./DATABRICKS_APPS.md)
+5. [Component Pages](./components/catalog.md)
+6. [Portal Tutorial](./PORTAL_TUTORIAL.md)
+7. [Examples](./EXAMPLES.md)
+8. [Databricks Apps Guide](./DATABRICKS_APPS.md)
 
 ## Why teams choose it
 
@@ -37,8 +39,10 @@ If you are new to the library, follow these in order:
 
 - [Architecture](./ARCHITECTURE.md) for the runtime model and packaging details
 - [Component Gallery](./components/index.md) for component-by-component learning
+- [Component Pages](./components/catalog.md) for a dedicated page per component
 - [Visualizations And Pipelines](./VISUALIZATIONS.md) for the modern chart and graph surface
 - [Theming](./THEMING.md) for branding and design tokens
+- [Portal Tutorial](./PORTAL_TUTORIAL.md) for a detailed end-to-end SaaS-style build
 - [Troubleshooting](./TROUBLESHOOTING.md) for the common deployment and runtime problems
 
 ## Install

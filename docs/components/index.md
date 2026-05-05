@@ -37,6 +37,7 @@ Use it when you want to understand:
 - `Timeline`
 - `SparklineStat`
 - `Image`
+- `Video`
 
 ### Inputs and actions
 
@@ -104,3 +105,7 @@ Use it when you want to understand:
 6. [Charts And Visualizations](./charts-and-visualizations.md)
 7. [Workflow Patterns](./workflow-patterns.md)
 8. [Databricks Components](./databricks-components.md)
+
+## Dedicated component pages
+
+If you want a page for one component at a time, open the [Component Pages catalog](./catalog.md).

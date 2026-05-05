@@ -405,13 +405,16 @@ def Modal(
     children: List[VNode],
     on_close: Optional[EventHandler] = None,
     size: Literal["sm", "md", "lg", "xl"] = "md",
+    animated: bool = True,
+    animation: Optional[str] = "fade-up",
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     handlers: Dict[str, EventHandler] = {}
     if on_close:
         handlers["close"] = on_close
     return VNode(
         type="Modal",
-        props={"visible": visible, "title": title, "size": size},
+        props={"visible": visible, "title": title, "size": size, "animated": animated, "animation": animation, "animationDelay": animation_delay},
         children=children,
         event_handlers=handlers,
     )
@@ -424,13 +427,16 @@ def Drawer(
     on_close: Optional[EventHandler] = None,
     side: Literal["left", "right"] = "right",
     width: str = "420px",
+    animated: bool = True,
+    animation: Optional[str] = "fade-up",
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     handlers: Dict[str, EventHandler] = {}
     if on_close:
         handlers["close"] = on_close
     return VNode(
         type="Drawer",
-        props={"visible": visible, "title": title, "side": side, "width": width},
+        props={"visible": visible, "title": title, "side": side, "width": width, "animated": animated, "animation": animation, "animationDelay": animation_delay},
         children=children,
         event_handlers=handlers,
     )
@@ -444,13 +450,16 @@ def Popup(
     size: Literal["sm", "md", "lg"] = "sm",
     backdrop: bool = True,
     placement: Literal["center"] = "center",
+    animated: bool = True,
+    animation: Optional[str] = "fade-up",
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     handlers: Dict[str, EventHandler] = {}
     if on_close:
         handlers["close"] = on_close
     return VNode(
         type="Popup",
-        props={"visible": visible, "title": title, "size": size, "backdrop": backdrop, "placement": placement},
+        props={"visible": visible, "title": title, "size": size, "backdrop": backdrop, "placement": placement, "animated": animated, "animation": animation, "animationDelay": animation_delay},
         children=children,
         event_handlers=handlers,
     )
@@ -482,8 +491,11 @@ def EmptyState(
     message: str,
     icon: Optional[str] = None,
     actions: Optional[List[VNode]] = None,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
-    return VNode(type="EmptyState", props={"title": title, "message": message, "icon": icon, "actions": actions or []})
+    return VNode(type="EmptyState", props={"title": title, "message": message, "icon": icon, "actions": actions or [], "animated": animated, "animation": animation, "animationDelay": animation_delay})
 
 
 def Breadcrumbs(items: List[Dict[str, Any]]) -> VNode:
@@ -535,6 +547,9 @@ def Toast(
     on_close: Optional[EventHandler] = None,
     dismissible: bool = True,
     auto_hide_ms: Optional[int] = None,
+    animated: bool = True,
+    animation: Optional[str] = "fade-up",
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     handlers: Dict[str, EventHandler] = {}
     if on_close:
@@ -549,13 +564,22 @@ def Toast(
             "icon": icon,
             "dismissible": dismissible,
             "autoHideMs": auto_hide_ms,
+            "animated": animated,
+            "animation": animation,
+            "animationDelay": animation_delay,
         },
         event_handlers=handlers,
     )
 
 
-def Timeline(items: List[Dict[str, Any]], title: Optional[str] = None) -> VNode:
-    return VNode(type="Timeline", props={"items": items, "title": title})
+def Timeline(
+    items: List[Dict[str, Any]],
+    title: Optional[str] = None,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
+) -> VNode:
+    return VNode(type="Timeline", props={"items": items, "title": title, "animated": animated, "animation": animation, "animationDelay": animation_delay})
 
 
 def Image(
@@ -567,6 +591,9 @@ def Image(
     caption: Optional[str] = None,
     radius: str = "var(--radius-lg)",
     loading: Literal["lazy", "eager"] = "lazy",
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     return VNode(
         type="Image",
@@ -579,6 +606,44 @@ def Image(
             "caption": caption,
             "radius": radius,
             "loadingMode": loading,
+            "animated": animated,
+            "animation": animation,
+            "animationDelay": animation_delay,
+        },
+    )
+
+
+def Video(
+    src: str,
+    poster: Optional[str] = None,
+    width: str = "100%",
+    height: str = "auto",
+    caption: Optional[str] = None,
+    radius: str = "var(--radius-lg)",
+    controls: bool = True,
+    autoplay: bool = False,
+    loop: bool = False,
+    muted: bool = False,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
+) -> VNode:
+    return VNode(
+        type="Video",
+        props={
+            "src": src,
+            "poster": poster,
+            "width": width,
+            "height": height,
+            "caption": caption,
+            "radius": radius,
+            "controls": controls,
+            "autoplay": autoplay,
+            "loop": loop,
+            "muted": muted,
+            "animated": animated,
+            "animation": animation,
+            "animationDelay": animation_delay,
         },
     )
 
@@ -616,6 +681,8 @@ def Hero(
     badges: Optional[List[VNode]] = None,
     visual: Optional[VNode] = None,
     animated: bool = True,
+    animation: Optional[str] = "fade-up",
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     """Premium landing/dashboard hero section."""
     return VNode(
@@ -627,6 +694,8 @@ def Hero(
             "actions": actions or [],
             "badges": badges or [],
             "animated": animated,
+            "animation": animation,
+            "animationDelay": animation_delay,
         },
         children=[visual] if visual else [],
     )
@@ -637,11 +706,14 @@ def SectionHeader(
     subtitle: Optional[str] = None,
     actions: Optional[List[VNode]] = None,
     eyebrow: Optional[str] = None,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     """Reusable section title with optional actions."""
     return VNode(
         type="SectionHeader",
-        props={"title": title, "subtitle": subtitle, "actions": actions or [], "eyebrow": eyebrow},
+        props={"title": title, "subtitle": subtitle, "actions": actions or [], "eyebrow": eyebrow, "animated": animated, "animation": animation, "animationDelay": animation_delay},
     )
 
 
@@ -649,29 +721,38 @@ def StatusStrip(
     items: List[Dict[str, Any]],
     title: Optional[str] = None,
     columns: int = 4,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     """Compact signal cards for health, freshness, latency, SLA, and cost."""
-    return VNode(type="StatusStrip", props={"items": items, "title": title, "columns": columns})
+    return VNode(type="StatusStrip", props={"items": items, "title": title, "columns": columns, "animated": animated, "animation": animation, "animationDelay": animation_delay})
 
 
 def Stepper(
     steps: List[Dict[str, Any]],
     active: int = 0,
     orientation: Literal["horizontal", "vertical"] = "horizontal",
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     """Process stepper for setup, deployments, releases, and approvals."""
-    return VNode(type="Stepper", props={"steps": steps, "active": active, "orientation": orientation})
+    return VNode(type="Stepper", props={"steps": steps, "active": active, "orientation": orientation, "animated": animated, "animation": animation, "animationDelay": animation_delay})
 
 
 def KanbanBoard(
     columns: List[Dict[str, Any]],
     on_card_click: Optional[Callable[[Dict[str, Any]], None]] = None,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     """Kanban board for work queues, triage boards, or pipeline issues."""
     handlers: Dict[str, EventHandler] = {}
     if on_card_click:
         handlers["cardClick"] = on_card_click
-    return VNode(type="KanbanBoard", props={"columns": columns}, event_handlers=handlers)
+    return VNode(type="KanbanBoard", props={"columns": columns, "animated": animated, "animation": animation, "animationDelay": animation_delay}, event_handlers=handlers)
 
 
 def ChatMessage(
@@ -681,6 +762,9 @@ def ChatMessage(
     timestamp: Optional[str] = None,
     avatar: Optional[str] = None,
     tone: Literal["default", "success", "warning", "error", "info"] = "default",
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     """Single chat transcript message for assistant/copilot style apps."""
     return VNode(
@@ -692,6 +776,9 @@ def ChatMessage(
             "timestamp": timestamp,
             "avatar": avatar,
             "tone": tone,
+            "animated": animated,
+            "animation": animation,
+            "animationDelay": animation_delay,
         },
     )
 
@@ -705,6 +792,9 @@ def ChatInput(
     disabled: bool = False,
     loading: bool = False,
     submit_label: str = "Send",
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     """Controlled chat input with change and submit callbacks."""
     handlers: Dict[str, EventHandler] = {}
@@ -721,6 +811,9 @@ def ChatInput(
             "disabled": disabled,
             "loading": loading,
             "submitLabel": submit_label,
+            "animated": animated,
+            "animation": animation,
+            "animationDelay": animation_delay,
         },
         event_handlers=handlers,
     )

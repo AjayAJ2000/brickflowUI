@@ -61,6 +61,7 @@ nav:
   - Quick Start: GETTING_STARTED.md
   - Component Gallery:
       - Overview: components/index.md
+      - Component Pages: components/catalog.md
       - Layout And Surfaces: components/layout-and-surfaces.md
       - Content And Feedback: components/content-and-feedback.md
       - Inputs And Forms: components/inputs-and-forms.md
@@ -70,6 +71,7 @@ nav:
       - Workflow Patterns: components/workflow-patterns.md
       - Databricks Components: components/databricks-components.md
   - First App Tutorial: TUTORIAL.md
+  - Build A Real Portal: PORTAL_TUTORIAL.md
   - Examples: EXAMPLES.md
   - Databricks Apps: DATABRICKS_APPS.md
   - Troubleshooting: TROUBLESHOOTING.md

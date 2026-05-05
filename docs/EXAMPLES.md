@@ -13,6 +13,9 @@ Use this page when you want to skip the docs theory and start from something run
 | Operations + Finance Portal | `examples/operations_finance_portal/app.py` | Executive dashboard with a traditional top nav |
 | Data Pipeline Command Center | `examples/data_pipeline_command_center/app.py` | Industry-style data engineering monitoring with filters, SLA controls, cost, freshness, and Databricks SQL handoff |
 | Pipeline Observability 0.1.6 | `examples/pipeline_observability_015/app.py` | New 0.1.6 showcase with pipeline graph, chatbot UI, heatmap, treemap, funnel, radar, gauge, kanban, and table export |
+| Component Studio | `examples/component_studio/app.py` | Interactive all-components app that doubles as documentation |
+| Clinical Trial Command Center | `examples/clinical_trial_command_center/app.py` | Auth-gated study operations portal with Unity Catalog query patterns and Plotly |
+| Secure Internal Tools | `examples/secure_internal_tools/app.py` | Role-aware internal tools portal focused on governance and restricted views |
 | Chatbot Workspace | `examples/chatbot_workspace/app.py` | Assistant-style UI with drawers, toast, timelines, and multi-value inputs |
 | Landing Site | `examples/landing_site/app.py` | Product-style landing page and launch-site composition |
 | Workspace Studio | `examples/workspace_studio/app.py` | Rich app structure with filters, tables, tabs, forms, modal flows, charts, and a dedicated themes page |
@@ -66,6 +69,60 @@ Run it locally:
 cd examples/pipeline_observability_015
 python app.py
 ```
+
+## Component Studio
+
+Use this example when you want one app that teaches the framework while also stress-testing it.
+
+- `examples/component_studio/app.py`
+- `examples/component_studio/app.yaml`
+- `examples/component_studio/requirements.txt`
+
+It demonstrates:
+
+- highly interactive tabs that act as documentation chapters
+- local and remote media rendering through `Image` and `Video`
+- custom loading branding
+- charts, plotly, pipeline graph, kanban, timeline, and chat surfaces
+- toast, popup, modal, and drawer flows in one example
+- component-level animation props in realistic usage
+
+## Clinical Trial Command Center
+
+Use this example when you want a more domain-specific, enterprise-style portal.
+
+- `examples/clinical_trial_command_center/app.py`
+- `examples/clinical_trial_command_center/app.yaml`
+- `examples/clinical_trial_command_center/requirements.txt`
+
+It demonstrates:
+
+- auth-gated trial views with role-aware pages
+- Unity Catalog and Databricks SQL query patterns with mock fallback
+- native Plotly integration via `Plot`
+- safety heatmaps, enrollment trend charts, and pipeline flows
+- a page split that feels like a real study operations portal
+
+Local testing note:
+
+```text
+Set x-brickflow-user-id and x-brickflow-user-roles headers when testing secured pages.
+```
+
+## Secure Internal Tools
+
+Use this example when your main priority is governance, access boundaries, and multi-role internal tooling.
+
+- `examples/secure_internal_tools/app.py`
+- `examples/secure_internal_tools/app.yaml`
+- `examples/secure_internal_tools/requirements.txt`
+
+It demonstrates:
+
+- per-page role requirements
+- governance-aware operational surfaces
+- workflow overlays like drawers and popups
+- security documentation embedded directly in the UI patterns
 
 ## Workspace Studio
 
@@ -190,3 +247,6 @@ The most effective pattern is:
 - Choose `workspace_studio` if you want the broadest example of how the library fits together.
 - Choose `data_pipeline_command_center` if your real goal is pipeline observability and operational dashboarding on Databricks.
 - Choose `pipeline_observability_015` if you want the newest chart, pipeline graph, kanban, and chatbot UI primitives.
+- Choose `component_studio` if you want an example that behaves like documentation and showcases nearly every UI surface.
+- Choose `clinical_trial_command_center` if you want a highly regulated, analytics-heavy portal pattern.
+- Choose `secure_internal_tools` if you want security, identity governance, and role-aware page design patterns first.

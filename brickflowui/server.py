@@ -20,7 +20,7 @@ from urllib.parse import urlparse
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -50,17 +50,18 @@ _FRONTEND_DIST = Path(__file__).parent / "frontend" / "dist"
 # ---------------------------------------------------------------------------
 
 
-def _full_tree_msg(vnode: VNode, handler_registry: dict) -> str:
+def _full_tree_msg(vnode: VNode, handler_registry: dict, dbrx_app: "App") -> str:
     """Build full-tree WebSocket message."""
+    tree = dbrx_app.transform_serialized_tree(vnode.serialize(handler_registry))
     return json.dumps({
         "type": "full",
-        "tree": vnode.serialize(handler_registry),
+        "tree": tree,
     })
 
 
-def _patch_msg(patches: list) -> str:
+def _patch_msg(patches: list, dbrx_app: "App") -> str:
     """Build patch WebSocket message."""
-    return json.dumps({"type": "patch", "patches": patches})
+    return json.dumps({"type": "patch", "patches": dbrx_app.transform_serialized_tree(patches)})
 
 
 def _error_msg(message: str) -> str:
@@ -161,7 +162,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
         response.headers.setdefault(
             "Content-Security-Policy",
             "default-src 'self'; connect-src 'self' ws: wss:; img-src 'self' data: https:; "
-            "style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data: https:; "
+            "media-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data: https:; "
             "frame-ancestors 'self';",
         )
         return response
@@ -174,6 +175,13 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
             StaticFiles(directory=str(_assets_dir)),
             name="assets",
         )
+
+    @fastapi_app.get("/__brickflow_asset__/{asset_id}/{filename:path}", include_in_schema=False)
+    async def brickflow_asset(asset_id: str, filename: str):
+        asset_path = dbrx_app.get_registered_asset(asset_id)
+        if asset_path is None or not asset_path.exists():
+            raise HTTPException(status_code=404, detail="Asset not found")
+        return FileResponse(asset_path)
 
     # ── Custom API Routes ──────────────────────────────────────────────────
     _mount_custom_routes(fastapi_app, dbrx_app)
@@ -225,7 +233,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                 vnode: VNode = dbrx_app._render(session_id)
                 ctx.run_effects()
                 ctx.dirty = False
-                msg = _full_tree_msg(vnode, handler_registry)
+                msg = _full_tree_msg(vnode, handler_registry, dbrx_app)
                 await ws.send_text(msg)
                 return vnode
             except Exception as exc:
@@ -250,7 +258,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                 patches = diff(old_tree, new_tree, new_handler_registry)
                 handler_registry = new_handler_registry
                 if patches:
-                    await ws.send_text(_patch_msg(patches))
+                    await ws.send_text(_patch_msg(patches, dbrx_app))
                 return new_tree
             except Exception as exc:
                 logger.exception(f"[{session_id}] Re-render error")
@@ -346,12 +354,11 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
 
         theme_css = dbrx_app.theme.to_css_variables()
         style_block = f"<style id=\"bf-theme-vars\">{theme_css}</style>"
-        favicon_block = (
-            f'<link rel="icon" href="{dbrx_app.favicon}" />'
-            if dbrx_app.favicon
-            else ""
-        )
-        head_injections = f"{style_block}\n{favicon_block}" if favicon_block else style_block
+        favicon_block = f'<link rel="icon" href="{dbrx_app.favicon}" />' if dbrx_app.favicon else ""
+        bootstrap = json.dumps(dbrx_app.loading_bootstrap())
+        bootstrap_block = f"<script>window.__BRICKFLOW_BOOTSTRAP__ = {bootstrap};</script>"
+        injections = [style_block, favicon_block, bootstrap_block]
+        head_injections = "\n".join(block for block in injections if block)
         
         index_path = _FRONTEND_DIST / "index.html"
         if index_path.exists():

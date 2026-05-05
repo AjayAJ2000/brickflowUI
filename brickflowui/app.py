@@ -19,10 +19,12 @@ Usage:
         app.run()
 """
 
+import hashlib
 import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union, Tuple
+from urllib.parse import quote
 
 from .auth import (
     AccessLevel,
@@ -40,6 +42,15 @@ from .theme import Theme
 from .version import __version__
 
 logger = logging.getLogger("brickflowui.app")
+
+_ASSET_PROP_KEYS = {
+    "src",
+    "poster",
+    "logo",
+    "favicon",
+    "avatar",
+    "image",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -87,6 +98,7 @@ class App:
         theme_color: Optional[str] = None,
         logo: Optional[str] = None,
         favicon: Optional[str] = None,
+        loading: Optional[Dict[str, Any]] = None,
         cors_origins: Optional[List[str]] = None,
         trusted_hosts: Optional[List[str]] = None,
         websocket_origins: Optional[List[str]] = None,
@@ -102,8 +114,10 @@ class App:
             self.theme.load({"colors": {"primary": theme_color}})
         if title == "BrickflowUI App":
             self.title = self.theme.branding_value("title", title)
-        self.logo = logo or self.theme.branding_value("logo")
-        self.favicon = favicon or self.theme.branding_value("favicon")
+        self._asset_registry: Dict[str, Path] = {}
+        self.logo = self.resolve_asset_url(logo or self.theme.branding_value("logo"))
+        self.favicon = self.resolve_asset_url(favicon or self.theme.branding_value("favicon"))
+        self.loading = self._normalize_loading_config(loading)
         self.cors_origins = list(cors_origins or [])
         self.trusted_hosts = list(trusted_hosts or [])
         self.websocket_origins = list(websocket_origins or [])
@@ -124,6 +138,101 @@ class App:
 
         # Simple root-mount shortcut (single-page apps)
         self._root_fn: Optional[Callable[[], VNode]] = None
+
+    def _normalize_loading_config(self, loading: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        theme_loading = self.theme.config.get("loading", {}) if isinstance(self.theme.config, dict) else {}
+        merged = {
+            "title": self.title,
+            "message": "Connecting to runtime...",
+            "reconnecting_message": "Reconnecting...",
+            "error_message": "Connection error - retrying...",
+            "animation": "spinner",
+            "text_only": False,
+            **(theme_loading if isinstance(theme_loading, dict) else {}),
+            **(loading or {}),
+        }
+
+        asset = merged.get("asset") or merged.get("logo") or merged.get("image")
+        video = merged.get("video")
+        if video:
+            merged["video"] = self.resolve_asset_url(video)
+            merged["asset"] = None
+            merged["asset_kind"] = "video"
+        elif asset:
+            merged["asset"] = self.resolve_asset_url(asset)
+            merged["asset_kind"] = self._asset_kind(asset)
+        else:
+            merged["asset"] = None
+            merged["asset_kind"] = None
+        return merged
+
+    def _asset_kind(self, value: Any) -> str:
+        suffix = Path(str(value)).suffix.lower()
+        if suffix in {".mp4", ".webm", ".ogg", ".mov"}:
+            return "video"
+        return "image"
+
+    def _coerce_asset_path(self, value: Any) -> Optional[Path]:
+        if value is None or isinstance(value, bool):
+            return None
+
+        raw = str(value).strip()
+        if not raw:
+            return None
+
+        lowered = raw.lower()
+        if lowered.startswith(("http://", "https://", "data:", "blob:", "/assets/", "/__brickflow_asset__/")):
+            return None
+
+        path = Path(raw).expanduser()
+        if not path.is_absolute():
+            path = Path.cwd() / path
+        path = path.resolve()
+        return path if path.exists() and path.is_file() else None
+
+    def resolve_asset_url(self, value: Any) -> Any:
+        asset_path = self._coerce_asset_path(value)
+        if asset_path is None:
+            return value
+
+        digest = hashlib.sha1(str(asset_path).encode("utf-8")).hexdigest()[:12]
+        self._asset_registry[digest] = asset_path
+        return f"/__brickflow_asset__/{digest}/{quote(asset_path.name)}"
+
+    def asset_url(self, value: Any) -> Any:
+        """Return a browser-safe URL for a local asset path, or the original value for remote URLs."""
+        return self.resolve_asset_url(value)
+
+    def get_registered_asset(self, asset_id: str) -> Optional[Path]:
+        return self._asset_registry.get(asset_id)
+
+    def transform_serialized_tree(self, payload: Any) -> Any:
+        if isinstance(payload, dict):
+            transformed = {}
+            for key, value in payload.items():
+                if key in _ASSET_PROP_KEYS:
+                    transformed[key] = self.resolve_asset_url(value)
+                else:
+                    transformed[key] = self.transform_serialized_tree(value)
+            return transformed
+
+        if isinstance(payload, list):
+            return [self.transform_serialized_tree(item) for item in payload]
+
+        return payload
+
+    def loading_bootstrap(self) -> Dict[str, Any]:
+        return {
+            "title": self.loading.get("title") or self.title,
+            "message": self.loading.get("message") or "Connecting to runtime...",
+            "reconnectingMessage": self.loading.get("reconnecting_message") or "Reconnecting...",
+            "errorMessage": self.loading.get("error_message") or "Connection error - retrying...",
+            "animation": self.loading.get("animation") or "spinner",
+            "textOnly": bool(self.loading.get("text_only")),
+            "asset": self.loading.get("asset"),
+            "assetKind": self.loading.get("asset_kind"),
+            "video": self.loading.get("video"),
+        }
 
     def _invalidate_server(self) -> None:
         """Drop the cached ASGI app when runtime routes or pages change."""

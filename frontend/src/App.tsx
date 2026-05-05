@@ -2,9 +2,27 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Renderer } from './Renderer'
 import type { VNodeData, ServerMessage, Patch } from './types'
 
-// ── WebSocket hook ───────────────────────────────────────────────────────
-
 type WsStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
+
+type LoadingBootstrap = {
+  title?: string
+  message?: string
+  reconnectingMessage?: string
+  errorMessage?: string
+  animation?: string
+  textOnly?: boolean
+  asset?: string | null
+  assetKind?: 'image' | 'video' | null
+  video?: string | null
+}
+
+declare global {
+  interface Window {
+    __BRICKFLOW_BOOTSTRAP__?: LoadingBootstrap
+  }
+}
+
+const LOADING_BOOTSTRAP: LoadingBootstrap = window.__BRICKFLOW_BOOTSTRAP__ || {}
 
 function applyPatch(tree: VNodeData, patch: Patch): VNodeData {
   const { op, path, node, props } = patch
@@ -44,7 +62,43 @@ function applyPatch(tree: VNodeData, patch: Patch): VNodeData {
   return { ...tree, children: newChildren }
 }
 
-// ── Main App ─────────────────────────────────────────────────────────────
+function LoadingVisual({ status }: { status: WsStatus }) {
+  const asset = LOADING_BOOTSTRAP.video || LOADING_BOOTSTRAP.asset
+  const kind = LOADING_BOOTSTRAP.video ? 'video' : LOADING_BOOTSTRAP.assetKind
+  const animation = LOADING_BOOTSTRAP.animation || 'spinner'
+  const title = LOADING_BOOTSTRAP.title || 'BrickflowUI'
+  const message =
+    status === 'connecting'
+      ? (LOADING_BOOTSTRAP.message || 'Connecting to runtime...')
+      : status === 'disconnected'
+        ? (LOADING_BOOTSTRAP.reconnectingMessage || 'Reconnecting...')
+        : status === 'error'
+          ? (LOADING_BOOTSTRAP.errorMessage || 'Connection error - retrying...')
+          : 'Loading...'
+
+  return (
+    <div className={`bf-loading-screen bf-loading-${animation}`}>
+      {!LOADING_BOOTSTRAP.textOnly ? (
+        kind === 'video' && asset ? (
+          <video
+            className="bf-loading-media"
+            src={asset}
+            autoPlay
+            muted
+            loop
+            playsInline
+          />
+        ) : asset ? (
+          <img className="bf-loading-media" src={asset} alt={`${title} loading`} />
+        ) : (
+          <div className={`bf-spinner bf-spinner-lg ${animation === 'pulse' ? 'bf-spinner-pulse' : ''}`} />
+        )
+      ) : null}
+      <div className="bf-loading-brand">{title}</div>
+      <div className="bf-loading-hint">{message}</div>
+    </div>
+  )
+}
 
 export default function App() {
   const [vdom, setVdom] = useState<VNodeData | null>(null)
@@ -62,7 +116,6 @@ export default function App() {
   const navigate = useCallback((path: string) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: 'navigate', path }))
-      // Optimistically update URL without full page reload
       window.history.pushState({}, '', path)
     }
   }, [])
@@ -95,7 +148,7 @@ export default function App() {
                 updated = applyPatch(updated, patch)
               }
               vdomRef.current = updated
-              setVdom({ ...updated }) // force re-render with new ref
+              setVdom({ ...updated })
             }
           } else if (msg.type === 'error') {
             setError(msg.message)
@@ -118,7 +171,6 @@ export default function App() {
 
     connect()
 
-    // Handle browser back/forward navigation
     const handlePopstate = () => navigate(window.location.pathname)
     window.addEventListener('popstate', handlePopstate)
 
@@ -129,20 +181,8 @@ export default function App() {
     }
   }, [navigate])
 
-  // Loading screen
   if (!vdom) {
-    return (
-      <div className="bf-loading-screen">
-        <div className="bf-spinner bf-spinner-lg" />
-        <div className="bf-loading-brand">BrickflowUI</div>
-        <div className="bf-loading-hint">
-          {status === 'connecting' ? 'Connecting to runtime…' :
-           status === 'disconnected' ? 'Reconnecting…' :
-           status === 'error' ? 'Connection error — retrying…' :
-           'Loading…'}
-        </div>
-      </div>
-    )
+    return <LoadingVisual status={status} />
   }
 
   return (
@@ -151,7 +191,7 @@ export default function App() {
         <Renderer node={vdom} dispatch={dispatch} navigate={navigate} />
       </div>
       {status === 'disconnected' && (
-        <div className="bf-connection-banner">⚠ Reconnecting to server…</div>
+        <div className="bf-connection-banner">Reconnecting to server...</div>
       )}
       {error && (
         <div className="bf-connection-banner" style={{ borderColor: 'var(--db-error)', color: 'var(--db-error)', background: 'var(--db-error-bg)' }}>

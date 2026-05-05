@@ -56,6 +56,12 @@ motion:
   duration_slow: "420ms"
   easing_standard: "cubic-bezier(0.4, 0, 0.2, 1)"
   stagger_step: "40ms"
+
+loading:
+  title: "Acme Ops Portal"
+  message: "Preparing the control room..."
+  animation: "pulse"
+  asset: "assets/acme-loader.gif"
 ```
 
 ## Notes
@@ -63,6 +69,8 @@ motion:
 - `branding.title` becomes the browser tab title when you leave `App(title=...)` at its default.
 - `branding.logo` is used by the app shell sidebar when `App(logo=...)` is not provided directly.
 - `branding.favicon` is injected into the HTML shell automatically.
+- `loading.*` can brand the pre-runtime loading screen with text, motion, and an image or GIF.
+- Local file paths for `logo`, `favicon`, `Image`, `Video`, and loading assets are now served automatically by the BrickflowUI runtime.
 - Friendly aliases are supported:
   - `background` maps to `bg`
   - `primary_hover` maps to `primary-hover`
@@ -95,3 +103,26 @@ That makes it easier to style:
 ## Recommendation
 
 For teams, keep one shared branding YAML per product and let apps override only the few values they need locally. That gives you consistent portals without forcing every app author to hand-roll theme tokens.
+
+## App-Level Loading Example
+
+If you want to control the startup experience directly in Python, you can do it at app construction time:
+
+```python
+app = db.App(
+    title="Astellas Study Portal",
+    loading={
+        "title": "Astellas Study Portal",
+        "message": "Connecting to trial operations runtime...",
+        "animation": "pulse",
+        "asset": "assets/astellas-loader.gif",
+    },
+)
+```
+
+Supported patterns:
+
+- text-only loading state
+- branded image or GIF
+- branded video
+- default spinner fallback

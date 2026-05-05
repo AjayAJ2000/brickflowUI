@@ -343,7 +343,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
     case 'EmptyState':
       return (
-        <div key={key} className="bf-empty-state">
+        <div key={key} className={resolveMotionClass(p, ['bf-empty-state'])} style={resolveMotionStyle(p)}>
           <div className="bf-empty-state-icon">
             <Icon name={(p.icon as string) || 'Inbox'} size={18} />
           </div>
@@ -426,7 +426,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       if (!p.visible) return null
       return (
         <div key={key} className="bf-modal-overlay" onClick={() => ev('close')}>
-          <div className={`bf-modal bf-modal-${(p.size as string) || 'md'}`} onClick={e => e.stopPropagation()}>
+          <div className={resolveMotionClass(p, [`bf-modal`, `bf-modal-${(p.size as string) || 'md'}`])} style={resolveMotionStyle(p)} onClick={e => e.stopPropagation()}>
             <div className="bf-modal-header">
               <span className="bf-modal-title">{p.title as string}</span>
               <button type="button" className="bf-modal-close" onClick={() => ev('close')}><Icon name="X" size={16} /></button>
@@ -441,7 +441,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       if (!p.visible) return null
       return (
         <div key={key} className="bf-drawer-overlay" onClick={() => ev('close')}>
-          <div className={`bf-drawer bf-drawer-${(p.side as string) || 'right'}`} style={{ width: (p.width as string) || '420px' }} onClick={e => e.stopPropagation()}>
+          <div className={resolveMotionClass(p, [`bf-drawer`, `bf-drawer-${(p.side as string) || 'right'}`])} style={{ width: (p.width as string) || '420px', ...resolveMotionStyle(p) }} onClick={e => e.stopPropagation()}>
             <div className="bf-drawer-header">
               <span className="bf-drawer-title">{p.title as string}</span>
               <button type="button" className="bf-modal-close" onClick={() => ev('close')}><Icon name="X" size={16} /></button>
@@ -456,7 +456,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return (
         <div key={key} className={`bf-popup-shell bf-popup-${(p.placement as string) || 'center'}`}>
           {Boolean(p.backdrop) ? <button type="button" className="bf-popup-backdrop" onClick={() => ev('close')} aria-label="Close popup" /> : null}
-          <div className={`bf-popup bf-popup-${(p.size as string) || 'sm'}`} onClick={e => e.stopPropagation()}>
+          <div className={resolveMotionClass(p, [`bf-popup`, `bf-popup-${(p.size as string) || 'sm'}`])} style={resolveMotionStyle(p)} onClick={e => e.stopPropagation()}>
             <div className="bf-popup-header">
               <span className="bf-popup-title">{p.title as string}</span>
               <button type="button" className="bf-modal-close" onClick={() => ev('close')}><Icon name="X" size={16} /></button>
@@ -709,7 +709,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
     case 'Hero':
       return (
-        <section key={key} className={`bf-hero ${p.animated ? 'bf-animated' : ''}`}>
+        <section key={key} className={resolveMotionClass(p, ['bf-hero'])} style={resolveMotionStyle(p)}>
           <div className="bf-hero-content">
             {p.eyebrow ? <div className="bf-hero-eyebrow">{p.eyebrow as string}</div> : null}
             <h1 className="bf-hero-title">{p.title as string}</h1>
@@ -723,7 +723,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
     case 'SectionHeader':
       return (
-        <div key={key} className="bf-section-header">
+        <div key={key} className={resolveMotionClass(p, ['bf-section-header'])} style={resolveMotionStyle(p)}>
           <div>
             {p.eyebrow ? <div className="bf-section-eyebrow">{p.eyebrow as string}</div> : null}
             <div className="bf-section-title">{p.title as string}</div>
@@ -754,9 +754,12 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
     case 'Image':
       return <ImageComponent key={key} props={p} />
 
+    case 'Video':
+      return <VideoComponent key={key} props={p} />
+
     case 'Timeline':
       return (
-        <div key={key} className="bf-timeline">
+        <div key={key} className={resolveMotionClass(p, ['bf-timeline'])} style={resolveMotionStyle(p)}>
           {p.title ? <div className="bf-card-title" style={{ marginBottom: 12 }}>{p.title as string}</div> : null}
           {((p.items as Array<Record<string, any>>) || []).map((item, index) => (
             <div key={`${key}-timeline-${index}`} className="bf-timeline-item">
@@ -829,7 +832,7 @@ function AlertComponent({ props: p }: { props: Record<string, any> }) {
 
 function ImageComponent({ props: p }: { props: Record<string, any> }) {
   return (
-    <figure className={`bf-image-shell ${p.caption ? 'has-caption' : ''}`}>
+    <figure className={resolveMotionClass(p, ['bf-image-shell', p.caption ? 'has-caption' : ''])} style={resolveMotionStyle(p)}>
       <img
         className="bf-image"
         src={p.src as string}
@@ -839,6 +842,29 @@ function ImageComponent({ props: p }: { props: Record<string, any> }) {
           width: (p.width as string) || '100%',
           height: (p.height as string) || 'auto',
           objectFit: (p.fit as React.CSSProperties['objectFit']) || 'cover',
+          borderRadius: (p.radius as string) || 'var(--radius-lg)',
+        }}
+      />
+      {p.caption ? <figcaption className="bf-image-caption">{p.caption as string}</figcaption> : null}
+    </figure>
+  )
+}
+
+function VideoComponent({ props: p }: { props: Record<string, any> }) {
+  return (
+    <figure className={resolveMotionClass(p, ['bf-image-shell', 'bf-video-shell', p.caption ? 'has-caption' : ''])} style={resolveMotionStyle(p)}>
+      <video
+        className="bf-video"
+        src={p.src as string}
+        poster={p.poster as string | undefined}
+        controls={p.controls !== false}
+        autoPlay={Boolean(p.autoplay)}
+        loop={Boolean(p.loop)}
+        muted={Boolean(p.muted)}
+        playsInline
+        style={{
+          width: (p.width as string) || '100%',
+          height: (p.height as string) || 'auto',
           borderRadius: (p.radius as string) || 'var(--radius-lg)',
         }}
       />
@@ -867,7 +893,7 @@ function ToastComponent({ props: p, dispatchClose }: { props: Record<string, any
   if (p.visible === false || dismissed) return null
 
   return (
-    <div className={`bf-toast bf-toast-${(p.alertType as string) || 'info'}`}>
+    <div className={resolveMotionClass(p, [`bf-toast`, `bf-toast-${(p.alertType as string) || 'info'}`])} style={resolveMotionStyle(p)}>
       {p.icon ? <Icon name={p.icon as string} size={16} /> : null}
       <div className="bf-toast-content">
         {p.title ? <div className="bf-toast-title">{p.title as string}</div> : null}
@@ -1209,7 +1235,7 @@ function PipelineGraphComponent({ props: p, dispatch }: { props: Record<string, 
 function StatusStripComponent({ props: p }: { props: Record<string, any> }) {
   const items = (p.items as Array<Record<string, any>>) || []
   return (
-    <div className="bf-status-strip">
+    <div className={resolveMotionClass(p, ['bf-status-strip'])} style={resolveMotionStyle(p)}>
       {p.title ? <div className="bf-card-title">{p.title as string}</div> : null}
       <div className="bf-status-strip-grid" style={{ '--bf-status-cols': Number(p.columns || 4) } as React.CSSProperties}>
         {items.map((item, index) => {
@@ -1231,7 +1257,7 @@ function StepperComponent({ props: p }: { props: Record<string, any> }) {
   const steps = (p.steps as Array<Record<string, any>>) || []
   const active = Number(p.active || 0)
   return (
-    <div className={`bf-stepper bf-stepper-${(p.orientation as string) || 'horizontal'}`}>
+    <div className={resolveMotionClass(p, [`bf-stepper`, `bf-stepper-${(p.orientation as string) || 'horizontal'}`])} style={resolveMotionStyle(p)}>
       {steps.map((step, index) => {
         const state = index < active ? 'complete' : index === active ? 'active' : 'pending'
         return (
@@ -1251,7 +1277,7 @@ function StepperComponent({ props: p }: { props: Record<string, any> }) {
 function KanbanBoardComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: Record<string, unknown>) => void }) {
   const columns = (p.columns as Array<Record<string, any>>) || []
   return (
-    <div className="bf-kanban">
+    <div className={resolveMotionClass(p, ['bf-kanban'])} style={resolveMotionStyle(p)}>
       {columns.map((column, columnIndex) => {
         const cards = (column.cards as Array<Record<string, any>>) || []
         return (
@@ -1279,7 +1305,7 @@ function KanbanBoardComponent({ props: p, dispatch }: { props: Record<string, an
 function ChatMessageComponent({ props: p }: { props: Record<string, any> }) {
   const role = (p.role as string) || 'assistant'
   return (
-    <div className={`bf-chat-message ${role} ${statusTone(p.tone)}`}>
+    <div className={resolveMotionClass(p, [`bf-chat-message`, role, statusTone(p.tone)])} style={resolveMotionStyle(p)}>
       <div className="bf-chat-avatar">{p.avatar ? String(p.avatar) : role.slice(0, 1).toUpperCase()}</div>
       <div className="bf-chat-bubble">
         <div className="bf-chat-meta">
@@ -1306,7 +1332,7 @@ function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }: { prop
   }
 
   return (
-    <div className="bf-chat-input">
+    <div className={resolveMotionClass(p, ['bf-chat-input'])} style={resolveMotionStyle(p)}>
       <input
         className="bf-input"
         name={(p.name as string) || 'message'}
