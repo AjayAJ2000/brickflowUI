@@ -22,7 +22,12 @@ export interface ErrorMessage {
   message: string
 }
 
-export type ServerMessage = FullMessage | PatchMessage | ErrorMessage
+export interface EventCompleteMessage {
+  type: 'event_complete'
+  event_id: string
+}
+
+export type ServerMessage = FullMessage | PatchMessage | ErrorMessage | EventCompleteMessage
 
 export interface Patch {
   op: 'replace' | 'update_props' | 'insert' | 'remove'

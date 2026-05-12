@@ -1,128 +1,216 @@
 # BrickflowUI Theming
 
-BrickflowUI supports loading app branding and design tokens from a YAML or JSON file:
+BrickflowUI supports product-level theming, branded loading experiences, local media assets, and dual dark/light modes directly from Python.
+
+## Fast Mental Model
+
+The theme surface is split into these areas:
+
+- `branding`: title, logo, favicon, tagline, theme-toggle visibility
+- `loading`: startup copy, animation, image/GIF/video asset
+- `colors`: semantic and interactive color tokens
+- `surfaces`: canvas, muted layers, overlays, hover surfaces
+- `typography`: body, heading, and mono stacks
+- `spacing`, `radius`, `shadows`, `motion`
+- `default_mode`, `light_mode`, `dark_mode`
+
+## Example Theme
 
 ```python
 import brickflowui as db
 
-app = db.App(theme="branding.yaml")
-```
-
-## Theme Model
-
-```yaml
-branding:
-  title: "Acme Ops Portal"
-  logo: "/static/acme-logo.svg"
-  favicon: "/static/acme-favicon.ico"
-
-colors:
-  primary: "#FF5F2E"
-  primary_hover: "#D9481C"
-  background: "#F7F7F5"
-  surface: "#FFFFFF"
-  text: "#18181B"
-  text_muted: "#71717A"
-  border: "#E4E4E7"
-  success: "#16A34A"
-  warning: "#D97706"
-  error: "#DC2626"
-  link: "#1D4ED8"
-
-surfaces:
-  background: "#F7F7F5"
-  surface: "#F1F5F9"
-  overlay: "rgba(255,255,255,0.88)"
-
-typography:
-  font_family: "'IBM Plex Sans', sans-serif"
-  font_mono: "'IBM Plex Mono', monospace"
-  base_size: "15px"
-
-spacing:
-  unit: "6px"
-
-borders:
-  radius: "14px"
-
-shadows:
-  small: "0 1px 2px rgba(0,0,0,0.05)"
-  medium: "0 10px 30px rgba(0,0,0,0.08)"
-  large: "0 18px 45px rgba(0,0,0,0.12)"
-
-motion:
-  duration_fast: "140ms"
-  duration_normal: "220ms"
-  duration_slow: "420ms"
-  easing_standard: "cubic-bezier(0.4, 0, 0.2, 1)"
-  stagger_step: "40ms"
-
-loading:
-  title: "Acme Ops Portal"
-  message: "Preparing the control room..."
-  animation: "pulse"
-  asset: "assets/acme-loader.gif"
-```
-
-## Notes
-
-- `branding.title` becomes the browser tab title when you leave `App(title=...)` at its default.
-- `branding.logo` is used by the app shell sidebar when `App(logo=...)` is not provided directly.
-- `branding.favicon` is injected into the HTML shell automatically.
-- `loading.*` can brand the pre-runtime loading screen with text, motion, and an image or GIF.
-- Local file paths for `logo`, `favicon`, `Image`, `Video`, and loading assets are now served automatically by the BrickflowUI runtime.
-- Friendly aliases are supported:
-  - `background` maps to `bg`
-  - `primary_hover` maps to `primary-hover`
-  - `text_muted` maps to `text-muted`
-  - `font_family` maps to `sans`
-  - `base_size` maps to `base-size`
-  - `borders.radius` maps to the default corner radius token
-  - `surfaces.background` maps to `canvas`
-  - `surfaces.surface` maps to `muted`
-  - `shadows.medium` maps to `md`
-  - `motion.duration_normal` maps to `duration-normal`
-
-## Polish-Oriented Tokens
-
-For `0.1.6`, the theme surface is broad enough to support more than dashboards:
-
-- `colors.*` for brand identity and semantics
-- `surfaces.*` for softer backgrounds and overlay layers
-- `shadows.*` for depth and premium card treatments
-- `motion.*` for transitions and stagger timing
-
-That makes it easier to style:
-
-- dashboards
-- pipeline command centers
-- chatbot surfaces
-- landing pages
-- internal launch or product sites
-
-## Recommendation
-
-For teams, keep one shared branding YAML per product and let apps override only the few values they need locally. That gives you consistent portals without forcing every app author to hand-roll theme tokens.
-
-## App-Level Loading Example
-
-If you want to control the startup experience directly in Python, you can do it at app construction time:
-
-```python
 app = db.App(
-    title="Astellas Study Portal",
-    loading={
-        "title": "Astellas Study Portal",
-        "message": "Connecting to trial operations runtime...",
-        "animation": "pulse",
-        "asset": "assets/astellas-loader.gif",
-    },
+    theme={
+        "default_mode": "dark",
+        "branding": {
+            "title": "Acme Control Center",
+            "tagline": "React components. Python syntax.",
+            "logo": "assets/acme-logo.svg",
+            "favicon": "assets/acme-mark.svg",
+            "show_theme_toggle": True,
+        },
+        "loading": {
+            "title": "Acme Control Center",
+            "subtitle": "Runtime-secure analytics workspace",
+            "message": "Connecting to warehouse and restoring your view...",
+            "animation": "pulse",
+            "asset": "assets/loader.gif",
+        },
+        "colors": {
+            "primary": "#4361EE",
+            "primary_hover": "#3650D8",
+            "success": "#22C55E",
+            "warning": "#F59E0B",
+            "error": "#F43F5E",
+        },
+        "light_mode": {
+            "colors": {
+                "background": "#F8FAFC",
+                "surface": "#FFFFFF",
+                "text": "#0F172A",
+                "text_muted": "#475569",
+                "border": "#E2E8F0",
+            }
+        },
+        "dark_mode": {
+            "colors": {
+                "background": "#0A0F1E",
+                "surface": "#0F172A",
+                "text": "#F1F5F9",
+                "text_muted": "#94A3B8",
+                "border": "#1E293B",
+            }
+        },
+    }
 )
 ```
 
-Supported patterns:
+## Theme File Example
+
+You can also keep the same structure in YAML or JSON and pass the file path to `App(theme=...)`.
+
+```yaml
+default_mode: dark
+
+branding:
+  title: Acme Control Center
+  tagline: React components. Python syntax.
+  logo: assets/acme-logo.svg
+  favicon: assets/acme-mark.svg
+  show_theme_toggle: true
+
+loading:
+  title: Acme Control Center
+  subtitle: Runtime-secure analytics workspace
+  message: Connecting to warehouse and restoring your view...
+  animation: pulse
+  asset: assets/loader.gif
+
+colors:
+  primary: "#4361EE"
+  primary_hover: "#3650D8"
+  success: "#22C55E"
+  warning: "#F59E0B"
+  error: "#F43F5E"
+
+light_mode:
+  colors:
+    background: "#F8FAFC"
+    surface: "#FFFFFF"
+    text: "#0F172A"
+    text_muted: "#475569"
+    border: "#E2E8F0"
+
+dark_mode:
+  colors:
+    background: "#0A0F1E"
+    surface: "#0F172A"
+    text: "#F1F5F9"
+    text_muted: "#94A3B8"
+    border: "#1E293B"
+```
+
+## Branding Details
+
+These keys matter most for product identity:
+
+- `branding.title`: browser title and shell title when `App(title=...)` is left at default
+- `branding.tagline`: shell subtitle for `Sidebar` and `TopNav`
+- `branding.logo`: shell logo when not passed directly to `App(logo=...)`
+- `branding.favicon`: injected into the HTML shell
+- `branding.show_theme_toggle`: enables the built-in dark/light switch in shell components
+
+## Loading Screen
+
+The loading screen is customizable before the runtime connects:
 
 - text-only loading state
 - branded image or GIF
 - branded video
 - default spinner fallback
+- animation hint such as `spinner`, `pulse`, or `float`
+
+```python
+app = db.App(
+    loading={
+        "title": "Astellas Study Portal",
+        "subtitle": "Clinical operations workspace",
+        "message": "Connecting to secured trial services...",
+        "animation": "pulse",
+        "asset": "assets/astellas-loader.gif",
+    }
+)
+```
+
+## Local Assets
+
+Local paths are supported for:
+
+- `branding.logo`
+- `branding.favicon`
+- `loading.asset`
+- `loading.video`
+- `db.Image(...)`
+- `db.Video(...)`
+- `db.Hero(image=...)`
+
+BrickflowUI serves these through a runtime asset route automatically, so they work in the app without you manually configuring static hosting.
+
+## Dark And Light Mode
+
+If your theme defines both modes, `ThemeToggle` and shell-level toggles switch the active mode in the browser.
+
+```python
+db.ThemeToggle()
+```
+
+You can also let `TopNav` or `Sidebar` handle it:
+
+```python
+db.TopNav(
+    items=[db.NavItem("Overview", "/")],
+    brand_name="Acme Analytics",
+    show_theme_toggle=True,
+)
+```
+
+## Image And Hero Branding
+
+For inline logos or lightweight brand marks, use:
+
+```python
+db.Image("assets/logo.svg", alt="Acme", variant="inline")
+```
+
+For circular avatars:
+
+```python
+db.Image("assets/user.png", alt="Operator", variant="avatar", width="40px")
+```
+
+For hero-level brand presentation:
+
+```python
+db.Hero(
+    "Workspace command center",
+    tagline="Built with BrickflowUI",
+    image="assets/logo.svg",
+)
+```
+
+## Friendly Aliases
+
+The theme loader accepts practical aliases:
+
+- `brand_name` -> `branding.title`
+- `brand_tagline` -> `branding.tagline`
+- `primary_hover` -> `colors.primary-hover`
+- `text_muted` -> `colors.text-muted`
+- `background` -> `colors.bg`
+- `font_family` -> `typography.sans`
+- `base_size` -> `typography.base-size`
+- `light_mode` / `dark_mode` -> mode-specific overrides
+
+## Recommendation
+
+Keep one product theme file per portal or platform area. Let application code override only the parts that are truly app-specific, such as page-level hero content or a temporary loading message. That keeps branding stable while still giving engineers room to move quickly.

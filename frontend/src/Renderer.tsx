@@ -44,6 +44,9 @@ const CHART_COLORS = ['#FF3621', '#58a6ff', '#3fb950', '#e3b341', '#bc8cff', '#d
 interface RenderCtx {
   dispatch: (event_id: string, data?: Record<string, unknown>) => void
   navigate: (path: string) => void
+  pendingEvents: Set<string>
+  themeMode: 'light' | 'dark'
+  setThemeMode: (mode: 'light' | 'dark') => void
 }
 
 // ── Icon component ──────────────────────────────────────────────────────────
@@ -86,6 +89,16 @@ function resolveMotionStyle(props: Record<string, any>) {
   return style
 }
 
+function pendingEventIds(props: Record<string, any>, keys: string[] = ['click', 'change', 'submit', 'close', 'rowClick', 'nodeClick', 'cardClick']) {
+  return keys
+    .map((key) => props[key])
+    .filter((value): value is string => typeof value === 'string' && value.length > 0)
+}
+
+function isPending(props: Record<string, any>, ctx: RenderCtx, keys?: string[]) {
+  return pendingEventIds(props, keys).some((eventId) => ctx.pendingEvents.has(eventId))
+}
+
 function renderLoadingSkeleton(lines = 3) {
   return (
     <div className="bf-skeleton-stack">
@@ -122,8 +135,22 @@ function statusTone(status?: unknown) {
 }
 
 // ── Main recursive renderer ────────────────────────────────────────────────
-export function Renderer({ node, dispatch, navigate }: { node: VNodeData; dispatch: RenderCtx['dispatch']; navigate: RenderCtx['navigate'] }) {
-  const ctx: RenderCtx = { dispatch, navigate }
+export function Renderer({
+  node,
+  dispatch,
+  navigate,
+  pendingEvents,
+  themeMode,
+  setThemeMode,
+}: {
+  node: VNodeData
+  dispatch: RenderCtx['dispatch']
+  navigate: RenderCtx['navigate']
+  pendingEvents: Set<string>
+  themeMode: 'light' | 'dark'
+  setThemeMode: (mode: 'light' | 'dark') => void
+}) {
+  const ctx: RenderCtx = { dispatch, navigate, pendingEvents, themeMode, setThemeMode }
   return <>{renderNode(node, ctx, '0')}</>
 }
 
@@ -213,26 +240,31 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
     // ── Controls ───────────────────────────────────────────────────────────
     case 'Button':
+      {
+      const autoLoading = isPending(p, ctx, ['click'])
       return (
         <button
           key={key}
-          className={resolveMotionClass(p, ['bf-btn', `bf-btn-${(p.variant as string) || 'primary'}`])}
-          disabled={(p.disabled as boolean) || (p.loading as boolean) || false}
+          className={resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ['bf-btn', `bf-btn-${(p.variant as string) || 'primary'}`])}
+          disabled={(p.disabled as boolean) || (p.loading as boolean) || autoLoading || false}
           type={(p.htmlType as 'button' | 'submit' | 'reset') || 'button'}
           style={resolveMotionStyle(p)}
           onClick={() => ev('click')}
         >
-          {p.loading && <span className="bf-spinner bf-spinner-sm" />}
+          {(p.loading || autoLoading) && <span className="bf-spinner bf-spinner-sm" />}
           {p.icon && <Icon name={p.icon as string} size={14} />}
           {p.label as string}
         </button>
       )
+      }
 
     case 'Input':
+      {
+      const autoLoading = isPending(p, ctx, ['change'])
       return (
-        <div key={key} className={resolveMotionClass(p, ['bf-form-field'])} style={resolveMotionStyle(p)}>
+        <div key={key} className={resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ['bf-form-field'])} style={resolveMotionStyle(p)}>
           {p.label && <label className="bf-label">{p.label as string}</label>}
-          {p.loading && <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div>}
+          {(p.loading || autoLoading) && <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div>}
           {p.inputType === 'textarea'
             ? <textarea
                 name={p.name as string}
@@ -240,6 +272,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
                 placeholder={p.placeholder as string}
                 value={(p.value as string) || ''}
                 disabled={p.disabled as boolean}
+                aria-busy={autoLoading}
                 onChange={e => ev('change', e.target.value)}
               />
             : <input
@@ -249,29 +282,33 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
                 placeholder={(p.placeholder as string) || ''}
                 value={(p.value as string) || ''}
                 disabled={p.disabled as boolean}
+                aria-busy={autoLoading}
                 onChange={e => ev('change', e.target.value)}
               />
           }
           {p.error && <span className="bf-input-error">{p.error as string}</span>}
         </div>
       )
+      }
 
     case 'DateRangePicker':
-      return <DateRangePickerComponent key={key} props={p} dispatch={(value) => ev('change', value)} />
+      return <DateRangePickerComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['change']) }} dispatch={(value) => ev('change', value)} />
 
     case 'MultiSelect':
-      return <MultiSelectComponent key={key} props={p} dispatch={(value) => ev('change', value)} />
+      return <MultiSelectComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['change']) }} dispatch={(value) => ev('change', value)} />
 
     case 'Select':
+      {
+      const autoLoading = isPending(p, ctx, ['change'])
       return (
-        <div key={key} className={resolveMotionClass(p, ['bf-form-field'])} style={resolveMotionStyle(p)}>
+        <div key={key} className={resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ['bf-form-field'])} style={resolveMotionStyle(p)}>
           {p.label && <label className="bf-label">{p.label as string}</label>}
-          {p.loading && <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div>}
+          {(p.loading || autoLoading) && <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div>}
           <select
             name={p.name as string}
             className="bf-select"
             value={(p.value as string) || ''}
-            disabled={p.disabled as boolean}
+            disabled={Boolean(p.disabled) || autoLoading}
             onChange={e => ev('change', e.target.value)}
           >
             {p.placeholder && <option value="">{p.placeholder as string}</option>}
@@ -281,30 +318,37 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
           </select>
         </div>
       )
+      }
 
     case 'Checkbox':
+      {
+      const autoLoading = isPending(p, ctx, ['change'])
       return (
-        <label key={key} className="bf-checkbox-wrapper">
+        <label key={key} className={`bf-checkbox-wrapper ${autoLoading ? 'is-loading' : ''}`}>
           <input
             type="checkbox"
             name={p.name as string}
             checked={Boolean(p.checked)}
-            disabled={p.disabled as boolean}
+            disabled={Boolean(p.disabled) || autoLoading}
             onChange={e => ev('change', e.target.checked)}
           />
           {p.label as string}
+          {autoLoading ? <span className="bf-spinner bf-spinner-sm" /> : null}
         </label>
       )
+      }
 
     case 'Toggle': {
       return (
-        <ToggleComponent key={key} props={p} dispatch={(v) => ev('change', v)} />
+        <ToggleComponent key={key} props={p} dispatch={(v) => ev('change', v)} pending={isPending(p, ctx, ['change'])} />
       )
     }
 
     case 'Slider':
+      {
+      const autoLoading = isPending(p, ctx, ['change'])
       return (
-        <div key={key} className="bf-slider-wrapper">
+        <div key={key} className={`bf-slider-wrapper ${autoLoading ? 'bf-is-loading' : ''}`}>
           {p.label && <label className="bf-label">{p.label as string}</label>}
           <input
             type="range"
@@ -314,10 +358,13 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
             max={p.max as number}
             step={p.step as number}
             value={p.value as number}
+            disabled={Boolean(p.disabled) || autoLoading}
             onChange={e => ev('change', parseFloat(e.target.value))}
           />
+          {autoLoading ? <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div> : null}
         </div>
       )
+      }
 
     // ── Data display ───────────────────────────────────────────────────────
     case 'Breadcrumbs':
@@ -399,6 +446,9 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
     case 'Sidebar':
       return <SidebarComponent key={key} props={p} children={children} ctx={ctx} />
 
+    case 'TopNav':
+      return <TopNavComponent key={key} props={p} children={children} ctx={ctx} />
+
     // NavItem is rendered as part of Sidebar above; standalone fallback:
     case 'NavItem':
       return (
@@ -467,40 +517,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       )
 
     case 'Form':
-      return (
-        <form
-          key={key}
-          className="bf-form"
-          onSubmit={async (e) => {
-            e.preventDefault()
-            const data: Record<string, unknown> = {}
-            new FormData(e.currentTarget).forEach((v, k) => {
-              if (k in data) {
-                const current = data[k]
-                if (Array.isArray(current)) current.push(v)
-                else data[k] = [current, v]
-              } else {
-                data[k] = v
-              }
-            })
-            const resp = await fetch(p.action as string, {
-              method: (p.method as string) || 'POST',
-              credentials: 'same-origin',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data),
-            })
-            if (resp.ok && p.successRedirect) {
-              if (p.reloadOnSuccess) {
-                window.location.assign(p.successRedirect as string)
-              } else {
-                ctx.navigate(p.successRedirect as string)
-              }
-            }
-          }}
-        >
-          {renderChildren(children, ctx, key)}
-        </form>
-      )
+      return <FormComponent key={key} props={p} children={children} ctx={ctx} nodeKey={key} />
 
     // ── Charts ─────────────────────────────────────────────────────────────
     case 'AreaChart': {
@@ -712,6 +729,12 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
         <section key={key} className={resolveMotionClass(p, ['bf-hero'])} style={resolveMotionStyle(p)}>
           <div className="bf-hero-content">
             {p.eyebrow ? <div className="bf-hero-eyebrow">{p.eyebrow as string}</div> : null}
+            {p.image ? (
+              <div className="bf-hero-brand">
+                <img className="bf-hero-brand-image" src={p.image as string} alt={(p.imageAlt as string) || (p.title as string)} />
+                {p.tagline ? <span className="bf-hero-brand-tagline">{p.tagline as string}</span> : null}
+              </div>
+            ) : p.tagline ? <div className="bf-hero-brand-tagline">{p.tagline as string}</div> : null}
             <h1 className="bf-hero-title">{p.title as string}</h1>
             {p.subtitle ? <p className="bf-hero-subtitle">{p.subtitle as string}</p> : null}
             {(p.badges as VNodeData[] | undefined)?.length ? <div className="bf-hero-badges">{renderChildren((p.badges as VNodeData[]) || [], ctx, `${key}-badges`)}</div> : null}
@@ -746,7 +769,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return <ChatMessageComponent key={key} props={p} />
 
     case 'ChatInput':
-      return <ChatInputComponent key={key} props={p} dispatchChange={(value) => ev('change', value)} dispatchSubmit={(value) => ev('submit', value)} />
+      return <ChatInputComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['submit', 'change']) }} dispatchChange={(value) => ev('change', value)} dispatchSubmit={(value) => ev('submit', value)} />
 
     case 'Toast':
       return <ToastComponent key={key} props={p} dispatchClose={() => ev('close')} />
@@ -756,6 +779,12 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
     case 'Video':
       return <VideoComponent key={key} props={p} />
+
+    case 'Embed':
+      return <EmbedComponent key={key} props={p} />
+
+    case 'ThemeToggle':
+      return <ThemeToggleComponent key={key} props={p} ctx={ctx} />
 
     case 'Timeline':
       return (
@@ -791,17 +820,18 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
 // ── Sub-components (need their own state) ─────────────────────────────────
 
-function ToggleComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: boolean) => void }) {
+function ToggleComponent({ props: p, dispatch, pending }: { props: Record<string, any>; dispatch: (v: boolean) => void; pending: boolean }) {
   const checked = Boolean(p.checked)
   return (
     <label
-      className="bf-toggle-wrapper"
+      className={`bf-toggle-wrapper ${pending ? 'is-loading' : ''}`}
       onClick={() => {
-        if (!p.disabled) dispatch(!checked)
+        if (!p.disabled && !pending) dispatch(!checked)
       }}
     >
       <div className={`bf-toggle-switch ${checked ? 'checked' : ''}`} />
       {p.label as string}
+      {pending ? <span className="bf-spinner bf-spinner-sm" /> : null}
     </label>
   )
 }
@@ -831,20 +861,33 @@ function AlertComponent({ props: p }: { props: Record<string, any> }) {
 }
 
 function ImageComponent({ props: p }: { props: Record<string, any> }) {
+  const variant = (p.variant as string) || 'content'
+  const image = (
+    <img
+      className={`bf-image ${variant === 'inline' ? 'inline' : ''} ${variant === 'avatar' ? 'avatar' : ''}`}
+      src={p.src as string}
+      alt={(p.alt as string) || ''}
+      loading={(p.loadingMode as 'lazy' | 'eager') || 'lazy'}
+      style={{
+        width: (p.width as string) || (variant === 'avatar' ? '48px' : '100%'),
+        height: (p.height as string) || (variant === 'avatar' ? ((p.width as string) || '48px') : 'auto'),
+        objectFit: (p.fit as React.CSSProperties['objectFit']) || 'cover',
+        borderRadius: variant === 'avatar' ? '50%' : ((p.radius as string) || 'var(--radius-lg)'),
+      }}
+    />
+  )
+
+  if (variant === 'inline' && !p.caption) {
+    return (
+      <span className={resolveMotionClass(p, ['bf-inline-image'])} style={resolveMotionStyle(p)}>
+        {image}
+      </span>
+    )
+  }
+
   return (
     <figure className={resolveMotionClass(p, ['bf-image-shell', p.caption ? 'has-caption' : ''])} style={resolveMotionStyle(p)}>
-      <img
-        className="bf-image"
-        src={p.src as string}
-        alt={(p.alt as string) || ''}
-        loading={(p.loadingMode as 'lazy' | 'eager') || 'lazy'}
-        style={{
-          width: (p.width as string) || '100%',
-          height: (p.height as string) || 'auto',
-          objectFit: (p.fit as React.CSSProperties['objectFit']) || 'cover',
-          borderRadius: (p.radius as string) || 'var(--radius-lg)',
-        }}
-      />
+      {image}
       {p.caption ? <figcaption className="bf-image-caption">{p.caption as string}</figcaption> : null}
     </figure>
   )
@@ -870,6 +913,45 @@ function VideoComponent({ props: p }: { props: Record<string, any> }) {
       />
       {p.caption ? <figcaption className="bf-image-caption">{p.caption as string}</figcaption> : null}
     </figure>
+  )
+}
+
+function EmbedComponent({ props: p }: { props: Record<string, any> }) {
+  return (
+    <div className={resolveMotionClass(p, ['bf-embed-shell'])} style={resolveMotionStyle(p)}>
+      <iframe
+        className="bf-embed-frame"
+        src={p.src as string}
+        title={(p.title as string) || 'Embedded content'}
+        loading={(p.loadingMode as 'lazy' | 'eager') || 'lazy'}
+        sandbox={typeof p.sandbox === 'string' ? (p.sandbox as string) : undefined}
+        allowFullScreen={Boolean(p.allowFullscreen)}
+        style={{
+          height: (p.height as string) || '420px',
+          borderRadius: (p.radius as string) || 'var(--radius-lg)',
+        }}
+      />
+    </div>
+  )
+}
+
+function ThemeToggleComponent({ props: p, ctx }: { props: Record<string, any>; ctx: RenderCtx }) {
+  const isDark = ctx.themeMode === 'dark'
+  return (
+    <button
+      type="button"
+      className="bf-theme-toggle"
+      onClick={() => ctx.setThemeMode(isDark ? 'light' : 'dark')}
+      aria-label={String(p.label || 'Toggle theme')}
+    >
+      <span className="bf-theme-toggle-track">
+        <span className={`bf-theme-toggle-thumb ${isDark ? 'dark' : 'light'}`} />
+      </span>
+      <span className="bf-theme-toggle-copy">
+        <strong>{String(p.label || 'Theme')}</strong>
+        <span>{isDark ? String(p.darkLabel || 'Dark') : String(p.lightLabel || 'Light')}</span>
+      </span>
+    </button>
   )
 }
 
@@ -963,15 +1045,16 @@ function DateRangePickerComponent({ props: p, dispatch }: { props: Record<string
   const emit = (nextStart: string, nextEnd: string) => dispatch({ start: nextStart, end: nextEnd })
 
   return (
-    <div className="bf-form-field">
+    <div className={`bf-form-field ${p.loading ? 'bf-is-loading' : ''}`}>
       {p.label && <label className="bf-label">{p.label as string}</label>}
+      {p.loading ? <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div> : null}
       <div className="bf-date-range">
         <input
           className="bf-input"
           type="date"
           name={`${p.name as string}_start`}
           value={start}
-          disabled={Boolean(p.disabled)}
+          disabled={Boolean(p.disabled) || Boolean(p.loading)}
           onChange={(e) => {
             const next = e.target.value
             setStart(next)
@@ -984,7 +1067,7 @@ function DateRangePickerComponent({ props: p, dispatch }: { props: Record<string
           type="date"
           name={`${p.name as string}_end`}
           value={end}
-          disabled={Boolean(p.disabled)}
+          disabled={Boolean(p.disabled) || Boolean(p.loading)}
           onChange={(e) => {
             const next = e.target.value
             setEnd(next)
@@ -1007,8 +1090,9 @@ function MultiSelectComponent({ props: p, dispatch }: { props: Record<string, an
   }
 
   return (
-    <div className="bf-form-field">
+    <div className={`bf-form-field ${p.loading ? 'bf-is-loading' : ''}`}>
       {p.label && <label className="bf-label">{p.label as string}</label>}
+      {p.loading ? <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div> : null}
       <div className="bf-multiselect">
         {Array.from(selected).map((value) => (
           <input key={`hidden-${value}`} type="hidden" name={p.name as string} value={value} />
@@ -1020,7 +1104,7 @@ function MultiSelectComponent({ props: p, dispatch }: { props: Record<string, an
               key={option.value}
               type="button"
               className={`bf-multiselect-chip ${active ? 'active' : ''}`}
-              disabled={Boolean(p.disabled)}
+              disabled={Boolean(p.disabled) || Boolean(p.loading)}
               onClick={() => toggleValue(option.value)}
             >
               {option.label}
@@ -1042,7 +1126,10 @@ function SidebarComponent({ props: p, children, ctx }: { props: Record<string, a
       <div className="bf-mobile-nav">
         <button type="button" className="bf-mobile-nav-toggle" onClick={() => setMobileOpen((open) => !open)}>
           <Icon name="LayoutDashboard" size={16} />
-          <span>{p.brandName as string}</span>
+          <span className="bf-mobile-nav-copy">
+            <strong>{p.brandName as string}</strong>
+            {p.tagline ? <small>{p.tagline as string}</small> : null}
+          </span>
         </button>
       </div>
       {mobileOpen ? <button type="button" className="bf-sidebar-backdrop" onClick={closeSidebar} aria-label="Close navigation" /> : null}
@@ -1052,7 +1139,10 @@ function SidebarComponent({ props: p, children, ctx }: { props: Record<string, a
             ? <img src={p.logo as string} alt="logo" width={28} height={28} style={{ borderRadius: 6 }} />
             : <div className="bf-sidebar-brand-logo">{((p.brandName as string) || 'B').charAt(0)}</div>
           }
-          <span className="bf-sidebar-brand-name">{p.brandName as string}</span>
+          <div className="bf-sidebar-brand-copy">
+            <span className="bf-sidebar-brand-name">{p.brandName as string}</span>
+            {p.tagline ? <span className="bf-sidebar-brand-tagline">{p.tagline as string}</span> : null}
+          </div>
           <button type="button" className="bf-sidebar-close" onClick={closeSidebar} aria-label="Close navigation">
             <Icon name="X" size={16} />
           </button>
@@ -1077,8 +1167,124 @@ function SidebarComponent({ props: p, children, ctx }: { props: Record<string, a
             )
           })}
         </nav>
+        {Boolean(p.showThemeToggle) ? (
+          <div className="bf-sidebar-footer">
+            <ThemeToggleComponent props={{ label: 'Theme', lightLabel: 'Light', darkLabel: 'Dark' }} ctx={ctx} />
+          </div>
+        ) : null}
       </aside>
     </>
+  )
+}
+
+function TopNavComponent({ props: p, children, ctx }: { props: Record<string, any>; children: VNodeData[]; ctx: RenderCtx }) {
+  const activePath = window.location.pathname
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const actions = (p.actions as VNodeData[]) || []
+
+  return (
+    <header className={`bf-topnav ${p.sticky !== false ? 'sticky' : ''}`}>
+      <div className="bf-topnav-inner">
+        <div className="bf-topnav-brand">
+          {p.logo ? <img className="bf-topnav-logo" src={p.logo as string} alt={String(p.brandName || 'Brand')} /> : <div className="bf-sidebar-brand-logo">{String((p.brandName as string) || 'B').charAt(0)}</div>}
+          <div className="bf-topnav-copy">
+            <span className="bf-topnav-brand-name">{p.brandName as string}</span>
+            {p.tagline ? <span className="bf-topnav-brand-tagline">{p.tagline as string}</span> : null}
+          </div>
+        </div>
+        <nav className="bf-topnav-links">
+          {children.map((child, index) => {
+            const cp = child.props as Record<string, any>
+            const isActive = activePath === (cp.path as string)
+            return (
+              <button key={`${cp.path as string}-${index}`} type="button" className={`bf-topnav-link ${isActive ? 'active' : ''}`} onClick={() => ctx.navigate(cp.path as string)}>
+                {cp.icon ? <Icon name={cp.icon as string} size={14} /> : null}
+                <span>{cp.label as string}</span>
+                {cp.badge ? <span className="bf-nav-badge">{cp.badge as string}</span> : null}
+              </button>
+            )
+          })}
+        </nav>
+        <div className="bf-topnav-actions">
+          {Boolean(p.showThemeToggle) ? <ThemeToggleComponent props={{ label: 'Theme', lightLabel: 'Light', darkLabel: 'Dark' }} ctx={ctx} /> : null}
+          {actions.length ? renderChildren(actions, ctx, 'topnav-actions') : null}
+          <button type="button" className="bf-topnav-menu" onClick={() => setMobileOpen((open) => !open)} aria-label="Toggle navigation menu">
+            <Icon name={mobileOpen ? 'X' : 'LayoutDashboard'} size={16} />
+          </button>
+        </div>
+      </div>
+      {mobileOpen ? (
+        <div className="bf-topnav-mobile">
+          <div className="bf-topnav-mobile-panel">
+            {children.map((child, index) => {
+              const cp = child.props as Record<string, any>
+              const isActive = activePath === (cp.path as string)
+              return (
+                <button
+                  key={`mobile-${cp.path as string}-${index}`}
+                  type="button"
+                  className={`bf-topnav-mobile-link ${isActive ? 'active' : ''}`}
+                  onClick={() => {
+                    setMobileOpen(false)
+                    ctx.navigate(cp.path as string)
+                  }}
+                >
+                  {cp.icon ? <Icon name={cp.icon as string} size={15} /> : null}
+                  <span>{cp.label as string}</span>
+                  {cp.badge ? <span className="bf-nav-badge">{cp.badge as string}</span> : null}
+                </button>
+              )
+            })}
+            {actions.length ? <div className="bf-topnav-mobile-actions">{renderChildren(actions, ctx, 'topnav-mobile-actions')}</div> : null}
+          </div>
+        </div>
+      ) : null}
+    </header>
+  )
+}
+
+function FormComponent({ props: p, children, ctx, nodeKey }: { props: Record<string, any>; children: VNodeData[]; ctx: RenderCtx; nodeKey: string }) {
+  const [submitting, setSubmitting] = useState(false)
+
+  return (
+    <form
+      className={`bf-form ${submitting ? 'bf-is-loading' : ''}`}
+      onSubmit={async (e) => {
+        e.preventDefault()
+        setSubmitting(true)
+        try {
+          const data: Record<string, unknown> = {}
+          new FormData(e.currentTarget).forEach((v, k) => {
+            if (k in data) {
+              const current = data[k]
+              if (Array.isArray(current)) current.push(v)
+              else data[k] = [current, v]
+            } else {
+              data[k] = v
+            }
+          })
+          const resp = await fetch(p.action as string, {
+            method: (p.method as string) || 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          })
+          if (resp.ok && p.successRedirect) {
+            if (p.reloadOnSuccess) {
+              window.location.assign(p.successRedirect as string)
+            } else {
+              ctx.navigate(p.successRedirect as string)
+            }
+          }
+        } finally {
+          setSubmitting(false)
+        }
+      }}
+    >
+      <fieldset className="bf-form-fieldset" disabled={submitting}>
+        {renderChildren(children, ctx, nodeKey)}
+      </fieldset>
+    </form>
   )
 }
 
@@ -1355,9 +1561,61 @@ function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }: { prop
   )
 }
 
+function tableCellTone(row: Record<string, unknown>, col: Record<string, any>, fallback: unknown) {
+  const keyedTone = col.toneKey ? row[String(col.toneKey)] : undefined
+  return statusTone(keyedTone ?? fallback ?? col.color)
+}
+
+function renderTableCell(row: Record<string, unknown>, col: Record<string, any>) {
+  const rawValue = row[col.key]
+  const format = String(col.format || 'text')
+
+  if (format === 'badge' || format === 'status') {
+    const tone = tableCellTone(row, col, rawValue)
+    return <span className={`bf-table-pill ${tone}`}>{String(rawValue ?? '')}</span>
+  }
+
+  if (format === 'progress') {
+    const value = Number(rawValue ?? 0)
+    const max = Number(col.max ?? 100)
+    const pct = Math.max(0, Math.min(100, (value / Math.max(1, max)) * 100))
+    return (
+      <div className="bf-table-progress">
+        <div className="bf-table-progress-track">
+          <div className={`bf-table-progress-fill ${tableCellTone(row, col, rawValue)}`} style={{ width: `${pct}%` }} />
+        </div>
+        <span className="bf-table-progress-value">{String(col.suffix ? `${value}${col.suffix}` : value)}</span>
+      </div>
+    )
+  }
+
+  if (format === 'currency') {
+    const value = Number(rawValue ?? 0)
+    return <span>{new Intl.NumberFormat(undefined, { style: 'currency', currency: String(col.currency || 'USD'), maximumFractionDigits: 0 }).format(value)}</span>
+  }
+
+  if (format === 'metric') {
+    return <span className="bf-table-metric">{String(rawValue ?? '')}</span>
+  }
+
+  if (format === 'image' || format === 'avatar') {
+    const src = String(rawValue ?? '')
+    if (!src) return <span className="bf-table-empty-cell">—</span>
+    return (
+      <img
+        className={`bf-table-media ${format === 'avatar' ? 'avatar' : ''}`}
+        src={src}
+        alt={String(col.alt || col.label || 'media')}
+      />
+    )
+  }
+
+  return String(rawValue ?? '')
+}
+
 function TableComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: RenderCtx['dispatch'] }) {
   const data = (p.data as Record<string, unknown>[]) || []
-  const columns = (p.columns as Array<{ key: string; label: string; sortable?: boolean }>) || []
+  const columns = (p.columns as Array<Record<string, any>>) || []
   const pageSize = (p.pagination as number) || 20
   const [page, setPage] = useState(0)
   const [sortKey, setSortKey] = useState<string | null>(null)
@@ -1438,8 +1696,8 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
               return (
                 <tr key={ri} className={rowClickId ? 'clickable' : ''} onClick={() => rowClickId && dispatch(rowClickId, { row })}>
                   {columns.map(col => (
-                    <td key={col.key} title={String(row[col.key] ?? '')}>
-                      {String(row[col.key] ?? '')}
+                    <td key={col.key as string} title={String(row[col.key as string] ?? '')} className={col.align ? `bf-table-align-${String(col.align)}` : ''}>
+                      {renderTableCell(row, col)}
                     </td>
                   ))}
                 </tr>

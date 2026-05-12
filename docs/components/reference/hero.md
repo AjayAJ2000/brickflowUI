@@ -2,46 +2,46 @@
 
 ## What It Does
 
-Hero creates a premium top-of-page introduction for dashboards, portals, or landing pages.
-
-## When To Use It
-
-Use `Hero` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
-
-```python
-import brickflowui as db
-
-node = db.Hero(...)
-```
+`Hero` creates a premium top-of-page introduction for dashboards, portals, landing pages, and internal product surfaces.
 
 ## Inputs To Know
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-SectionHeader, Badge
+- `title`
+- `subtitle`
+- `eyebrow`
+- `tagline`
+- `image`
+- `image_alt`
+- `actions`
+- `badges`
+- `visual`
+- `animated`, `animation`, `animation_delay`
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("Hero example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+hero = db.Hero(
+    "Workspace command center",
+    subtitle="Monitor jobs, data products, and release readiness in one place.",
+    eyebrow="Acme Analytics",
+    tagline="Built with BrickflowUI",
+    image="assets/logo.svg",
+    badges=[db.Badge("Runtime secure", color="green")],
+    actions=[
+        db.Button("Open report", variant="secondary"),
+        db.Button("Create alert"),
+    ],
+)
 ```
+
+## Works Well With
+
+`Badge`, `Button`, `SectionHeader`, `StatusStrip`, `Image`, `TopNav`
 
 ## Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- Use `image` for a small inline logo or product mark in the hero header itself.
+- Use `visual` when you want the right-hand side of the hero to host charts, cards, or another composed component.
+- `Hero` is a strong fit for both dashboards and landing pages, so it is a good place to express the product brand clearly.

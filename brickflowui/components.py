@@ -380,13 +380,50 @@ def Sidebar(
     items: List[VNode],
     logo: Optional[str] = None,
     brand_name: str = "BrickflowUI",
+    tagline: Optional[str] = None,
     collapsed: bool = False,
     **kwargs,
 ) -> VNode:
     return VNode(
         type="Sidebar",
-        props={"logo": logo, "brandName": brand_name, "collapsed": collapsed, **kwargs},
+        props={"logo": logo, "brandName": brand_name, "tagline": tagline, "collapsed": collapsed, **kwargs},
         children=items,
+    )
+
+
+def TopNav(
+    items: List[VNode],
+    logo: Optional[str] = None,
+    brand_name: str = "BrickflowUI",
+    tagline: Optional[str] = None,
+    actions: Optional[List[VNode]] = None,
+    sticky: bool = True,
+    show_theme_toggle: bool = False,
+    **kwargs,
+) -> VNode:
+    return VNode(
+        type="TopNav",
+        props={
+            "logo": logo,
+            "brandName": brand_name,
+            "tagline": tagline,
+            "actions": actions or [],
+            "sticky": sticky,
+            "showThemeToggle": show_theme_toggle,
+            **kwargs,
+        },
+        children=items,
+    )
+
+
+def ThemeToggle(
+    label: str = "Theme",
+    light_label: str = "Light",
+    dark_label: str = "Dark",
+) -> VNode:
+    return VNode(
+        type="ThemeToggle",
+        props={"label": label, "lightLabel": light_label, "darkLabel": dark_label},
     )
 
 
@@ -591,6 +628,8 @@ def Image(
     caption: Optional[str] = None,
     radius: str = "var(--radius-lg)",
     loading: Literal["lazy", "eager"] = "lazy",
+    variant: Literal["content", "inline", "avatar"] = "content",
+    inline: bool = False,
     animated: bool = False,
     animation: Optional[str] = None,
     animation_delay: Optional[float] = None,
@@ -606,6 +645,7 @@ def Image(
             "caption": caption,
             "radius": radius,
             "loadingMode": loading,
+            "variant": "inline" if inline else variant,
             "animated": animated,
             "animation": animation,
             "animationDelay": animation_delay,
@@ -677,6 +717,9 @@ def Hero(
     title: str,
     subtitle: Optional[str] = None,
     eyebrow: Optional[str] = None,
+    tagline: Optional[str] = None,
+    image: Optional[str] = None,
+    image_alt: str = "",
     actions: Optional[List[VNode]] = None,
     badges: Optional[List[VNode]] = None,
     visual: Optional[VNode] = None,
@@ -691,6 +734,9 @@ def Hero(
             "title": title,
             "subtitle": subtitle,
             "eyebrow": eyebrow,
+            "tagline": tagline,
+            "image": image,
+            "imageAlt": image_alt,
             "actions": actions or [],
             "badges": badges or [],
             "animated": animated,
@@ -698,6 +744,35 @@ def Hero(
             "animationDelay": animation_delay,
         },
         children=[visual] if visual else [],
+    )
+
+
+def Embed(
+    src: str,
+    title: str = "Embedded content",
+    height: str = "420px",
+    allow_fullscreen: bool = True,
+    loading: Literal["lazy", "eager"] = "lazy",
+    sandbox: Optional[str] = None,
+    radius: str = "var(--radius-lg)",
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
+) -> VNode:
+    return VNode(
+        type="Embed",
+        props={
+            "src": src,
+            "title": title,
+            "height": height,
+            "allowFullscreen": allow_fullscreen,
+            "loadingMode": loading,
+            "sandbox": sandbox,
+            "radius": radius,
+            "animated": animated,
+            "animation": animation,
+            "animationDelay": animation_delay,
+        },
     )
 
 

@@ -3,63 +3,112 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Mapping, Optional, Union
 
+
 DEFAULT_THEME = {
+    "default_mode": "dark",
     "branding": {
         "title": "BrickflowUI App",
+        "tagline": "React components. Python syntax.",
         "logo": None,
         "favicon": None,
+        "show_theme_toggle": True,
     },
     "loading": {
         "title": "BrickflowUI",
         "message": "Connecting to runtime...",
+        "subtitle": "Preparing the workspace runtime.",
         "animation": "spinner",
     },
     "colors": {
-        "primary": "#003087",
-        "primary-hover": "#00205b",
-        "primary-light": "#00aed1",
-        "bg": "#f8f9fa",
-        "surface": "#ffffff",
-        "text": "#1a1a1a",
-        "text-muted": "#6b7280",
-        "border": "#e5e7eb",
-        "success": "#10b981",
-        "warning": "#f59e0b",
-        "error": "#ef4444",
-        "info": "#0ea5e9",
-        "link": "#003087",
+        "primary": "#4361EE",
+        "primary-hover": "#3650D8",
+        "primary-light": "rgba(67, 97, 238, 0.18)",
+        "bg": "#0A0F1E",
+        "surface": "#0F172A",
+        "surface-2": "#1E293B",
+        "text": "#F1F5F9",
+        "text-muted": "#94A3B8",
+        "text-subtle": "#64748B",
+        "border": "#1E293B",
+        "border-strong": "#334155",
+        "success": "#22C55E",
+        "warning": "#F59E0B",
+        "error": "#F43F5E",
+        "info": "#3B82F6",
+        "link": "#4361EE",
     },
     "surfaces": {
-        "canvas": "#f8f9fa",
-        "muted": "#f1f3f5",
-        "overlay": "rgba(255, 255, 255, 0.88)",
+        "canvas": "#0A0F1E",
+        "muted": "#111B2E",
+        "overlay": "rgba(10, 15, 30, 0.82)",
+        "card": "#1E293B",
+        "hover": "#334155",
     },
     "typography": {
-        "sans": "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
-        "mono": "ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace",
-        "base-size": "14px",
+        "sans": "'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "heading": "'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "mono": "'JetBrains Mono', 'Fira Code', Menlo, Monaco, monospace",
+        "base-size": "15px",
     },
     "spacing": {
         "base": "4px",
     },
     "radius": {
         "sm": "4px",
-        "md": "8px",
-        "lg": "12px",
+        "md": "6px",
+        "lg": "8px",
+        "xl": "12px",
+        "full": "9999px",
     },
     "shadows": {
-        "sm": "0 1px 2px rgba(0,0,0,0.05)",
-        "md": "0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04)",
-        "lg": "0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04)",
+        "sm": "0 0 0 1px rgba(51, 65, 85, 0.48)",
+        "md": "0 0 0 1px rgba(51, 65, 85, 0.72)",
+        "lg": "0 0 0 1px rgba(67, 97, 238, 0.12), 0 24px 48px rgba(2, 6, 23, 0.48)",
     },
     "motion": {
         "duration-fast": "140ms",
         "duration-normal": "220ms",
         "duration-slow": "360ms",
-        "easing-standard": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "easing-standard": "cubic-bezier(0.2, 0.8, 0.2, 1)",
         "stagger-step": "40ms",
     },
+    "modes": {
+        "dark": {},
+        "light": {
+            "colors": {
+                "primary": "#4361EE",
+                "primary-hover": "#3650D8",
+                "primary-light": "rgba(67, 97, 238, 0.12)",
+                "bg": "#F8FAFC",
+                "surface": "#FFFFFF",
+                "surface-2": "#F1F5F9",
+                "text": "#0F172A",
+                "text-muted": "#475569",
+                "text-subtle": "#94A3B8",
+                "border": "#E2E8F0",
+                "border-strong": "#CBD5E1",
+                "success": "#15803D",
+                "warning": "#B45309",
+                "error": "#BE123C",
+                "info": "#1D4ED8",
+                "link": "#4361EE",
+            },
+            "surfaces": {
+                "canvas": "#F8FAFC",
+                "muted": "#F1F5F9",
+                "overlay": "rgba(255, 255, 255, 0.84)",
+                "card": "#F1F5F9",
+                "hover": "#E2E8F0",
+            },
+            "shadows": {
+                "sm": "0 1px 2px rgba(15, 23, 42, 0.05)",
+                "md": "0 8px 24px rgba(15, 23, 42, 0.08)",
+                "lg": "0 24px 48px rgba(15, 23, 42, 0.12)",
+            },
+        },
+    },
 }
+
 
 _SECTION_ALIASES = {
     "brand": "branding",
@@ -73,6 +122,9 @@ _SECTION_ALIASES = {
     "surfaces": "surfaces",
     "shadows": "shadows",
     "motion": "motion",
+    "modes": "modes",
+    "light_mode": "light_mode",
+    "dark_mode": "dark_mode",
 }
 
 _KEY_ALIASES = {
@@ -80,15 +132,21 @@ _KEY_ALIASES = {
         "app_name": "title",
         "brand_name": "title",
         "name": "title",
+        "brand_tagline": "tagline",
+        "subtitle": "tagline",
+        "theme_toggle": "show_theme_toggle",
     },
     "colors": {
         "primary_hover": "primary-hover",
         "primary_light": "primary-light",
         "background": "bg",
         "text_muted": "text-muted",
+        "text_subtle": "text-subtle",
+        "border_strong": "border-strong",
     },
     "typography": {
         "font_family": "sans",
+        "font_heading": "heading",
         "font_mono": "mono",
         "base_size": "base-size",
     },
@@ -115,6 +173,16 @@ _KEY_ALIASES = {
         "stagger_step": "stagger-step",
     },
 }
+
+
+def _deep_merge(base: Dict[str, Any], override: Mapping[str, Any]) -> Dict[str, Any]:
+    merged = deepcopy(base)
+    for key, value in override.items():
+        if isinstance(value, Mapping) and isinstance(merged.get(key), dict):
+            merged[key] = _deep_merge(merged[key], value)
+        else:
+            merged[key] = deepcopy(value)
+    return merged
 
 
 class Theme:
@@ -148,31 +216,64 @@ class Theme:
         elif isinstance(theme_config, dict):
             self._merge(self._normalize_theme(theme_config))
 
+    def default_mode(self) -> str:
+        mode = str(self.config.get("default_mode", "dark")).lower()
+        return mode if mode in {"light", "dark"} else "dark"
+
     def branding_value(self, key: str, default: Any = None) -> Any:
         return self.config.get("branding", {}).get(key, default)
 
     def _merge(self, new_config: Dict[str, Any]):
-        for section, values in new_config.items():
-            if section in self.config and isinstance(self.config[section], dict):
-                self.config[section].update(values)
-            else:
-                self.config[section] = values
+        self.config = _deep_merge(self.config, new_config)
+
+    def _normalize_section_values(self, section: str, raw_values: Any) -> Any:
+        if not isinstance(raw_values, dict):
+            return raw_values
+
+        section_aliases = _KEY_ALIASES.get(section, {})
+        values = {
+            section_aliases.get(raw_key, raw_key): raw_value
+            for raw_key, raw_value in raw_values.items()
+        }
+
+        if section == "radius" and "md" in values and "lg" not in values:
+            values = {**values, "lg": values["md"]}
+        return values
+
+    def _normalize_modes(self, raw_modes: Mapping[str, Any]) -> Dict[str, Any]:
+        normalized_modes: Dict[str, Any] = {}
+        for mode_name, mode_values in raw_modes.items():
+            if not isinstance(mode_values, Mapping):
+                continue
+            normalized_mode: Dict[str, Any] = {}
+            for section_name, section_values in mode_values.items():
+                section = _SECTION_ALIASES.get(section_name, section_name)
+                normalized_mode[section] = self._normalize_section_values(section, section_values)
+            normalized_modes[str(mode_name).lower()] = normalized_mode
+        return normalized_modes
 
     def _normalize_theme(self, raw_config: Mapping[str, Any]) -> Dict[str, Any]:
         normalized: Dict[str, Any] = {}
         for raw_section, raw_values in raw_config.items():
             section = _SECTION_ALIASES.get(raw_section, raw_section)
-            if isinstance(raw_values, dict):
-                section_aliases = _KEY_ALIASES.get(section, {})
-                values = {
-                    section_aliases.get(raw_key, raw_key): raw_value
-                    for raw_key, raw_value in raw_values.items()
-                }
-            else:
-                values = raw_values
 
-            if section == "radius" and isinstance(values, dict) and "md" in values and "lg" not in values:
-                values = {**values, "lg": values["md"]}
+            if section == "modes" and isinstance(raw_values, Mapping):
+                normalized["modes"] = self._normalize_modes(raw_values)
+                continue
+
+            if section in {"light_mode", "dark_mode"} and isinstance(raw_values, Mapping):
+                modes = normalized.setdefault("modes", {})
+                mode_name = "light" if section == "light_mode" else "dark"
+                modes[mode_name] = {
+                    _SECTION_ALIASES.get(mode_section, mode_section): self._normalize_section_values(
+                        _SECTION_ALIASES.get(mode_section, mode_section),
+                        mode_values,
+                    )
+                    for mode_section, mode_values in raw_values.items()
+                }
+                continue
+
+            values = self._normalize_section_values(section, raw_values)
 
             if section in normalized and isinstance(normalized[section], dict) and isinstance(values, dict):
                 normalized[section].update(values)
@@ -180,38 +281,38 @@ class Theme:
                 normalized[section] = values
         return normalized
 
-    def to_css_variables(self) -> str:
-        """Generate CSS :root variables from the theme config."""
-        lines = [":root {"]
+    def _resolved_mode_config(self, mode: Optional[str] = None) -> Dict[str, Any]:
+        selected_mode = (mode or self.default_mode()).lower()
+        mode_overrides = self.config.get("modes", {}).get(selected_mode, {})
+        merged = deepcopy(self.config)
+        merged.pop("modes", None)
+        merged.pop("default_mode", None)
+        return _deep_merge(merged, mode_overrides)
 
-        # Colors
-        for key, val in self.config.get("colors", {}).items():
+    def _css_block(self, selector: str, config: Mapping[str, Any]) -> str:
+        lines = [f"{selector} {{"]
+
+        for key, val in config.get("colors", {}).items():
             lines.append(f"  --db-{key}: {val};")
 
-        # Surface variants
-        for key, val in self.config.get("surfaces", {}).items():
+        for key, val in config.get("surfaces", {}).items():
             lines.append(f"  --db-surface-{key}: {val};")
 
-        # Typography
-        for key, val in self.config.get("typography", {}).items():
+        for key, val in config.get("typography", {}).items():
             lines.append(f"  --font-{key}: {val};")
 
-        # Spacing
-        base_spacing = self.config.get("spacing", {}).get("base", "4px")
+        base_spacing = config.get("spacing", {}).get("base", "4px")
         lines.append(f"  --space-unit: {base_spacing};")
         for i in range(1, 13):
             lines.append(f"  --space-{i}: calc(var(--space-unit) * {i});")
 
-        # Radius
-        for key, val in self.config.get("radius", {}).items():
+        for key, val in config.get("radius", {}).items():
             lines.append(f"  --radius-{key}: {val};")
 
-        # Shadows
-        for key, val in self.config.get("shadows", {}).items():
+        for key, val in config.get("shadows", {}).items():
             lines.append(f"  --shadow-{key}: {val};")
 
-        # Motion
-        motion = self.config.get("motion", {})
+        motion = config.get("motion", {})
         for key, val in motion.items():
             lines.append(f"  --motion-{key}: {val};")
 
@@ -220,9 +321,21 @@ class Theme:
         if "easing-standard" in motion:
             lines.append(f"  --transition-easing: {motion['easing-standard']};")
         if "duration-normal" in motion and "easing-standard" in motion:
-            lines.append(
-                "  --transition: var(--transition-duration) var(--transition-easing);"
-            )
+            lines.append("  --transition: var(--transition-duration) var(--transition-easing);")
 
         lines.append("}")
         return "\n".join(lines)
+
+    def to_css_variables(self) -> str:
+        default_mode = self.default_mode()
+        blocks = [self._css_block(":root", self._resolved_mode_config(default_mode))]
+        for mode_name in ("dark", "light"):
+            if mode_name == default_mode:
+                continue
+            blocks.append(
+                self._css_block(
+                    f":root[data-theme-mode='{mode_name}']",
+                    self._resolved_mode_config(mode_name),
+                )
+            )
+        return "\n\n".join(blocks)

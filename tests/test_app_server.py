@@ -104,6 +104,22 @@ def test_shell_bootstrap_and_local_asset_route():
     assert asset_response.status_code == 200
     assert b"<svg" in asset_response.content
 
+
+def test_shell_bootstrap_includes_theme_mode_and_subtitle():
+    app = App(
+        title="Acme Analytics",
+        theme={"branding": {"tagline": "React components. Python syntax."}},
+        loading={"subtitle": "Querying warehouse metadata"},
+    )
+    app.mount(lambda: VNode(type="div"))
+    client = TestClient(create_asgi_app(app))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "Querying warehouse metadata" in response.text
+    assert "\"themeMode\": \"dark\"" in response.text
+
 def test_custom_api_route():
     app = App()
     
@@ -463,3 +479,30 @@ def test_pipeline_node_click_payload_updates_state_and_rerenders():
     assert patch["type"] == "patch"
     text_patch = next(item for item in patch["patches"] if item["path"] == [0])
     assert text_patch["props"]["value"] == "bronze"
+
+
+def test_websocket_sends_event_complete_for_non_dirty_handlers():
+    app = App()
+    touched = {"count": 0}
+
+    @app.page("/")
+    def home():
+        return db.Button("Ping", on_click=lambda: touched.__setitem__("count", touched["count"] + 1))
+
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events") as websocket:
+        full = websocket.receive_json()
+        event_id = full["tree"]["props"]["click"]
+
+        websocket.send_json(
+            {
+                "type": "event",
+                "event_id": event_id,
+                "data": {},
+            }
+        )
+        completion = websocket.receive_json()
+
+    assert touched["count"] == 1
+    assert completion == {"type": "event_complete", "event_id": event_id}

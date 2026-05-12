@@ -40,6 +40,7 @@ Use this catalog when you want a page dedicated to one BrickflowUI component.
 - [Timeline](reference/timeline.md): Narrates chronological events such as incidents, approvals, or jobs.
 - [Image](reference/image.md): Renders local or remote images, logos, screenshots, and GIFs from Python.
 - [Video](reference/video.md): Renders local or remote videos directly from your BrickflowUI script.
+- [Embed](reference/embed.md): Hosts external artifacts, dashboards, and review content inside the page.
 - [SparklineStat](reference/sparkline-stat.md): Combines a compact KPI value with a tiny embedded trend line.
 
 ## Navigation
@@ -47,7 +48,9 @@ Use this catalog when you want a page dedicated to one BrickflowUI component.
 - [Tabs](reference/tabs.md): Switches between multiple content sections without leaving the page.
 - [TabItem](reference/tab-item.md): Defines one tab label and its corresponding content tree.
 - [Sidebar](reference/sidebar.md): Creates the left navigation shell for multi-page apps.
+- [TopNav](reference/top-nav.md): Creates a responsive top navigation bar with automatic mobile collapse.
 - [NavItem](reference/nav-item.md): Defines one route entry inside a sidebar navigation list.
+- [ThemeToggle](reference/theme-toggle.md): Switches between dark and light modes directly in the UI.
 - [Modal](reference/modal.md): Shows a centered blocking overlay for heavier workflows.
 - [Drawer](reference/drawer.md): Slides contextual detail in from the side without leaving the page.
 - [Popup](reference/popup.md): Shows a lightweight confirmation or quick-look overlay.

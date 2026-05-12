@@ -68,6 +68,10 @@ def _error_msg(message: str) -> str:
     return json.dumps({"type": "error", "message": message})
 
 
+def _event_complete_msg(event_id: str) -> str:
+    return json.dumps({"type": "event_complete", "event_id": event_id})
+
+
 def _consume_task_exception(task: asyncio.Task) -> None:
     """Prevent noisy unretrieved-task warnings during websocket disconnect races."""
     try:
@@ -273,6 +277,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
         # ── Event/rerender loop ────────────────────────────────────────────
         try:
             while True:
+                completed_event_id: Optional[str] = None
                 # Wait for either an incoming WS message or a dirty flag
                 receive_task = asyncio.ensure_future(ws.receive_text())
                 rerender_task = asyncio.ensure_future(ctx.rerender_event.wait())
@@ -324,6 +329,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                                 await ws.send_text(_error_msg(str(exc)))
                             finally:
                                 reset_current_principal(principal_token)
+                                completed_event_id = str(event_id)
 
                     elif msg_data.get("type") == "navigate":
                         path = msg_data.get("path", "/")
@@ -335,6 +341,9 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                 # If any state change occurred, re-render
                 if ctx.dirty:
                     current_tree = await send_patch(current_tree)
+
+                if completed_event_id is not None:
+                    await ws.send_text(_event_complete_msg(completed_event_id))
 
         except WebSocketDisconnect:
             logger.info(f"[{session_id}] WebSocket disconnected")
@@ -480,7 +489,7 @@ def _minimal_html_shell(style_block: str = "", title: str = "BrickflowUI App") -
   <div id="root">
     <div class="loading-screen">
       <div class="spinner"></div>
-      <div class="loading-brand">BrickflowUI</div>
+      <div class="loading-brand">__APP_TITLE__</div>
       <div class="loading-hint">Connecting to runtime...</div>
     </div>
   </div>

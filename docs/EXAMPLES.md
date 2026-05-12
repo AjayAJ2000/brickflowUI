@@ -11,6 +11,7 @@ Use this page when you want to skip the docs theory and start from something run
 | Counter | `examples/counter/app.py` | Fastest possible sanity check |
 | Auth Portal | `examples/auth_portal/app.py` | Login, access control, protected routes |
 | Operations + Finance Portal | `examples/operations_finance_portal/app.py` | Executive dashboard with a traditional top nav |
+| Acme Analytics Command Center | `examples/acme_analytics_command_center/app.py` | Dark SaaS-style analytics shell with responsive navigation, rich tables, and theme modes |
 | Data Pipeline Command Center | `examples/data_pipeline_command_center/app.py` | Industry-style data engineering monitoring with filters, SLA controls, cost, freshness, and Databricks SQL handoff |
 | Pipeline Observability 0.1.6 | `examples/pipeline_observability_015/app.py` | New 0.1.6 showcase with pipeline graph, chatbot UI, heatmap, treemap, funnel, radar, gauge, kanban, and table export |
 | Component Studio | `examples/component_studio/app.py` | Interactive all-components app that doubles as documentation |
@@ -44,6 +45,21 @@ This is a good starting point for:
 - bronze/silver/gold pipeline visibility
 - engineering + analytics stakeholder review dashboards
 - free-edition Databricks prototypes that later grow into team dashboards
+
+## Acme Analytics Command Center
+
+Use this example when you want to prove BrickflowUI can build the kind of dark, premium analytics portal teams usually expect from a dedicated frontend stack.
+
+- `examples/acme_analytics_command_center/app.py`
+
+It demonstrates:
+
+- multi-page branded shell with sidebar navigation
+- built-in dark/light mode switching
+- responsive page composition that stays usable on mobile
+- KPI cards and hero composition
+- richer table cells with badge, currency, progress, and status formatting
+- a screenshot-style operational dashboard surface you can extend into a real product
 
 ## Pipeline Observability 0.1.6
 
@@ -242,6 +258,7 @@ The most effective pattern is:
 - Choose `counter` if you just want to verify installation and runtime.
 - Choose `auth_portal` if your main concern is access control and protected pages.
 - Choose `operations_finance_portal` if you want a polished dashboard-style shell quickly.
+- Choose `acme_analytics_command_center` if you want a premium analytics dashboard aesthetic with richer table presentation.
 - Choose `chatbot_workspace` if you want an assistant-style interface with real UI controls around it.
 - Choose `landing_site` if you want a cleaner marketing or internal product-launch layout.
 - Choose `workspace_studio` if you want the broadest example of how the library fits together.

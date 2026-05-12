@@ -64,7 +64,7 @@ class DemoCookieAuthProvider:
 
 
 app = db.App(
-    theme=APP_DIR / "astellas_theme.yaml",
+    theme=APP_DIR / "theme.yaml",
     auth_mode="hybrid",
     auth_provider=DemoCookieAuthProvider(),
     allow_anonymous=True,

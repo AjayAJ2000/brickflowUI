@@ -2,46 +2,82 @@
 
 ## What It Does
 
-Table shows rows of structured data with sorting, pagination, and export.
+`Table` renders structured rows with sorting, pagination, row click handling, CSV export, loading states, and richer cell presentation patterns.
 
 ## When To Use It
 
-Use `Table` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
-
-```python
-import brickflowui as db
-
-node = db.Table(...)
-```
+Use `Table` for dashboards, review queues, release lists, customer scorecards, and any screen where dense operational data matters.
 
 ## Inputs To Know
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
+- `data`: list of row dictionaries
+- `columns`: explicit column definitions
+- `pagination`: page size
+- `on_row_click`: callback when a row is selected
+- `loading`: show a loading state while data is in flight
+- `empty_message`: custom empty-state copy
+- `exportable`: turn on built-in CSV export
 
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
+## Useful Column Patterns
 
-## Works Well With
+`Table` columns can now describe richer cell formats:
 
-Form, Drawer
+```python
+columns = [
+    {"key": "account", "label": "Account", "format": "metric"},
+    {"key": "plan", "label": "Plan", "format": "badge", "toneKey": "planTone"},
+    {"key": "mrr", "label": "MRR", "format": "currency", "currency": "USD"},
+    {"key": "health", "label": "Health", "format": "progress", "toneKey": "statusTone"},
+    {"key": "status", "label": "Status", "format": "status", "toneKey": "statusTone"},
+]
+```
+
+Supported practical formats:
+
+- `text`
+- `metric`
+- `badge`
+- `status`
+- `progress`
+- `currency`
+- `image`
+- `avatar`
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("Table example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+rows = [
+    {
+        "account": "Acme Corp",
+        "plan": "Enterprise",
+        "planTone": "info",
+        "mrr": 12400,
+        "health": 88,
+        "status": "Active",
+        "statusTone": "success",
+    }
+]
+
+table = db.Table(
+    data=rows,
+    columns=[
+        {"key": "account", "label": "Account", "format": "metric"},
+        {"key": "plan", "label": "Plan", "format": "badge", "toneKey": "planTone"},
+        {"key": "mrr", "label": "MRR", "format": "currency", "currency": "USD"},
+        {"key": "health", "label": "Health", "format": "progress", "toneKey": "statusTone"},
+        {"key": "status", "label": "Status", "format": "status", "toneKey": "statusTone"},
+    ],
+    exportable=True,
+)
 ```
+
+## Works Well With
+
+`Card`, `SectionHeader`, `Drawer`, `DateRangePicker`, `MultiSelect`, `PipelineGraph`
 
 ## Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- Use `loading=True` when you are waiting on backend data, or let the runtime-driven loading flow handle it from interaction events.
+- Use column formatting when you need a screenshot-grade table rather than plain strings.

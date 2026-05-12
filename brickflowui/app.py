@@ -117,6 +117,9 @@ class App:
         self._asset_registry: Dict[str, Path] = {}
         self.logo = self.resolve_asset_url(logo or self.theme.branding_value("logo"))
         self.favicon = self.resolve_asset_url(favicon or self.theme.branding_value("favicon"))
+        self.brand_tagline = self.theme.branding_value("tagline")
+        self.show_theme_toggle = bool(self.theme.branding_value("show_theme_toggle", True))
+        self.default_theme_mode = self.theme.default_mode()
         self.loading = self._normalize_loading_config(loading)
         self.cors_origins = list(cors_origins or [])
         self.trusted_hosts = list(trusted_hosts or [])
@@ -144,6 +147,7 @@ class App:
         merged = {
             "title": self.title,
             "message": "Connecting to runtime...",
+            "subtitle": self.brand_tagline or "Preparing the workspace runtime.",
             "reconnecting_message": "Reconnecting...",
             "error_message": "Connection error - retrying...",
             "animation": "spinner",
@@ -225,6 +229,7 @@ class App:
         return {
             "title": self.loading.get("title") or self.title,
             "message": self.loading.get("message") or "Connecting to runtime...",
+            "subtitle": self.loading.get("subtitle") or self.brand_tagline,
             "reconnectingMessage": self.loading.get("reconnecting_message") or "Reconnecting...",
             "errorMessage": self.loading.get("error_message") or "Connection error - retrying...",
             "animation": self.loading.get("animation") or "spinner",
@@ -232,6 +237,7 @@ class App:
             "asset": self.loading.get("asset"),
             "assetKind": self.loading.get("asset_kind"),
             "video": self.loading.get("video"),
+            "themeMode": self.default_theme_mode,
         }
 
     def _invalidate_server(self) -> None:
@@ -357,7 +363,9 @@ class App:
                 Sidebar(
                     items=nav_items,
                     brand_name=self.title,
+                    tagline=self.brand_tagline,
                     logo=self.logo,
+                    show_theme_toggle=self.show_theme_toggle,
                 ),
                 Column(
                     children=[current_page.render_fn()],

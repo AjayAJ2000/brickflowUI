@@ -69,6 +69,29 @@ def test_theme_css_variables_include_surface_shadow_and_motion_tokens():
     assert "--transition: var(--transition-duration) var(--transition-easing);" in css
 
 
+def test_theme_supports_light_and_dark_mode_overrides():
+    theme = Theme(
+        {
+            "default_mode": "dark",
+            "branding": {"brand_tagline": "Runtime confidence"},
+            "light_mode": {
+                "colors": {"background": "#ffffff", "text_muted": "#475569"},
+            },
+            "dark_mode": {
+                "colors": {"background": "#010409", "text_muted": "#8b949e"},
+            },
+        }
+    )
+
+    css = theme.to_css_variables()
+
+    assert theme.branding_value("tagline") == "Runtime confidence"
+    assert theme.default_mode() == "dark"
+    assert ":root[data-theme-mode='light']" in css
+    assert "--db-bg: #010409;" in css
+    assert "--db-bg: #ffffff;" in css
+
+
 def test_app_uses_branding_from_theme_file_when_defaults_are_used():
     theme_path = Path(__file__).parent / "_branding_test.yaml"
     try:

@@ -16,12 +16,27 @@ theme:
     - search.highlight
     - search.suggest
   palette:
+    - scheme: slate
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
     - scheme: default
-      primary: red
-      accent: orange
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+  font:
+    text: Inter
+    code: JetBrains Mono
 
 extra:
   generator: false
+
+extra_css:
+  - stylesheets/brand.css
 
 markdown_extensions:
   - admonition
@@ -70,10 +85,77 @@ nav:
       - Charts And Visualizations: components/charts-and-visualizations.md
       - Workflow Patterns: components/workflow-patterns.md
       - Databricks Components: components/databricks-components.md
+      - Component Reference:
+          - Accordion: components/reference/accordion.md
+          - Accordion Item: components/reference/accordion-item.md
+          - Alert: components/reference/alert.md
+          - Area Chart: components/reference/area-chart.md
+          - Badge: components/reference/badge.md
+          - Bar Chart: components/reference/bar-chart.md
+          - Breadcrumbs: components/reference/breadcrumbs.md
+          - Button: components/reference/button.md
+          - Card: components/reference/card.md
+          - Catalog Browser: components/reference/catalog-browser.md
+          - Chat Input: components/reference/chat-input.md
+          - Chat Message: components/reference/chat-message.md
+          - Checkbox: components/reference/checkbox.md
+          - Code: components/reference/code.md
+          - Column: components/reference/column.md
+          - Composed Chart: components/reference/composed-chart.md
+          - Date Range Picker: components/reference/date-range-picker.md
+          - Divider: components/reference/divider.md
+          - Donut Chart: components/reference/donut-chart.md
+          - Drawer: components/reference/drawer.md
+          - Embed: components/reference/embed.md
+          - Empty State: components/reference/empty-state.md
+          - Form: components/reference/form.md
+          - Funnel Chart: components/reference/funnel-chart.md
+          - Gauge Chart: components/reference/gauge-chart.md
+          - Grid: components/reference/grid.md
+          - Heatmap: components/reference/heatmap.md
+          - Hero: components/reference/hero.md
+          - Image: components/reference/image.md
+          - Input: components/reference/input.md
+          - Job Trigger: components/reference/job-trigger.md
+          - Kanban Board: components/reference/kanban-board.md
+          - Line Chart: components/reference/line-chart.md
+          - Modal: components/reference/modal.md
+          - Multi Select: components/reference/multi-select.md
+          - Nav Item: components/reference/nav-item.md
+          - Pipeline Graph: components/reference/pipeline-graph.md
+          - Plot: components/reference/plot.md
+          - Popup: components/reference/popup.md
+          - Progress: components/reference/progress.md
+          - Radar Chart: components/reference/radar-chart.md
+          - Row: components/reference/row.md
+          - Scatter Chart: components/reference/scatter-chart.md
+          - Section Header: components/reference/section-header.md
+          - Select: components/reference/select.md
+          - Sidebar: components/reference/sidebar.md
+          - Slider: components/reference/slider.md
+          - Spacer: components/reference/spacer.md
+          - Sparkline Stat: components/reference/sparkline-stat.md
+          - Spinner: components/reference/spinner.md
+          - Stat: components/reference/stat.md
+          - Status Strip: components/reference/status-strip.md
+          - Stepper: components/reference/stepper.md
+          - Tab Item: components/reference/tab-item.md
+          - Table: components/reference/table.md
+          - Tabs: components/reference/tabs.md
+          - Text: components/reference/text.md
+          - Theme Toggle: components/reference/theme-toggle.md
+          - Timeline: components/reference/timeline.md
+          - Toast: components/reference/toast.md
+          - Toggle: components/reference/toggle.md
+          - TopNav: components/reference/top-nav.md
+          - Tree Map: components/reference/tree-map.md
+          - Video: components/reference/video.md
+          - Warehouse Selector: components/reference/warehouse-selector.md
   - First App Tutorial: TUTORIAL.md
   - Build A Real Portal: PORTAL_TUTORIAL.md
   - Examples: EXAMPLES.md
   - Databricks Apps: DATABRICKS_APPS.md
+  - Local Development: LOCAL_DEVELOPMENT.md
   - Troubleshooting: TROUBLESHOOTING.md
   - FAQ: FAQ.md
   - How It Works: HOW_IT_WORKS.md

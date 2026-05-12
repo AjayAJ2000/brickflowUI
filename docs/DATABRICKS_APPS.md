@@ -9,6 +9,7 @@ It is written for the actual questions people ask:
 - Why do I only see "Connecting to runtime..."?
 - How do I install from GitHub instead of PyPI?
 - How do I make sure the frontend bundle is included?
+- How do I get logos, GIFs, and videos to render correctly?
 
 ## Minimum working setup
 
@@ -92,3 +93,26 @@ Expected:
 True
 True
 ```
+
+## Media, Branding, And Loading Assets
+
+You can point loading assets, logos, images, and videos at local files from your app script:
+
+```python
+app = db.App(
+    theme={
+        "branding": {
+            "logo": "assets/brand/logo.svg",
+            "favicon": "assets/brand/mark.svg",
+            "tagline": "Built with BrickflowUI",
+        }
+    },
+    loading={
+        "title": "Acme Workspace",
+        "subtitle": "Runtime-secure analytics workspace",
+        "asset": "assets/brand/loader.gif",
+    },
+)
+```
+
+The runtime serves those files automatically, so this now works in Databricks Apps without asking you to wire a separate static route yourself.

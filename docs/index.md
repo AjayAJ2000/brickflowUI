@@ -26,14 +26,16 @@ If you are new to the library, follow these in order:
 6. [Portal Tutorial](./PORTAL_TUTORIAL.md)
 7. [Examples](./EXAMPLES.md)
 8. [Databricks Apps Guide](./DATABRICKS_APPS.md)
+9. [Local Development](./LOCAL_DEVELOPMENT.md)
 
 ## Why teams choose it
 
 - Python-first UI authoring with no frontend code required for common use cases
 - session-scoped state with reactive rerenders
 - built-in layout, forms, tables, charts, overlays, and workflow patterns
+- runtime-aware loading feedback on common interactive components
 - packaged frontend assets that work in stricter environments like Databricks Apps
-- theming and branding support for enterprise rollout
+- dark/light mode theming, branded loading screens, and local media assets
 
 ## Key documentation paths
 
@@ -42,6 +44,7 @@ If you are new to the library, follow these in order:
 - [Component Pages](./components/catalog.md) for a dedicated page per component
 - [Visualizations And Pipelines](./VISUALIZATIONS.md) for the modern chart and graph surface
 - [Theming](./THEMING.md) for branding and design tokens
+- [Local Development](./LOCAL_DEVELOPMENT.md) for auth, assets, responsive testing, and runtime debugging
 - [Portal Tutorial](./PORTAL_TUTORIAL.md) for a detailed end-to-end SaaS-style build
 - [Troubleshooting](./TROUBLESHOOTING.md) for the common deployment and runtime problems
 

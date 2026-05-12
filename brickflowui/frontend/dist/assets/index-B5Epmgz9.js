@@ -85,6 +85,12 @@ function resolveMotionStyle(props) {
   }
   return style;
 }
+function pendingEventIds(props, keys = ["click", "change", "submit", "close", "rowClick", "nodeClick", "cardClick"]) {
+  return keys.map((key) => props[key]).filter((value) => typeof value === "string" && value.length > 0);
+}
+function isPending(props, ctx, keys) {
+  return pendingEventIds(props, keys).some((eventId) => ctx.pendingEvents.has(eventId));
+}
 function renderLoadingSkeleton(lines = 3) {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-skeleton-stack", children: Array.from({ length: lines }).map((_, index) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-skeleton-line" }, index)) });
 }
@@ -108,8 +114,15 @@ function statusTone(status) {
   if (["info", "active", "processing"].includes(normalized)) return "info";
   return "neutral";
 }
-function Renderer({ node, dispatch, navigate }) {
-  const ctx = { dispatch, navigate };
+function Renderer({
+  node,
+  dispatch,
+  navigate,
+  pendingEvents,
+  themeMode,
+  setThemeMode
+}) {
+  const ctx = { dispatch, navigate, pendingEvents, themeMode, setThemeMode };
   return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: renderNode(node, ctx, "0") });
 }
 function renderChildren(children, ctx, prefix) {
@@ -167,27 +180,30 @@ function renderNode(node, ctx, key) {
     case "Spacer":
       return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { height: (p.size || 4) * 4 } }, key);
     // ── Controls ───────────────────────────────────────────────────────────
-    case "Button":
+    case "Button": {
+      const autoLoading = isPending(p, ctx, ["click"]);
       return /* @__PURE__ */ jsxRuntimeExports.jsxs(
         "button",
         {
-          className: resolveMotionClass(p, ["bf-btn", `bf-btn-${p.variant || "primary"}`]),
-          disabled: p.disabled || p.loading || false,
+          className: resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ["bf-btn", `bf-btn-${p.variant || "primary"}`]),
+          disabled: p.disabled || p.loading || autoLoading || false,
           type: p.htmlType || "button",
           style: resolveMotionStyle(p),
           onClick: () => ev("click"),
           children: [
-            p.loading && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-spinner bf-spinner-sm" }),
+            (p.loading || autoLoading) && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-spinner bf-spinner-sm" }),
             p.icon && /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: p.icon, size: 14 }),
             p.label
           ]
         },
         key
       );
-    case "Input":
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-form-field"]), style: resolveMotionStyle(p), children: [
+    }
+    case "Input": {
+      const autoLoading = isPending(p, ctx, ["change"]);
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ["bf-form-field"]), style: resolveMotionStyle(p), children: [
         p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
-        p.loading && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }),
+        (p.loading || autoLoading) && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }),
         p.inputType === "textarea" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
           "textarea",
           {
@@ -196,6 +212,7 @@ function renderNode(node, ctx, key) {
             placeholder: p.placeholder,
             value: p.value || "",
             disabled: p.disabled,
+            "aria-busy": autoLoading,
             onChange: (e) => ev("change", e.target.value)
           }
         ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -207,26 +224,29 @@ function renderNode(node, ctx, key) {
             placeholder: p.placeholder || "",
             value: p.value || "",
             disabled: p.disabled,
+            "aria-busy": autoLoading,
             onChange: (e) => ev("change", e.target.value)
           }
         ),
         p.error && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-input-error", children: p.error })
       ] }, key);
+    }
     case "DateRangePicker":
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(DateRangePickerComponent, { props: p, dispatch: (value) => ev("change", value) }, key);
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(DateRangePickerComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, ["change"]) }, dispatch: (value) => ev("change", value) }, key);
     case "MultiSelect":
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(MultiSelectComponent, { props: p, dispatch: (value) => ev("change", value) }, key);
-    case "Select":
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-form-field"]), style: resolveMotionStyle(p), children: [
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(MultiSelectComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, ["change"]) }, dispatch: (value) => ev("change", value) }, key);
+    case "Select": {
+      const autoLoading = isPending(p, ctx, ["change"]);
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ["bf-form-field"]), style: resolveMotionStyle(p), children: [
         p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
-        p.loading && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }),
+        (p.loading || autoLoading) && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsxs(
           "select",
           {
             name: p.name,
             className: "bf-select",
             value: p.value || "",
-            disabled: p.disabled,
+            disabled: Boolean(p.disabled) || autoLoading,
             onChange: (e) => ev("change", e.target.value),
             children: [
               p.placeholder && /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: p.placeholder }),
@@ -235,25 +255,30 @@ function renderNode(node, ctx, key) {
           }
         )
       ] }, key);
-    case "Checkbox":
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: "bf-checkbox-wrapper", children: [
+    }
+    case "Checkbox": {
+      const autoLoading = isPending(p, ctx, ["change"]);
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: `bf-checkbox-wrapper ${autoLoading ? "is-loading" : ""}`, children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx(
           "input",
           {
             type: "checkbox",
             name: p.name,
             checked: Boolean(p.checked),
-            disabled: p.disabled,
+            disabled: Boolean(p.disabled) || autoLoading,
             onChange: (e) => ev("change", e.target.checked)
           }
         ),
-        p.label
+        p.label,
+        autoLoading ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-spinner bf-spinner-sm" }) : null
       ] }, key);
-    case "Toggle": {
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(ToggleComponent, { props: p, dispatch: (v) => ev("change", v) }, key);
     }
-    case "Slider":
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-slider-wrapper", children: [
+    case "Toggle": {
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(ToggleComponent, { props: p, dispatch: (v) => ev("change", v), pending: isPending(p, ctx, ["change"]) }, key);
+    }
+    case "Slider": {
+      const autoLoading = isPending(p, ctx, ["change"]);
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-slider-wrapper ${autoLoading ? "bf-is-loading" : ""}`, children: [
         p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(
           "input",
@@ -265,10 +290,13 @@ function renderNode(node, ctx, key) {
             max: p.max,
             step: p.step,
             value: p.value,
+            disabled: Boolean(p.disabled) || autoLoading,
             onChange: (e) => ev("change", parseFloat(e.target.value))
           }
-        )
+        ),
+        autoLoading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }) : null
       ] }, key);
+    }
     // ── Data display ───────────────────────────────────────────────────────
     case "Breadcrumbs":
       return /* @__PURE__ */ jsxRuntimeExports.jsx("nav", { className: "bf-breadcrumbs", "aria-label": "Breadcrumb", children: (p.items || []).map((item, index, items) => {
@@ -279,7 +307,7 @@ function renderNode(node, ctx, key) {
         ] }, `${key}-crumb-${index}`);
       }) }, key);
     case "EmptyState":
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-empty-state", children: [
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-empty-state"]), style: resolveMotionStyle(p), children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-empty-state-icon", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: p.icon || "Inbox", size: 18 }) }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-empty-state-title", children: p.title }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-empty-state-message", children: p.message }),
@@ -324,6 +352,8 @@ function renderNode(node, ctx, key) {
     // ── Navigation ──────────────────────────────────────────────────────────
     case "Sidebar":
       return /* @__PURE__ */ jsxRuntimeExports.jsx(SidebarComponent, { props: p, children, ctx }, key);
+    case "TopNav":
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(TopNavComponent, { props: p, children, ctx }, key);
     // NavItem is rendered as part of Sidebar above; standalone fallback:
     case "NavItem":
       return /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { className: "bf-nav-item", onClick: () => ctx.navigate(p.path), children: [
@@ -343,7 +373,7 @@ function renderNode(node, ctx, key) {
       return null;
     case "Modal":
       if (!p.visible) return null;
-      return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-modal-overlay", onClick: () => ev("close"), children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-modal bf-modal-${p.size || "md"}`, onClick: (e) => e.stopPropagation(), children: [
+      return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-modal-overlay", onClick: () => ev("close"), children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, [`bf-modal`, `bf-modal-${p.size || "md"}`]), style: resolveMotionStyle(p), onClick: (e) => e.stopPropagation(), children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-modal-header", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-modal-title", children: p.title }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-modal-close", onClick: () => ev("close"), children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: "X", size: 16 }) })
@@ -353,7 +383,7 @@ function renderNode(node, ctx, key) {
     // ── Form ───────────────────────────────────────────────────────────────
     case "Drawer":
       if (!p.visible) return null;
-      return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-drawer-overlay", onClick: () => ev("close"), children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-drawer bf-drawer-${p.side || "right"}`, style: { width: p.width || "420px" }, onClick: (e) => e.stopPropagation(), children: [
+      return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-drawer-overlay", onClick: () => ev("close"), children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, [`bf-drawer`, `bf-drawer-${p.side || "right"}`]), style: { width: p.width || "420px", ...resolveMotionStyle(p) }, onClick: (e) => e.stopPropagation(), children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-drawer-header", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-drawer-title", children: p.title }),
           /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-modal-close", onClick: () => ev("close"), children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: "X", size: 16 }) })
@@ -364,7 +394,7 @@ function renderNode(node, ctx, key) {
       if (!p.visible) return null;
       return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-popup-shell bf-popup-${p.placement || "center"}`, children: [
         Boolean(p.backdrop) ? /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-popup-backdrop", onClick: () => ev("close"), "aria-label": "Close popup" }) : null,
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-popup bf-popup-${p.size || "sm"}`, onClick: (e) => e.stopPropagation(), children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, [`bf-popup`, `bf-popup-${p.size || "sm"}`]), style: resolveMotionStyle(p), onClick: (e) => e.stopPropagation(), children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-popup-header", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-popup-title", children: p.title }),
             /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-modal-close", onClick: () => ev("close"), children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: "X", size: 16 }) })
@@ -373,40 +403,7 @@ function renderNode(node, ctx, key) {
         ] })
       ] }, key);
     case "Form":
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "form",
-        {
-          className: "bf-form",
-          onSubmit: async (e) => {
-            e.preventDefault();
-            const data = {};
-            new FormData(e.currentTarget).forEach((v, k) => {
-              if (k in data) {
-                const current = data[k];
-                if (Array.isArray(current)) current.push(v);
-                else data[k] = [current, v];
-              } else {
-                data[k] = v;
-              }
-            });
-            const resp = await fetch(p.action, {
-              method: p.method || "POST",
-              credentials: "same-origin",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(data)
-            });
-            if (resp.ok && p.successRedirect) {
-              if (p.reloadOnSuccess) {
-                window.location.assign(p.successRedirect);
-              } else {
-                ctx.navigate(p.successRedirect);
-              }
-            }
-          },
-          children: renderChildren(children, ctx, key)
-        },
-        key
-      );
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(FormComponent, { props: p, children, ctx, nodeKey: key }, key);
     // ── Charts ─────────────────────────────────────────────────────────────
     case "AreaChart": {
       const yKeys = p.yKeys || [];
@@ -566,9 +563,13 @@ function renderNode(node, ctx, key) {
     case "PipelineGraph":
       return /* @__PURE__ */ jsxRuntimeExports.jsx(PipelineGraphComponent, { props: p, dispatch: (value) => ev("nodeClick", value) }, key);
     case "Hero":
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: `bf-hero ${p.animated ? "bf-animated" : ""}`, children: [
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("section", { className: resolveMotionClass(p, ["bf-hero"]), style: resolveMotionStyle(p), children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-hero-content", children: [
           p.eyebrow ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-hero-eyebrow", children: p.eyebrow }) : null,
+          p.image ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-hero-brand", children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx("img", { className: "bf-hero-brand-image", src: p.image, alt: p.imageAlt || p.title }),
+            p.tagline ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-hero-brand-tagline", children: p.tagline }) : null
+          ] }) : p.tagline ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-hero-brand-tagline", children: p.tagline }) : null,
           /* @__PURE__ */ jsxRuntimeExports.jsx("h1", { className: "bf-hero-title", children: p.title }),
           p.subtitle ? /* @__PURE__ */ jsxRuntimeExports.jsx("p", { className: "bf-hero-subtitle", children: p.subtitle }) : null,
           p.badges?.length ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-hero-badges", children: renderChildren(p.badges || [], ctx, `${key}-badges`) }) : null,
@@ -577,7 +578,7 @@ function renderNode(node, ctx, key) {
         children.length ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-hero-visual", children: renderChildren(children, ctx, `${key}-visual`) }) : null
       ] }, key);
     case "SectionHeader":
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-section-header", children: [
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-section-header"]), style: resolveMotionStyle(p), children: [
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
           p.eyebrow ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-section-eyebrow", children: p.eyebrow }) : null,
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-section-title", children: p.title }),
@@ -594,13 +595,19 @@ function renderNode(node, ctx, key) {
     case "ChatMessage":
       return /* @__PURE__ */ jsxRuntimeExports.jsx(ChatMessageComponent, { props: p }, key);
     case "ChatInput":
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(ChatInputComponent, { props: p, dispatchChange: (value) => ev("change", value), dispatchSubmit: (value) => ev("submit", value) }, key);
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(ChatInputComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, ["submit", "change"]) }, dispatchChange: (value) => ev("change", value), dispatchSubmit: (value) => ev("submit", value) }, key);
     case "Toast":
       return /* @__PURE__ */ jsxRuntimeExports.jsx(ToastComponent, { props: p, dispatchClose: () => ev("close") }, key);
     case "Image":
       return /* @__PURE__ */ jsxRuntimeExports.jsx(ImageComponent, { props: p }, key);
+    case "Video":
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(VideoComponent, { props: p }, key);
+    case "Embed":
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(EmbedComponent, { props: p }, key);
+    case "ThemeToggle":
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeToggleComponent, { props: p, ctx }, key);
     case "Timeline":
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-timeline", children: [
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-timeline"]), style: resolveMotionStyle(p), children: [
         p.title ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-card-title", style: { marginBottom: 12 }, children: p.title }) : null,
         (p.items || []).map((item, index) => /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-timeline-item", children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-timeline-dot" }),
@@ -620,18 +627,19 @@ function renderNode(node, ctx, key) {
       return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `bf-node-${type.toLowerCase()}`, children: renderChildren(children, ctx, key) }, key);
   }
 }
-function ToggleComponent({ props: p, dispatch }) {
+function ToggleComponent({ props: p, dispatch, pending }) {
   const checked = Boolean(p.checked);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "label",
     {
-      className: "bf-toggle-wrapper",
+      className: `bf-toggle-wrapper ${pending ? "is-loading" : ""}`,
       onClick: () => {
-        if (!p.disabled) dispatch(!checked);
+        if (!p.disabled && !pending) dispatch(!checked);
       },
       children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `bf-toggle-switch ${checked ? "checked" : ""}` }),
-        p.label
+        p.label,
+        pending ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-spinner bf-spinner-sm" }) : null
       ]
     }
   );
@@ -651,24 +659,88 @@ function AlertComponent({ props: p }) {
   ] });
 }
 function ImageComponent({ props: p }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("figure", { className: `bf-image-shell ${p.caption ? "has-caption" : ""}`, children: [
+  const variant = p.variant || "content";
+  const image = /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "img",
+    {
+      className: `bf-image ${variant === "inline" ? "inline" : ""} ${variant === "avatar" ? "avatar" : ""}`,
+      src: p.src,
+      alt: p.alt || "",
+      loading: p.loadingMode || "lazy",
+      style: {
+        width: p.width || (variant === "avatar" ? "48px" : "100%"),
+        height: p.height || (variant === "avatar" ? p.width || "48px" : "auto"),
+        objectFit: p.fit || "cover",
+        borderRadius: variant === "avatar" ? "50%" : p.radius || "var(--radius-lg)"
+      }
+    }
+  );
+  if (variant === "inline" && !p.caption) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: resolveMotionClass(p, ["bf-inline-image"]), style: resolveMotionStyle(p), children: image });
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("figure", { className: resolveMotionClass(p, ["bf-image-shell", p.caption ? "has-caption" : ""]), style: resolveMotionStyle(p), children: [
+    image,
+    p.caption ? /* @__PURE__ */ jsxRuntimeExports.jsx("figcaption", { className: "bf-image-caption", children: p.caption }) : null
+  ] });
+}
+function VideoComponent({ props: p }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("figure", { className: resolveMotionClass(p, ["bf-image-shell", "bf-video-shell", p.caption ? "has-caption" : ""]), style: resolveMotionStyle(p), children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(
-      "img",
+      "video",
       {
-        className: "bf-image",
+        className: "bf-video",
         src: p.src,
-        alt: p.alt || "",
-        loading: p.loadingMode || "lazy",
+        poster: p.poster,
+        controls: p.controls !== false,
+        autoPlay: Boolean(p.autoplay),
+        loop: Boolean(p.loop),
+        muted: Boolean(p.muted),
+        playsInline: true,
         style: {
           width: p.width || "100%",
           height: p.height || "auto",
-          objectFit: p.fit || "cover",
           borderRadius: p.radius || "var(--radius-lg)"
         }
       }
     ),
     p.caption ? /* @__PURE__ */ jsxRuntimeExports.jsx("figcaption", { className: "bf-image-caption", children: p.caption }) : null
   ] });
+}
+function EmbedComponent({ props: p }) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: resolveMotionClass(p, ["bf-embed-shell"]), style: resolveMotionStyle(p), children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "iframe",
+    {
+      className: "bf-embed-frame",
+      src: p.src,
+      title: p.title || "Embedded content",
+      loading: p.loadingMode || "lazy",
+      sandbox: typeof p.sandbox === "string" ? p.sandbox : void 0,
+      allowFullScreen: Boolean(p.allowFullscreen),
+      style: {
+        height: p.height || "420px",
+        borderRadius: p.radius || "var(--radius-lg)"
+      }
+    }
+  ) });
+}
+function ThemeToggleComponent({ props: p, ctx }) {
+  const isDark = ctx.themeMode === "dark";
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "button",
+    {
+      type: "button",
+      className: "bf-theme-toggle",
+      onClick: () => ctx.setThemeMode(isDark ? "light" : "dark"),
+      "aria-label": String(p.label || "Toggle theme"),
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-theme-toggle-track", children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `bf-theme-toggle-thumb ${isDark ? "dark" : "light"}` }) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "bf-theme-toggle-copy", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: String(p.label || "Theme") }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: isDark ? String(p.darkLabel || "Dark") : String(p.lightLabel || "Light") })
+        ] })
+      ]
+    }
+  );
 }
 function ToastComponent({ props: p, dispatchClose }) {
   const [dismissed, setDismissed] = reactExports.useState(false);
@@ -685,7 +757,7 @@ function ToastComponent({ props: p, dispatchClose }) {
     return () => window.clearTimeout(timer);
   }, [dismissed, p.autoHideMs, p.visible, p.message, p.title]);
   if (p.visible === false || dismissed) return null;
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-toast bf-toast-${p.alertType || "info"}`, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, [`bf-toast`, `bf-toast-${p.alertType || "info"}`]), style: resolveMotionStyle(p), children: [
     p.icon ? /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: p.icon, size: 16 }) : null,
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-toast-content", children: [
       p.title ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-toast-title", children: p.title }) : null,
@@ -738,8 +810,9 @@ function DateRangePickerComponent({ props: p, dispatch }) {
     setEnd(p.end || "");
   }, [p.start, p.end]);
   const emit = (nextStart, nextEnd) => dispatch({ start: nextStart, end: nextEnd });
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-form-field", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-form-field ${p.loading ? "bf-is-loading" : ""}`, children: [
     p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
+    p.loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }) : null,
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-date-range", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(
         "input",
@@ -748,7 +821,7 @@ function DateRangePickerComponent({ props: p, dispatch }) {
           type: "date",
           name: `${p.name}_start`,
           value: start,
-          disabled: Boolean(p.disabled),
+          disabled: Boolean(p.disabled) || Boolean(p.loading),
           onChange: (e) => {
             const next = e.target.value;
             setStart(next);
@@ -764,7 +837,7 @@ function DateRangePickerComponent({ props: p, dispatch }) {
           type: "date",
           name: `${p.name}_end`,
           value: end,
-          disabled: Boolean(p.disabled),
+          disabled: Boolean(p.disabled) || Boolean(p.loading),
           onChange: (e) => {
             const next = e.target.value;
             setEnd(next);
@@ -783,8 +856,9 @@ function MultiSelectComponent({ props: p, dispatch }) {
     else selected.add(value);
     dispatch(Array.from(selected));
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-form-field", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-form-field ${p.loading ? "bf-is-loading" : ""}`, children: [
     p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
+    p.loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }) : null,
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-multiselect", children: [
       Array.from(selected).map((value) => /* @__PURE__ */ jsxRuntimeExports.jsx("input", { type: "hidden", name: p.name, value }, `hidden-${value}`)),
       options.map((option) => {
@@ -794,7 +868,7 @@ function MultiSelectComponent({ props: p, dispatch }) {
           {
             type: "button",
             className: `bf-multiselect-chip ${active ? "active" : ""}`,
-            disabled: Boolean(p.disabled),
+            disabled: Boolean(p.disabled) || Boolean(p.loading),
             onClick: () => toggleValue(option.value),
             children: option.label
           },
@@ -811,13 +885,19 @@ function SidebarComponent({ props: p, children, ctx }) {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-mobile-nav", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { type: "button", className: "bf-mobile-nav-toggle", onClick: () => setMobileOpen((open) => !open), children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: "LayoutDashboard", size: 16 }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: p.brandName })
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { className: "bf-mobile-nav-copy", children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("strong", { children: p.brandName }),
+        p.tagline ? /* @__PURE__ */ jsxRuntimeExports.jsx("small", { children: p.tagline }) : null
+      ] })
     ] }) }),
     mobileOpen ? /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-sidebar-backdrop", onClick: closeSidebar, "aria-label": "Close navigation" }) : null,
     /* @__PURE__ */ jsxRuntimeExports.jsxs("aside", { className: `bf-sidebar ${mobileOpen ? "open" : ""}`, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-sidebar-brand", children: [
         p.logo ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { src: p.logo, alt: "logo", width: 28, height: 28, style: { borderRadius: 6 } }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-sidebar-brand-logo", children: (p.brandName || "B").charAt(0) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-sidebar-brand-name", children: p.brandName }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-sidebar-brand-copy", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-sidebar-brand-name", children: p.brandName }),
+          p.tagline ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-sidebar-brand-tagline", children: p.tagline }) : null
+        ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-sidebar-close", onClick: closeSidebar, "aria-label": "Close navigation", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: "X", size: 16 }) })
       ] }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("nav", { className: "bf-nav-section", children: children.map((child, index) => {
@@ -839,9 +919,105 @@ function SidebarComponent({ props: p, children, ctx }) {
           },
           `${cp.path}-${index}`
         );
-      }) })
+      }) }),
+      Boolean(p.showThemeToggle) ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-sidebar-footer", children: /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeToggleComponent, { props: { label: "Theme", lightLabel: "Light", darkLabel: "Dark" }, ctx }) }) : null
     ] })
   ] });
+}
+function TopNavComponent({ props: p, children, ctx }) {
+  const activePath = window.location.pathname;
+  const [mobileOpen, setMobileOpen] = reactExports.useState(false);
+  const actions = p.actions || [];
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("header", { className: `bf-topnav ${p.sticky !== false ? "sticky" : ""}`, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-topnav-inner", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-topnav-brand", children: [
+        p.logo ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { className: "bf-topnav-logo", src: p.logo, alt: String(p.brandName || "Brand") }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-sidebar-brand-logo", children: String(p.brandName || "B").charAt(0) }),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-topnav-copy", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-topnav-brand-name", children: p.brandName }),
+          p.tagline ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-topnav-brand-tagline", children: p.tagline }) : null
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("nav", { className: "bf-topnav-links", children: children.map((child, index) => {
+        const cp = child.props;
+        const isActive = activePath === cp.path;
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { type: "button", className: `bf-topnav-link ${isActive ? "active" : ""}`, onClick: () => ctx.navigate(cp.path), children: [
+          cp.icon ? /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: cp.icon, size: 14 }) : null,
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: cp.label }),
+          cp.badge ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-nav-badge", children: cp.badge }) : null
+        ] }, `${cp.path}-${index}`);
+      }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-topnav-actions", children: [
+        Boolean(p.showThemeToggle) ? /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeToggleComponent, { props: { label: "Theme", lightLabel: "Light", darkLabel: "Dark" }, ctx }) : null,
+        actions.length ? renderChildren(actions, ctx, "topnav-actions") : null,
+        /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-topnav-menu", onClick: () => setMobileOpen((open) => !open), "aria-label": "Toggle navigation menu", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: mobileOpen ? "X" : "LayoutDashboard", size: 16 }) })
+      ] })
+    ] }),
+    mobileOpen ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-topnav-mobile", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-topnav-mobile-panel", children: [
+      children.map((child, index) => {
+        const cp = child.props;
+        const isActive = activePath === cp.path;
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "button",
+          {
+            type: "button",
+            className: `bf-topnav-mobile-link ${isActive ? "active" : ""}`,
+            onClick: () => {
+              setMobileOpen(false);
+              ctx.navigate(cp.path);
+            },
+            children: [
+              cp.icon ? /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: cp.icon, size: 15 }) : null,
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: cp.label }),
+              cp.badge ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-nav-badge", children: cp.badge }) : null
+            ]
+          },
+          `mobile-${cp.path}-${index}`
+        );
+      }),
+      actions.length ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-topnav-mobile-actions", children: renderChildren(actions, ctx, "topnav-mobile-actions") }) : null
+    ] }) }) : null
+  ] });
+}
+function FormComponent({ props: p, children, ctx, nodeKey }) {
+  const [submitting, setSubmitting] = reactExports.useState(false);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
+    "form",
+    {
+      className: `bf-form ${submitting ? "bf-is-loading" : ""}`,
+      onSubmit: async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        try {
+          const data = {};
+          new FormData(e.currentTarget).forEach((v, k) => {
+            if (k in data) {
+              const current = data[k];
+              if (Array.isArray(current)) current.push(v);
+              else data[k] = [current, v];
+            } else {
+              data[k] = v;
+            }
+          });
+          const resp = await fetch(p.action, {
+            method: p.method || "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+          });
+          if (resp.ok && p.successRedirect) {
+            if (p.reloadOnSuccess) {
+              window.location.assign(p.successRedirect);
+            } else {
+              ctx.navigate(p.successRedirect);
+            }
+          }
+        } finally {
+          setSubmitting(false);
+        }
+      },
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx("fieldset", { className: "bf-form-fieldset", disabled: submitting, children: renderChildren(children, ctx, nodeKey) })
+    }
+  );
 }
 function AccordionComponent({ props: p, children, ctx, nodeKey }) {
   const defaultOpen = (p.defaultOpen || []).map(Number);
@@ -971,7 +1147,7 @@ function PipelineGraphComponent({ props: p, dispatch }) {
 }
 function StatusStripComponent({ props: p }) {
   const items = p.items || [];
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-status-strip", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-status-strip"]), style: resolveMotionStyle(p), children: [
     p.title ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-card-title", children: p.title }) : null,
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-status-strip-grid", style: { "--bf-status-cols": Number(p.columns || 4) }, children: items.map((item, index) => {
       const tone = statusTone(item.status || item.tone);
@@ -986,7 +1162,7 @@ function StatusStripComponent({ props: p }) {
 function StepperComponent({ props: p }) {
   const steps = p.steps || [];
   const active = Number(p.active || 0);
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `bf-stepper bf-stepper-${p.orientation || "horizontal"}`, children: steps.map((step, index) => {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: resolveMotionClass(p, [`bf-stepper`, `bf-stepper-${p.orientation || "horizontal"}`]), style: resolveMotionStyle(p), children: steps.map((step, index) => {
     const state = index < active ? "complete" : index === active ? "active" : "pending";
     return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-stepper-step ${state}`, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-stepper-dot", children: index + 1 }),
@@ -999,7 +1175,7 @@ function StepperComponent({ props: p }) {
 }
 function KanbanBoardComponent({ props: p, dispatch }) {
   const columns = p.columns || [];
-  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-kanban", children: columns.map((column, columnIndex) => {
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: resolveMotionClass(p, ["bf-kanban"]), style: resolveMotionStyle(p), children: columns.map((column, columnIndex) => {
     const cards = column.cards || [];
     return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-kanban-column", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-kanban-header", children: [
@@ -1016,7 +1192,7 @@ function KanbanBoardComponent({ props: p, dispatch }) {
 }
 function ChatMessageComponent({ props: p }) {
   const role = p.role || "assistant";
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-chat-message ${role} ${statusTone(p.tone)}`, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, [`bf-chat-message`, role, statusTone(p.tone)]), style: resolveMotionStyle(p), children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-chat-avatar", children: p.avatar ? String(p.avatar) : role.slice(0, 1).toUpperCase() }),
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-chat-bubble", children: [
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-chat-meta", children: [
@@ -1037,7 +1213,7 @@ function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }) {
     if (!next || p.disabled || p.loading) return;
     dispatchSubmit(next);
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-chat-input", children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-chat-input"]), style: resolveMotionStyle(p), children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx(
       "input",
       {
@@ -1060,6 +1236,47 @@ function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }) {
       p.submitLabel || "Send"
     ] })
   ] });
+}
+function tableCellTone(row, col, fallback) {
+  const keyedTone = col.toneKey ? row[String(col.toneKey)] : void 0;
+  return statusTone(keyedTone ?? fallback ?? col.color);
+}
+function renderTableCell(row, col) {
+  const rawValue = row[col.key];
+  const format = String(col.format || "text");
+  if (format === "badge" || format === "status") {
+    const tone = tableCellTone(row, col, rawValue);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: `bf-table-pill ${tone}`, children: String(rawValue ?? "") });
+  }
+  if (format === "progress") {
+    const value = Number(rawValue ?? 0);
+    const max = Number(col.max ?? 100);
+    const pct = Math.max(0, Math.min(100, value / Math.max(1, max) * 100));
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-table-progress", children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-table-progress-track", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `bf-table-progress-fill ${tableCellTone(row, col, rawValue)}`, style: { width: `${pct}%` } }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-table-progress-value", children: String(col.suffix ? `${value}${col.suffix}` : value) })
+    ] });
+  }
+  if (format === "currency") {
+    const value = Number(rawValue ?? 0);
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: new Intl.NumberFormat(void 0, { style: "currency", currency: String(col.currency || "USD"), maximumFractionDigits: 0 }).format(value) });
+  }
+  if (format === "metric") {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-table-metric", children: String(rawValue ?? "") });
+  }
+  if (format === "image" || format === "avatar") {
+    const src = String(rawValue ?? "");
+    if (!src) return /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-table-empty-cell", children: "—" });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "img",
+      {
+        className: `bf-table-media ${format === "avatar" ? "avatar" : ""}`,
+        src,
+        alt: String(col.alt || col.label || "media")
+      }
+    );
+  }
+  return String(rawValue ?? "");
 }
 function TableComponent({ props: p, dispatch }) {
   const data = p.data || [];
@@ -1114,7 +1331,7 @@ function TableComponent({ props: p, dispatch }) {
       ] }, col.key)) }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsx("tbody", { children: pageData.map((row, ri) => {
         const rowClickId = p.rowClick;
-        return /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { className: rowClickId ? "clickable" : "", onClick: () => rowClickId && dispatch(rowClickId, { row }), children: columns.map((col) => /* @__PURE__ */ jsxRuntimeExports.jsx("td", { title: String(row[col.key] ?? ""), children: String(row[col.key] ?? "") }, col.key)) }, ri);
+        return /* @__PURE__ */ jsxRuntimeExports.jsx("tr", { className: rowClickId ? "clickable" : "", onClick: () => rowClickId && dispatch(rowClickId, { row }), children: columns.map((col) => /* @__PURE__ */ jsxRuntimeExports.jsx("td", { title: String(row[col.key] ?? ""), className: col.align ? `bf-table-align-${String(col.align)}` : "", children: renderTableCell(row, col) }, col.key)) }, ri);
       }) })
     ] }) }),
     totalPages > 1 && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-table-pagination", children: [
@@ -1150,6 +1367,7 @@ function TabsComponent({ props: p, children, ctx, nodeKey, dispatch }) {
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-tab-content", children: children[active]?.children && renderChildren(children[active].children, ctx, `${nodeKey}-tab-${active}`) })
   ] });
 }
+const LOADING_BOOTSTRAP = window.__BRICKFLOW_BOOTSTRAP__ || {};
 function applyPatch(tree, patch) {
   const { op, path, node, props } = patch;
   if (path.length === 0) {
@@ -1181,15 +1399,63 @@ function applyPatch(tree, patch) {
   }
   return { ...tree, children: newChildren };
 }
+function LoadingVisual({ status }) {
+  const asset = LOADING_BOOTSTRAP.video || LOADING_BOOTSTRAP.asset;
+  const kind = LOADING_BOOTSTRAP.video ? "video" : LOADING_BOOTSTRAP.assetKind;
+  const animation = LOADING_BOOTSTRAP.animation || "spinner";
+  const title = LOADING_BOOTSTRAP.title || "BrickflowUI";
+  const subtitle = LOADING_BOOTSTRAP.subtitle;
+  const message = status === "connecting" ? LOADING_BOOTSTRAP.message || "Connecting to runtime..." : status === "disconnected" ? LOADING_BOOTSTRAP.reconnectingMessage || "Reconnecting..." : status === "error" ? LOADING_BOOTSTRAP.errorMessage || "Connection error - retrying..." : "Loading...";
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-loading-screen bf-loading-${animation}`, children: [
+    !LOADING_BOOTSTRAP.textOnly ? kind === "video" && asset ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "video",
+      {
+        className: "bf-loading-media",
+        src: asset,
+        autoPlay: true,
+        muted: true,
+        loop: true,
+        playsInline: true
+      }
+    ) : asset ? /* @__PURE__ */ jsxRuntimeExports.jsx("img", { className: "bf-loading-media", src: asset, alt: `${title} loading` }) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `bf-spinner bf-spinner-lg ${animation === "pulse" ? "bf-spinner-pulse" : ""}` }) : null,
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-loading-brand", children: title }),
+    subtitle ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-loading-subtitle", children: subtitle }) : null,
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-loading-hint", children: message })
+  ] });
+}
+function resolveInitialThemeMode() {
+  const bootstrapMode = LOADING_BOOTSTRAP.themeMode === "light" ? "light" : "dark";
+  try {
+    const stored = window.localStorage.getItem("brickflowui.theme");
+    return stored === "light" || stored === "dark" ? stored : bootstrapMode;
+  } catch {
+    return bootstrapMode;
+  }
+}
 function App() {
   const [vdom, setVdom] = reactExports.useState(null);
   const [status, setStatus] = reactExports.useState("connecting");
   const [error, setError] = reactExports.useState(null);
+  const [pendingEvents, setPendingEvents] = reactExports.useState(/* @__PURE__ */ new Set());
+  const [themeMode, setThemeModeState] = reactExports.useState(resolveInitialThemeMode);
   const wsRef = reactExports.useRef(null);
   const vdomRef = reactExports.useRef(null);
   const dispatch = reactExports.useCallback((event_id, data = {}) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
+      setPendingEvents((prev) => {
+        const next = new Set(prev);
+        next.add(event_id);
+        return next;
+      });
       wsRef.current.send(JSON.stringify({ type: "event", event_id, data }));
+    }
+  }, []);
+  const setThemeMode = reactExports.useCallback((mode) => {
+    setThemeModeState(mode);
+    document.documentElement.dataset.themeMode = mode;
+    try {
+      window.localStorage.setItem("brickflowui.theme", mode);
+    } catch {
     }
   }, []);
   const navigate = reactExports.useCallback((path) => {
@@ -1198,6 +1464,9 @@ function App() {
       window.history.pushState({}, "", path);
     }
   }, []);
+  reactExports.useEffect(() => {
+    document.documentElement.dataset.themeMode = themeMode;
+  }, [themeMode]);
   reactExports.useEffect(() => {
     let reconnectTimer;
     function connect() {
@@ -1224,6 +1493,13 @@ function App() {
               vdomRef.current = updated;
               setVdom({ ...updated });
             }
+          } else if (msg.type === "event_complete") {
+            setPendingEvents((prev) => {
+              if (!prev.has(msg.event_id)) return prev;
+              const next = new Set(prev);
+              next.delete(msg.event_id);
+              return next;
+            });
           } else if (msg.type === "error") {
             setError(msg.message);
           }
@@ -1233,10 +1509,12 @@ function App() {
       };
       ws.onclose = () => {
         setStatus("disconnected");
+        setPendingEvents(/* @__PURE__ */ new Set());
         reconnectTimer = setTimeout(connect, 2500);
       };
       ws.onerror = () => {
         setStatus("error");
+        setPendingEvents(/* @__PURE__ */ new Set());
         ws.close();
       };
     }
@@ -1250,15 +1528,21 @@ function App() {
     };
   }, [navigate]);
   if (!vdom) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-loading-screen", children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-lg" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-loading-brand", children: "BrickflowUI" }),
-      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-loading-hint", children: status === "connecting" ? "Connecting to runtime…" : status === "disconnected" ? "Reconnecting…" : status === "error" ? "Connection error — retrying…" : "Loading…" })
-    ] });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingVisual, { status });
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-page-shell", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Renderer, { node: vdom, dispatch, navigate }) }),
-    status === "disconnected" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-connection-banner", children: "⚠ Reconnecting to server…" }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-page-shell", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+      Renderer,
+      {
+        node: vdom,
+        dispatch,
+        navigate,
+        pendingEvents,
+        themeMode,
+        setThemeMode
+      }
+    ) }),
+    status === "disconnected" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-connection-banner", children: "Reconnecting to server..." }),
     error && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-connection-banner", style: { borderColor: "var(--db-error)", color: "var(--db-error)", background: "var(--db-error-bg)" }, children: [
       "Runtime error: ",
       error
@@ -1268,4 +1552,4 @@ function App() {
 ReactDOM.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-gCrZdwJF.js.map
+//# sourceMappingURL=index-B5Epmgz9.js.map

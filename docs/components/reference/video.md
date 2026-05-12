@@ -2,46 +2,47 @@
 
 ## What It Does
 
-Video renders local or remote videos directly from your brickflowui script.
+`Video` renders local or remote videos directly from your BrickflowUI script.
 
 ## When To Use It
 
-Use `Video` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
+Use `Video` for:
 
-## Typical Pattern
-
-```python
-import brickflowui as db
-
-node = db.Video(...)
-```
+- short product walkthroughs
+- embedded motion demos in docs-like pages
+- loading and onboarding support media
+- internal runbook clips
 
 ## Inputs To Know
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-Hero, Card
+- `src`
+- `poster`
+- `controls`
+- `autoplay`
+- `loop`
+- `muted`
+- `caption`
+- `width`
+- `height`
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("Video example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+demo = db.Video(
+    "assets/demo.mp4",
+    poster="assets/poster.png",
+    caption="Quarterly analytics workflow walkthrough",
+    controls=True,
+)
 ```
+
+## Works Well With
+
+`Card`, `Hero`, `Accordion`, `Embed`
 
 ## Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- Local video paths are served automatically through the runtime asset layer.
+- For a startup screen, use `App(loading={"video": ...})`.

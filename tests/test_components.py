@@ -76,6 +76,44 @@ def test_new_components_serialize_expected_props_and_nested_actions():
     assert video["props"]["poster"] == "https://example.com/poster.png"
 
 
+def test_navigation_media_and_embed_components_serialize_new_branding_props():
+    node = db.Column(
+        [
+            db.TopNav(
+                items=[db.NavItem("Overview", "/"), db.NavItem("Pipelines", "/pipelines", badge="12")],
+                brand_name="Acme Analytics",
+                tagline="React components. Python syntax.",
+                logo="/logo.svg",
+                actions=[db.Button("Export")],
+                show_theme_toggle=True,
+            ),
+            db.ThemeToggle(),
+            db.Image("/logo.svg", alt="Acme", variant="inline"),
+            db.Image("/avatar.png", alt="Operator", variant="avatar", width="40px"),
+            db.Hero(
+                "Command center",
+                tagline="Built for operating teams",
+                image="/mark.svg",
+                image_alt="Brand mark",
+            ),
+            db.Embed("https://example.com/embed", title="Embedded dashboard"),
+        ]
+    )
+
+    payload = node.serialize({})
+    rendered = {child["type"]: child for child in payload["children"]}
+    images = [child for child in payload["children"] if child["type"] == "Image"]
+
+    assert rendered["TopNav"]["props"]["tagline"] == "React components. Python syntax."
+    assert rendered["TopNav"]["props"]["showThemeToggle"] is True
+    assert rendered["ThemeToggle"]["props"]["label"] == "Theme"
+    assert images[0]["props"]["variant"] == "inline"
+    assert images[1]["props"]["variant"] == "avatar"
+    assert rendered["Hero"]["props"]["image"] == "/mark.svg"
+    assert rendered["Hero"]["props"]["tagline"] == "Built for operating teams"
+    assert rendered["Embed"]["props"]["title"] == "Embedded dashboard"
+
+
 def test_chart_components_expose_loading_empty_and_click_handlers():
     chart = db.BarChart(
         data=[],

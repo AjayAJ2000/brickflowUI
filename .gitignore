@@ -6,9 +6,14 @@ build/
 /dist/
 frontend/node_modules/
 site/
+.site_check/
+.site_validation*/
 *.egg-info/
 *.pyc
 __pycache__/
 tests/_tmp_cli*/
 frontend/tsc_errors.txt
 sample_app_*/
+Branding_Files/
+asset-*/
+_tmp_cli_*/

@@ -2,46 +2,58 @@
 
 ## What It Does
 
-Image renders local or remote images, logos, screenshots, and gifs from python.
+`Image` renders local or remote images, screenshots, logos, avatars, and GIFs directly from Python.
 
 ## When To Use It
 
-Use `Image` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
+Use `Image` any time media is part of the product surface rather than an afterthought, especially for:
 
-## Typical Pattern
-
-```python
-import brickflowui as db
-
-node = db.Image(...)
-```
+- logos in shell chrome
+- inline product marks in heroes
+- avatars in tables or chat
+- screenshots in docs-style pages
+- GIF demos inside examples
 
 ## Inputs To Know
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
+- `src`
+- `alt`
+- `width`
+- `height`
+- `fit`
+- `caption`
+- `variant`
+- `loading`
 
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
+## Variants
+
+Use the right variant for the job:
+
+```python
+db.Image("assets/logo.svg", alt="Logo", variant="inline")
+db.Image("assets/user.png", alt="Operator", variant="avatar", width="40px")
+db.Image("assets/screenshot.png", alt="Preview", variant="content")
+```
+
+- `content`: framed media surface for screenshots and larger images
+- `inline`: shrink-to-content logo or mark with no frame styling
+- `avatar`: circular small image for people or identities
+
+## Local Files
+
+Local image paths are served automatically by the runtime:
+
+```python
+db.Image("assets/brand/logo.svg", alt="Acme logo", variant="inline")
+```
+
+You do not need a separate static hosting setup just to display local images.
 
 ## Works Well With
 
-Hero, Card
-
-## Example
-
-```python
-import brickflowui as db
-
-example = db.Card([
-    db.Text("Image example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
-```
+`Hero`, `Sidebar`, `TopNav`, `Table`, `ChatMessage`, `Card`
 
 ## Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- Use `variant="inline"` for logos to avoid the heavier framed screenshot treatment.
+- Use `variant="avatar"` when the media should feel like identity rather than content.

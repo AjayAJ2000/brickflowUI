@@ -7,6 +7,7 @@ type WsStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 type LoadingBootstrap = {
   title?: string
   message?: string
+  subtitle?: string
   reconnectingMessage?: string
   errorMessage?: string
   animation?: string
@@ -14,6 +15,7 @@ type LoadingBootstrap = {
   asset?: string | null
   assetKind?: 'image' | 'video' | null
   video?: string | null
+  themeMode?: 'light' | 'dark'
 }
 
 declare global {
@@ -67,6 +69,7 @@ function LoadingVisual({ status }: { status: WsStatus }) {
   const kind = LOADING_BOOTSTRAP.video ? 'video' : LOADING_BOOTSTRAP.assetKind
   const animation = LOADING_BOOTSTRAP.animation || 'spinner'
   const title = LOADING_BOOTSTRAP.title || 'BrickflowUI'
+  const subtitle = LOADING_BOOTSTRAP.subtitle
   const message =
     status === 'connecting'
       ? (LOADING_BOOTSTRAP.message || 'Connecting to runtime...')
@@ -95,21 +98,49 @@ function LoadingVisual({ status }: { status: WsStatus }) {
         )
       ) : null}
       <div className="bf-loading-brand">{title}</div>
+      {subtitle ? <div className="bf-loading-subtitle">{subtitle}</div> : null}
       <div className="bf-loading-hint">{message}</div>
     </div>
   )
+}
+
+function resolveInitialThemeMode(): 'light' | 'dark' {
+  const bootstrapMode = LOADING_BOOTSTRAP.themeMode === 'light' ? 'light' : 'dark'
+  try {
+    const stored = window.localStorage.getItem('brickflowui.theme')
+    return stored === 'light' || stored === 'dark' ? stored : bootstrapMode
+  } catch {
+    return bootstrapMode
+  }
 }
 
 export default function App() {
   const [vdom, setVdom] = useState<VNodeData | null>(null)
   const [status, setStatus] = useState<WsStatus>('connecting')
   const [error, setError] = useState<string | null>(null)
+  const [pendingEvents, setPendingEvents] = useState<Set<string>>(new Set())
+  const [themeMode, setThemeModeState] = useState<'light' | 'dark'>(resolveInitialThemeMode)
   const wsRef = useRef<WebSocket | null>(null)
   const vdomRef = useRef<VNodeData | null>(null)
 
   const dispatch = useCallback((event_id: string, data: Record<string, unknown> = {}) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
+      setPendingEvents((prev) => {
+        const next = new Set(prev)
+        next.add(event_id)
+        return next
+      })
       wsRef.current.send(JSON.stringify({ type: 'event', event_id, data }))
+    }
+  }, [])
+
+  const setThemeMode = useCallback((mode: 'light' | 'dark') => {
+    setThemeModeState(mode)
+    document.documentElement.dataset.themeMode = mode
+    try {
+      window.localStorage.setItem('brickflowui.theme', mode)
+    } catch {
+      // Ignore storage issues in locked-down runtimes.
     }
   }, [])
 
@@ -119,6 +150,10 @@ export default function App() {
       window.history.pushState({}, '', path)
     }
   }, [])
+
+  useEffect(() => {
+    document.documentElement.dataset.themeMode = themeMode
+  }, [themeMode])
 
   useEffect(() => {
     let reconnectTimer: ReturnType<typeof setTimeout>
@@ -150,6 +185,13 @@ export default function App() {
               vdomRef.current = updated
               setVdom({ ...updated })
             }
+          } else if (msg.type === 'event_complete') {
+            setPendingEvents((prev) => {
+              if (!prev.has(msg.event_id)) return prev
+              const next = new Set(prev)
+              next.delete(msg.event_id)
+              return next
+            })
           } else if (msg.type === 'error') {
             setError(msg.message)
           }
@@ -160,11 +202,13 @@ export default function App() {
 
       ws.onclose = () => {
         setStatus('disconnected')
+        setPendingEvents(new Set())
         reconnectTimer = setTimeout(connect, 2500)
       }
 
       ws.onerror = () => {
         setStatus('error')
+        setPendingEvents(new Set())
         ws.close()
       }
     }
@@ -188,7 +232,14 @@ export default function App() {
   return (
     <>
       <div className="bf-page-shell">
-        <Renderer node={vdom} dispatch={dispatch} navigate={navigate} />
+        <Renderer
+          node={vdom}
+          dispatch={dispatch}
+          navigate={navigate}
+          pendingEvents={pendingEvents}
+          themeMode={themeMode}
+          setThemeMode={setThemeMode}
+        />
       </div>
       {status === 'disconnected' && (
         <div className="bf-connection-banner">Reconnecting to server...</div>

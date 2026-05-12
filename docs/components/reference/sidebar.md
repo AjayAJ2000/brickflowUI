@@ -2,46 +2,48 @@
 
 ## What It Does
 
-Sidebar creates the left navigation shell for multi-page apps.
-
-## When To Use It
-
-Use `Sidebar` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
-
-```python
-import brickflowui as db
-
-node = db.Sidebar(...)
-```
+`Sidebar` creates the left navigation shell for multi-page apps and now includes mobile collapse behavior by default.
 
 ## Inputs To Know
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-NavItem, Breadcrumbs
+- `items`: a list of `db.NavItem(...)`
+- `brand_name`
+- `tagline`
+- `logo`
+- `show_theme_toggle`
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("Sidebar example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+sidebar = db.Sidebar(
+    items=[
+        db.NavItem("Dashboard", "/"),
+        db.NavItem("Pipelines", "/pipelines"),
+        db.NavItem("Settings", "/settings"),
+    ],
+    brand_name="Acme Analytics",
+    tagline="Built with BrickflowUI",
+    logo="assets/logo.svg",
+    show_theme_toggle=True,
+)
 ```
+
+## Responsive Behavior
+
+On smaller screens, `Sidebar` automatically:
+
+- hides behind a menu button
+- opens as an overlay panel
+- closes after a navigation click
+- keeps the theme toggle accessible in the footer
+
+## Works Well With
+
+`NavItem`, `ThemeToggle`, `Image`, multi-page `App(...)` shells
 
 ## Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- If you register multiple pages with `@app.page(...)`, BrickflowUI uses `Sidebar` automatically for the built-in shell.
+- For a top navigation pattern instead, use `TopNav`.
