@@ -2,47 +2,41 @@
 
 ## What It Does
 
-`Video` renders local or remote videos directly from your BrickflowUI script.
+Renders local or remote videos directly from your BrickflowUI script.
 
-## When To Use It
+## Signature
 
-Use `Video` for:
+```python
+db.Video(src: 'str', poster: 'Optional[str]' = None, width: 'str' = '100%', height: 'str' = 'auto', caption: 'Optional[str]' = None, radius: 'str' = 'var(--radius-lg)', controls: 'bool' = True, autoplay: 'bool' = False, loop: 'bool' = False, muted: 'bool' = False, animated: 'bool' = False, animation: 'Optional[str]' = None, animation_delay: 'Optional[float]' = None) -> 'VNode'
+```
 
-- short product walkthroughs
-- embedded motion demos in docs-like pages
-- loading and onboarding support media
-- internal runbook clips
+## Parameters
 
-## Inputs To Know
-
-- `src`
-- `poster`
-- `controls`
-- `autoplay`
-- `loop`
-- `muted`
-- `caption`
-- `width`
-- `height`
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `src` | `str` | `required` | |
+| `poster` | `Optional[str]` | `None` | |
+| `width` | `str` | `'100%'` | |
+| `height` | `str` | `'auto'` | |
+| `caption` | `Optional[str]` | `None` | |
+| `radius` | `str` | `'var(--radius-lg)'` | |
+| `controls` | `bool` | `True` | |
+| `autoplay` | `bool` | `False` | |
+| `loop` | `bool` | `False` | |
+| `muted` | `bool` | `False` | |
+| `animated` | `bool` | `False` | |
+| `animation` | `Optional[str]` | `None` | |
+| `animation_delay` | `Optional[float]` | `None` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-demo = db.Video(
-    "assets/demo.mp4",
-    poster="assets/poster.png",
-    caption="Quarterly analytics workflow walkthrough",
-    controls=True,
-)
+node = db.Video("assets/demo.mp4", poster="assets/poster.png", caption="Product walkthrough")
 ```
 
-## Works Well With
+## Integration Notes
 
-`Card`, `Hero`, `Accordion`, `Embed`
-
-## Notes
-
-- Local video paths are served automatically through the runtime asset layer.
-- For a startup screen, use `App(loading={"video": ...})`.
+- This component composes cleanly with layout primitives such as `Card`, `Grid`, `Row`, and `Column`.
+- Prefer controlled state from Python when the value matters to your business logic or backend query layer.

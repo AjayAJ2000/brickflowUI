@@ -1,4 +1,4 @@
-![BrickFlowUI](/docs/assets/brickflowui-hero.png)
+﻿![BrickflowUI](/docs/assets/brickflowui-logo.svg)
 
 # BrickflowUI
 
@@ -154,7 +154,7 @@ Use this minimum setup:
 `requirements.txt`
 
 ```text
-brickflowui>=0.1.6
+brickflowui>=0.1.9
 ```
 
 Install from GitHub instead:
@@ -209,6 +209,19 @@ Package build:
 python -m build
 ```
 
+## Recommended playgrounds
+
+- `examples/local_playground/app.py` for framework validation
+- `examples/component_studio/app.py` for a broad component walkthrough
+- `examples/acme_analytics_command_center/app.py` for a product-style shell reference
+
+## Open source standards
+
+- [Contributing guide](./CONTRIBUTING.md)
+- [Code of Conduct](./CODE_OF_CONDUCT.md)
+- [Security policy](./SECURITY.md)
+- [Support guide](./SUPPORT.md)
+
 ## Repo map
 
 ```text
@@ -235,3 +248,4 @@ docs/
 ## License
 
 MIT
+

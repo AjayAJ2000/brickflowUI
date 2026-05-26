@@ -2,46 +2,41 @@
 
 ## What It Does
 
-ChatInput collects assistant-style prompts with change and submit events.
+Collects assistant-style prompts with change and submit events.
 
-## When To Use It
-
-Use `ChatInput` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
+## Signature
 
 ```python
-import brickflowui as db
-
-node = db.ChatInput(...)
+db.ChatInput(name: 'str' = 'message', value: 'str' = '', placeholder: 'str' = 'Ask a question', on_change: 'Optional[Callable[[str], None]]' = None, on_submit: 'Optional[Callable[[str], None]]' = None, disabled: 'bool' = False, loading: 'bool' = False, submit_label: 'str' = 'Send', debounce_ms: 'int' = 180, change_strategy: "Literal['debounce', 'immediate', 'blur']" = 'debounce', animated: 'bool' = False, animation: 'Optional[str]' = None, animation_delay: 'Optional[float]' = None) -> 'VNode'
 ```
 
-## Inputs To Know
+## Parameters
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-ChatMessage, Drawer
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `name` | `str` | `'message'` | |
+| `value` | `str` | `''` | |
+| `placeholder` | `str` | `'Ask a question'` | |
+| `on_change` | `Optional[Callable[[str], None]]` | `None` | |
+| `on_submit` | `Optional[Callable[[str], None]]` | `None` | |
+| `disabled` | `bool` | `False` | |
+| `loading` | `bool` | `False` | |
+| `submit_label` | `str` | `'Send'` | |
+| `debounce_ms` | `int` | `180` | |
+| `change_strategy` | `Literal['debounce', 'immediate', 'blur']` | `'debounce'` | |
+| `animated` | `bool` | `False` | |
+| `animation` | `Optional[str]` | `None` | |
+| `animation_delay` | `Optional[float]` | `None` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("ChatInput example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+node = db.ChatInput(value="", placeholder="Ask about delayed jobs", on_change=lambda value: None, on_submit=lambda value: None, debounce_ms=200)
 ```
 
-## Notes
+## Integration Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- Chat input uses the same debounced local-first sync model as `Input`, so composing prompts stays smooth.
+- Call `on_submit` for the actual send action and reserve `on_change` for draft-aware UX, prompt suggestions, or validation.

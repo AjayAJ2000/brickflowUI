@@ -118,7 +118,7 @@ def test_shell_bootstrap_includes_theme_mode_and_subtitle():
 
     assert response.status_code == 200
     assert "Querying warehouse metadata" in response.text
-    assert "\"themeMode\": \"dark\"" in response.text
+    assert "\"themeMode\": \"light\"" in response.text
 
 def test_custom_api_route():
     app = App()

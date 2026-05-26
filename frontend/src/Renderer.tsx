@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import type { VNodeData } from './types'
 import {
   AreaChart, Area,
@@ -44,7 +44,7 @@ const CHART_COLORS = ['#FF3621', '#58a6ff', '#3fb950', '#e3b341', '#bc8cff', '#d
 interface RenderCtx {
   dispatch: (event_id: string, data?: Record<string, unknown>) => void
   navigate: (path: string) => void
-  pendingEvents: Set<string>
+  pendingEvents: Map<string, number>
   themeMode: 'light' | 'dark'
   setThemeMode: (mode: 'light' | 'dark') => void
 }
@@ -96,7 +96,7 @@ function pendingEventIds(props: Record<string, any>, keys: string[] = ['click', 
 }
 
 function isPending(props: Record<string, any>, ctx: RenderCtx, keys?: string[]) {
-  return pendingEventIds(props, keys).some((eventId) => ctx.pendingEvents.has(eventId))
+  return pendingEventIds(props, keys).some((eventId) => (ctx.pendingEvents.get(eventId) || 0) > 0)
 }
 
 function renderLoadingSkeleton(lines = 3) {
@@ -146,7 +146,7 @@ export function Renderer({
   node: VNodeData
   dispatch: RenderCtx['dispatch']
   navigate: RenderCtx['navigate']
-  pendingEvents: Set<string>
+  pendingEvents: Map<string, number>
   themeMode: 'light' | 'dark'
   setThemeMode: (mode: 'light' | 'dark') => void
 }) {
@@ -259,37 +259,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       }
 
     case 'Input':
-      {
-      const autoLoading = isPending(p, ctx, ['change'])
-      return (
-        <div key={key} className={resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ['bf-form-field'])} style={resolveMotionStyle(p)}>
-          {p.label && <label className="bf-label">{p.label as string}</label>}
-          {(p.loading || autoLoading) && <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div>}
-          {p.inputType === 'textarea'
-            ? <textarea
-                name={p.name as string}
-                className="bf-textarea"
-                placeholder={p.placeholder as string}
-                value={(p.value as string) || ''}
-                disabled={p.disabled as boolean}
-                aria-busy={autoLoading}
-                onChange={e => ev('change', e.target.value)}
-              />
-            : <input
-                name={p.name as string}
-                className={`bf-input${p.error ? ' error' : ''}`}
-                type={(p.inputType as string) || 'text'}
-                placeholder={(p.placeholder as string) || ''}
-                value={(p.value as string) || ''}
-                disabled={p.disabled as boolean}
-                aria-busy={autoLoading}
-                onChange={e => ev('change', e.target.value)}
-              />
-          }
-          {p.error && <span className="bf-input-error">{p.error as string}</span>}
-        </div>
-      )
-      }
+      return <InputComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['change']) }} dispatch={(value) => ev('change', value)} />
 
     case 'DateRangePicker':
       return <DateRangePickerComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['change']) }} dispatch={(value) => ev('change', value)} />
@@ -1033,6 +1003,115 @@ function AnimatedValue({ value, animated }: { value: string; animated: boolean }
   return <div className="bf-stat-value">{display}</div>
 }
 
+function useDebouncedDispatcher<T>(dispatch: (value: T) => void, delayMs: number) {
+  const latestDispatch = useRef(dispatch)
+  const timerRef = useRef<number | null>(null)
+  const queuedValueRef = useRef<T | null>(null)
+
+  useEffect(() => {
+    latestDispatch.current = dispatch
+  }, [dispatch])
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current)
+      }
+    }
+  }, [])
+
+  const flush = useCallback((explicitValue?: T) => {
+    const nextValue = explicitValue ?? queuedValueRef.current
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    if (nextValue === null || nextValue === undefined) return
+    queuedValueRef.current = null
+    latestDispatch.current(nextValue)
+  }, [])
+
+  const schedule = useCallback((value: T) => {
+    queuedValueRef.current = value
+    if (delayMs <= 0) {
+      flush(value)
+      return
+    }
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current)
+    }
+    timerRef.current = window.setTimeout(() => {
+      const queued = queuedValueRef.current
+      queuedValueRef.current = null
+      timerRef.current = null
+      if (queued !== null && queued !== undefined) {
+        latestDispatch.current(queued)
+      }
+    }, delayMs)
+  }, [delayMs, flush])
+
+  return { flush, schedule }
+}
+
+function InputComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: string) => void }) {
+  const incomingValue = String((p.value as string) || '')
+  const [value, setValue] = useState(incomingValue)
+  const localDirtyRef = useRef(false)
+  const lastDispatchedRef = useRef(incomingValue)
+  const inputType = String((p.inputType as string) || 'text')
+  const changeStrategy = String(p.changeStrategy || (inputType === 'number' || inputType === 'date' ? 'immediate' : 'debounce'))
+  const debounceMs = Math.max(0, Number(p.debounceMs ?? 180))
+  const syncOnBlur = p.syncOnBlur !== false
+  const { flush, schedule } = useDebouncedDispatcher<string>((nextValue) => {
+    lastDispatchedRef.current = nextValue
+    dispatch(nextValue)
+  }, debounceMs)
+
+  useEffect(() => {
+    if (!localDirtyRef.current || incomingValue === lastDispatchedRef.current) {
+      setValue(incomingValue)
+      localDirtyRef.current = false
+    }
+  }, [incomingValue])
+
+  const commitValue = useCallback((nextValue: string, immediate = false) => {
+    localDirtyRef.current = true
+    if (changeStrategy === 'blur' && !immediate) return
+    if (immediate || changeStrategy === 'immediate') flush(nextValue)
+    else schedule(nextValue)
+  }, [changeStrategy, flush, schedule])
+
+  const commonProps = {
+    name: p.name as string,
+    placeholder: (p.placeholder as string) || '',
+    value,
+    disabled: Boolean(p.disabled),
+    'aria-busy': Boolean(p.loading),
+    onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const nextValue = event.target.value
+      setValue(nextValue)
+      commitValue(nextValue)
+    },
+    onBlur: () => {
+      if (syncOnBlur || changeStrategy === 'blur') {
+        flush(value)
+      }
+    },
+  }
+
+  return (
+    <div className={resolveMotionClass(p, ['bf-form-field'])} style={resolveMotionStyle(p)}>
+      {p.label && <label className="bf-label">{p.label as string}</label>}
+      {p.loading ? <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div> : null}
+      {inputType === 'textarea'
+        ? <textarea {...commonProps} className="bf-textarea" />
+        : <input {...commonProps} className={`bf-input${p.error ? ' error' : ''}`} type={inputType} />
+      }
+      {p.error && <span className="bf-input-error">{p.error as string}</span>}
+    </div>
+  )
+}
+
 function DateRangePickerComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: Record<string, string>) => void }) {
   const [start, setStart] = useState((p.start as string) || '')
   const [end, setEnd] = useState((p.end as string) || '')
@@ -1525,15 +1604,35 @@ function ChatMessageComponent({ props: p }: { props: Record<string, any> }) {
 }
 
 function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }: { props: Record<string, any>; dispatchChange: (v: string) => void; dispatchSubmit: (v: string) => void }) {
-  const [value, setValue] = useState((p.value as string) || '')
+  const incomingValue = String((p.value as string) || '')
+  const [value, setValue] = useState(incomingValue)
+  const localDirtyRef = useRef(false)
+  const lastDispatchedRef = useRef(incomingValue)
+  const changeStrategy = String(p.changeStrategy || 'debounce')
+  const debounceMs = Math.max(0, Number(p.debounceMs ?? 180))
+  const { flush, schedule } = useDebouncedDispatcher<string>((nextValue) => {
+    lastDispatchedRef.current = nextValue
+    dispatchChange(nextValue)
+  }, debounceMs)
 
   useEffect(() => {
-    setValue((p.value as string) || '')
-  }, [p.value])
+    if (!localDirtyRef.current || incomingValue === lastDispatchedRef.current) {
+      setValue(incomingValue)
+      localDirtyRef.current = false
+    }
+  }, [incomingValue])
+
+  const commitValue = useCallback((nextValue: string, immediate = false) => {
+    localDirtyRef.current = true
+    if (changeStrategy === 'blur' && !immediate) return
+    if (immediate || changeStrategy === 'immediate') flush(nextValue)
+    else schedule(nextValue)
+  }, [changeStrategy, flush, schedule])
 
   const submit = () => {
     const next = value.trim()
     if (!next || p.disabled || p.loading) return
+    flush(value)
     dispatchSubmit(next)
   }
 
@@ -1546,9 +1645,11 @@ function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }: { prop
         placeholder={(p.placeholder as string) || 'Ask a question'}
         disabled={Boolean(p.disabled)}
         onChange={(event) => {
-          setValue(event.target.value)
-          dispatchChange(event.target.value)
+          const nextValue = event.target.value
+          setValue(nextValue)
+          commitValue(nextValue)
         }}
+        onBlur={() => flush(value)}
         onKeyDown={(event) => {
           if (event.key === 'Enter') submit()
         }}
@@ -1645,7 +1746,7 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
       columns
         .map((col) => {
           const raw = String(row[col.key] ?? '')
-          return `"${raw.replaceAll('"', '""')}"`
+          return `"${raw.split('"').join('""')}"`
         })
         .join(',')
     )

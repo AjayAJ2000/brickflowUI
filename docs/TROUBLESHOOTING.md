@@ -1,4 +1,4 @@
-# Troubleshooting
+﻿# Troubleshooting
 
 This page collects the most common problems users hit while installing, running, publishing, and deploying BrickflowUI.
 
@@ -17,7 +17,7 @@ Common causes:
 
 Recommended fixes:
 
-- use `brickflowui>=0.1.6`
+- use `brickflowui>=0.1.9`
 - hard refresh the page
 - keep `app.yaml` minimal
 - avoid relying on third-party frontend assets
@@ -33,7 +33,7 @@ pip install brickflowui
 or:
 
 ```bash
-pip install "brickflowui @ git+https://github.com/AjayAJ2000/brickflowUI.git@v0.1.6"
+pip install "brickflowui @ git+https://github.com/AjayAJ2000/brickflowUI.git@v0.1.9"
 ```
 
 ## I changed frontend code, but my package still behaves the same
@@ -48,9 +48,27 @@ cd ..
 python -m build
 ```
 
+## Typing in `db.Input` or `db.ChatInput` still feels slow
+
+BrickflowUI now defaults these controls to debounced local-first syncing, so the browser should stay responsive even when Python owns the state.
+
+Check these things:
+
+- make sure you are on `brickflowui>=0.1.9`
+- rebuild the frontend bundle after changing runtime input behavior
+- avoid `change_strategy="immediate"` unless you truly need every keystroke in Python
+- use the local playground example to confirm the framework behavior before debugging your own app logic
+
+Recommended validation:
+
+```bash
+python examples/local_playground/app.py
+```
+
 ## `python -m build` fails around frontend assets
 
 Before publishing, always verify the wheel contains:
 
 - `brickflowui/frontend/dist/index.html`
 - `brickflowui/frontend/dist/assets/...`
+

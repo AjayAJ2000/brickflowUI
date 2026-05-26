@@ -2,46 +2,35 @@
 
 ## What It Does
 
-GaugeChart shows readiness, freshness, reliability, or quality as a dial.
+Shows readiness, freshness, reliability, or quality as a dial.
 
-## When To Use It
-
-Use `GaugeChart` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
+## Signature
 
 ```python
-import brickflowui as db
-
-node = db.GaugeChart(...)
+db.GaugeChart(value: 'float', min: 'float' = 0, max: 'float' = 100, title: 'Optional[str]' = None, label: 'Optional[str]' = None, color: 'Optional[str]' = None, height: 'int' = 220) -> 'VNode'
 ```
 
-## Inputs To Know
+## Parameters
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-Stat, StatusStrip
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `value` | `float` | `required` | |
+| `min` | `float` | `0` | |
+| `max` | `float` | `100` | |
+| `title` | `Optional[str]` | `None` | |
+| `label` | `Optional[str]` | `None` | |
+| `color` | `Optional[str]` | `None` | |
+| `height` | `int` | `220` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("GaugeChart example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+node = db.GaugeChart(value=72, title="Command center", label="Pipeline health", height="320px")
 ```
 
-## Notes
+## Integration Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- This component composes cleanly with layout primitives such as `Card`, `Grid`, `Row`, and `Column`.
+- Prefer controlled state from Python when the value matters to your business logic or backend query layer.

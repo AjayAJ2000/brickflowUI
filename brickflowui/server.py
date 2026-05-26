@@ -10,6 +10,7 @@ Creates a FastAPI app that:
 from __future__ import annotations
 
 import asyncio
+import html
 import inspect
 import json
 import logging
@@ -379,7 +380,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                 html = f"{head_injections}\n{html}"
             return HTMLResponse(html)
             
-        return HTMLResponse(_minimal_html_shell(head_injections, dbrx_app.title))
+        return HTMLResponse(_minimal_html_shell(head_injections, dbrx_app.title, dbrx_app.loading_bootstrap()))
 
     return fastapi_app
 
@@ -430,7 +431,35 @@ def _mount_custom_routes(fastapi_app: FastAPI, dbrx_app: "App"):
 # ---------------------------------------------------------------------------
 
 
-def _minimal_html_shell(style_block: str = "", title: str = "BrickflowUI App") -> str:
+def _minimal_html_shell(
+    style_block: str = "",
+    title: str = "BrickflowUI App",
+    loading: Optional[Dict[str, object]] = None,
+) -> str:
+    loading = loading or {}
+    loading_title = html.escape(str(loading.get("title") or title))
+    loading_message = html.escape(str(loading.get("message") or "Connecting to runtime..."))
+    loading_subtitle = str(loading.get("subtitle") or "").strip()
+    loading_asset = str(loading.get("video") or loading.get("asset") or "").strip()
+    loading_kind = str(loading.get("assetKind") or ("video" if loading.get("video") else "image")).strip()
+    loading_media = ""
+    if loading_asset:
+        escaped_asset = html.escape(loading_asset, quote=True)
+        if loading_kind == "video":
+            loading_media = (
+                f'<video class="loading-media" src="{escaped_asset}" autoplay muted loop playsinline></video>'
+            )
+        else:
+            loading_media = f'<img class="loading-media" src="{escaped_asset}" alt="{loading_title} loading" />'
+    elif not bool(loading.get("textOnly")):
+        loading_media = '<div class="spinner"></div>'
+
+    subtitle_html = (
+        f'<div class="loading-subtitle">{html.escape(loading_subtitle)}</div>'
+        if loading_subtitle
+        else ""
+    )
+
     return """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -439,15 +468,6 @@ def _minimal_html_shell(style_block: str = "", title: str = "BrickflowUI App") -
   <title>__APP_TITLE__</title>
   __STYLE_BLOCK__
   <style>
-    :root {{
-      --db-bg: #0d1117;
-      --db-surface: #161b22;
-      --db-border: #30363d;
-      --db-text: #e6edf3;
-      --db-text-muted: #8b949e;
-      --db-primary: #FF3621;
-      --db-primary-hover: #e02d1a;
-    }}
     * {{ box-sizing: border-box; margin: 0; padding: 0; }}
     body {{
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -482,15 +502,28 @@ def _minimal_html_shell(style_block: str = "", title: str = "BrickflowUI App") -
       to {{ transform: rotate(360deg); }}
     }}
     .loading-brand {{ font-size: 24px; font-weight: 600; color: var(--db-primary); }}
+    .loading-subtitle {{ font-size: 16px; font-weight: 500; color: var(--db-text); }}
     .loading-hint {{ font-size: 14px; color: var(--db-text-muted); }}
+    .loading-media {{
+      max-width: 168px;
+      max-height: 168px;
+      width: auto;
+      height: auto;
+      border-radius: 16px;
+      object-fit: contain;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      background: rgba(255, 255, 255, 0.68);
+    }}
   </style>
 </head>
 <body>
   <div id="root">
     <div class="loading-screen">
-      <div class="spinner"></div>
+      __LOADING_MEDIA__
       <div class="loading-brand">__APP_TITLE__</div>
-      <div class="loading-hint">Connecting to runtime...</div>
+      __LOADING_SUBTITLE__
+      <div class="loading-hint">__LOADING_MESSAGE__</div>
     </div>
   </div>
   <script>
@@ -572,4 +605,4 @@ def _minimal_html_shell(style_block: str = "", title: str = "BrickflowUI App") -
   </script>
 </body>
 </html>
-""".replace("__STYLE_BLOCK__", style_block).replace("__APP_TITLE__", title)
+""".replace("__STYLE_BLOCK__", style_block).replace("__APP_TITLE__", loading_title).replace("__LOADING_MEDIA__", loading_media).replace("__LOADING_SUBTITLE__", subtitle_html).replace("__LOADING_MESSAGE__", loading_message)

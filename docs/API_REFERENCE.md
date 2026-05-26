@@ -1,4 +1,4 @@
-# API Reference
+﻿# API Reference
 
 Use this page when you already understand the overall framework shape and want the current public surface in one place.
 
@@ -111,8 +111,10 @@ Useful additive props:
 Notes:
 
 - `Input(..., loading=True)` and `Select(..., loading=True)` show inline loading affordances
+- `Input` supports `debounce_ms`, `change_strategy`, and `sync_on_blur` for smoother backend-controlled typing flows
 - `DateRangePicker` emits `{"start": "...", "end": "..."}` to its `on_change`
 - `MultiSelect` emits `list[str]` to its `on_change`
+- `MultiSelect(..., loading=True)` and `DateRangePicker(..., loading=True)` can reflect backend work directly
 - `Form` preserves repeated field names as arrays when posting JSON
 
 ## Navigation And Surface Components
@@ -178,7 +180,7 @@ db.BarChart(
 
 ## Pipeline And App Composition Components
 
-These components were added for richer `0.1.6` dashboards and internal apps:
+These components were added for richer `0.1.9` dashboards and internal apps:
 
 - `db.PipelineGraph(nodes, edges, on_node_click=...)` renders a simple pipeline/DAG-style flow from plain dictionaries.
 - `db.StatusStrip(items=[...])` renders compact signal cards for freshness, SLA, cost, latency, and incident counts.
@@ -260,3 +262,4 @@ Useful aliases:
 - `list_tables(catalog, schema)`
 - `table_schema(catalog, schema, table)`
 - `get_table(catalog, schema, table, limit=100)`
+

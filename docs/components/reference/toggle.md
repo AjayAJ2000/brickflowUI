@@ -2,46 +2,33 @@
 
 ## What It Does
 
-Toggle switches a boolean state with a more app-like visual treatment.
+Switches a boolean state with a more app-like visual treatment.
 
-## When To Use It
-
-Use `Toggle` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
+## Signature
 
 ```python
-import brickflowui as db
-
-node = db.Toggle(...)
+db.Toggle(name: 'str', label: 'str', checked: 'bool' = False, on_change: 'Optional[Callable[[bool], None]]' = None, disabled: 'bool' = False) -> 'VNode'
 ```
 
-## Inputs To Know
+## Parameters
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-Alert, StatusStrip
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `name` | `str` | `required` | |
+| `label` | `str` | `required` | |
+| `checked` | `bool` | `False` | |
+| `on_change` | `Optional[Callable[[bool], None]]` | `None` | |
+| `disabled` | `bool` | `False` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("Toggle example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+node = db.Toggle(name="dark_mode", label="Dark mode", checked=True, on_change=lambda value: None)
 ```
 
-## Notes
+## Integration Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- This component composes cleanly with layout primitives such as `Card`, `Grid`, `Row`, and `Column`.
+- Prefer controlled state from Python when the value matters to your business logic or backend query layer.

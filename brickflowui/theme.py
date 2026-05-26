@@ -5,7 +5,7 @@ from typing import Any, Dict, Mapping, Optional, Union
 
 
 DEFAULT_THEME = {
-    "default_mode": "dark",
+    "default_mode": "light",
     "branding": {
         "title": "BrickflowUI App",
         "tagline": "React components. Python syntax.",
@@ -22,27 +22,27 @@ DEFAULT_THEME = {
     "colors": {
         "primary": "#4361EE",
         "primary-hover": "#3650D8",
-        "primary-light": "rgba(67, 97, 238, 0.18)",
-        "bg": "#0A0F1E",
-        "surface": "#0F172A",
-        "surface-2": "#1E293B",
-        "text": "#F1F5F9",
-        "text-muted": "#94A3B8",
-        "text-subtle": "#64748B",
-        "border": "#1E293B",
-        "border-strong": "#334155",
-        "success": "#22C55E",
-        "warning": "#F59E0B",
-        "error": "#F43F5E",
-        "info": "#3B82F6",
+        "primary-light": "rgba(67, 97, 238, 0.12)",
+        "bg": "#F8FAFC",
+        "surface": "#FFFFFF",
+        "surface-2": "#F1F5F9",
+        "text": "#0F172A",
+        "text-muted": "#475569",
+        "text-subtle": "#94A3B8",
+        "border": "#E2E8F0",
+        "border-strong": "#CBD5E1",
+        "success": "#15803D",
+        "warning": "#B45309",
+        "error": "#BE123C",
+        "info": "#1D4ED8",
         "link": "#4361EE",
     },
     "surfaces": {
-        "canvas": "#0A0F1E",
-        "muted": "#111B2E",
-        "overlay": "rgba(10, 15, 30, 0.82)",
-        "card": "#1E293B",
-        "hover": "#334155",
+        "canvas": "#F8FAFC",
+        "muted": "#F1F5F9",
+        "overlay": "rgba(255, 255, 255, 0.84)",
+        "card": "#F1F5F9",
+        "hover": "#E2E8F0",
     },
     "typography": {
         "sans": "'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -61,9 +61,9 @@ DEFAULT_THEME = {
         "full": "9999px",
     },
     "shadows": {
-        "sm": "0 0 0 1px rgba(51, 65, 85, 0.48)",
-        "md": "0 0 0 1px rgba(51, 65, 85, 0.72)",
-        "lg": "0 0 0 1px rgba(67, 97, 238, 0.12), 0 24px 48px rgba(2, 6, 23, 0.48)",
+        "sm": "0 1px 2px rgba(15, 23, 42, 0.05)",
+        "md": "0 8px 24px rgba(15, 23, 42, 0.08)",
+        "lg": "0 24px 48px rgba(15, 23, 42, 0.12)",
     },
     "motion": {
         "duration-fast": "140ms",
@@ -73,37 +73,37 @@ DEFAULT_THEME = {
         "stagger-step": "40ms",
     },
     "modes": {
-        "dark": {},
-        "light": {
+        "light": {},
+        "dark": {
             "colors": {
                 "primary": "#4361EE",
                 "primary-hover": "#3650D8",
-                "primary-light": "rgba(67, 97, 238, 0.12)",
-                "bg": "#F8FAFC",
-                "surface": "#FFFFFF",
-                "surface-2": "#F1F5F9",
-                "text": "#0F172A",
-                "text-muted": "#475569",
-                "text-subtle": "#94A3B8",
-                "border": "#E2E8F0",
-                "border-strong": "#CBD5E1",
-                "success": "#15803D",
-                "warning": "#B45309",
-                "error": "#BE123C",
-                "info": "#1D4ED8",
+                "primary-light": "rgba(67, 97, 238, 0.18)",
+                "bg": "#0A0F1E",
+                "surface": "#0F172A",
+                "surface-2": "#1E293B",
+                "text": "#F1F5F9",
+                "text-muted": "#94A3B8",
+                "text-subtle": "#64748B",
+                "border": "#1E293B",
+                "border-strong": "#334155",
+                "success": "#22C55E",
+                "warning": "#F59E0B",
+                "error": "#F43F5E",
+                "info": "#3B82F6",
                 "link": "#4361EE",
             },
             "surfaces": {
-                "canvas": "#F8FAFC",
-                "muted": "#F1F5F9",
-                "overlay": "rgba(255, 255, 255, 0.84)",
-                "card": "#F1F5F9",
-                "hover": "#E2E8F0",
+                "canvas": "#0A0F1E",
+                "muted": "#111B2E",
+                "overlay": "rgba(10, 15, 30, 0.84)",
+                "card": "#1E293B",
+                "hover": "#334155",
             },
             "shadows": {
-                "sm": "0 1px 2px rgba(15, 23, 42, 0.05)",
-                "md": "0 8px 24px rgba(15, 23, 42, 0.08)",
-                "lg": "0 24px 48px rgba(15, 23, 42, 0.12)",
+                "sm": "0 0 0 1px rgba(51, 65, 85, 0.48)",
+                "md": "0 0 0 1px rgba(51, 65, 85, 0.72)",
+                "lg": "0 0 0 1px rgba(67, 97, 238, 0.12), 0 24px 48px rgba(2, 6, 23, 0.48)",
             },
         },
     },
@@ -217,8 +217,8 @@ class Theme:
             self._merge(self._normalize_theme(theme_config))
 
     def default_mode(self) -> str:
-        mode = str(self.config.get("default_mode", "dark")).lower()
-        return mode if mode in {"light", "dark"} else "dark"
+        mode = str(self.config.get("default_mode", "light")).lower()
+        return mode if mode in {"light", "dark"} else "light"
 
     def branding_value(self, key: str, default: Any = None) -> Any:
         return self.config.get("branding", {}).get(key, default)

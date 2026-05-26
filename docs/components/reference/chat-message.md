@@ -2,46 +2,37 @@
 
 ## What It Does
 
-ChatMessage renders one message inside an assistant or copilot transcript.
+Renders one message inside an assistant or copilot transcript.
 
-## When To Use It
-
-Use `ChatMessage` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
+## Signature
 
 ```python
-import brickflowui as db
-
-node = db.ChatMessage(...)
+db.ChatMessage(role: "Literal['user', 'assistant', 'system', 'tool']", content: 'str', name: 'Optional[str]' = None, timestamp: 'Optional[str]' = None, avatar: 'Optional[str]' = None, tone: "Literal['default', 'success', 'warning', 'error', 'info']" = 'default', animated: 'bool' = False, animation: 'Optional[str]' = None, animation_delay: 'Optional[float]' = None) -> 'VNode'
 ```
 
-## Inputs To Know
+## Parameters
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-ChatInput, Card
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `role` | `Literal['user', 'assistant', 'system', 'tool']` | `required` | |
+| `content` | `str` | `required` | |
+| `name` | `Optional[str]` | `None` | |
+| `timestamp` | `Optional[str]` | `None` | |
+| `avatar` | `Optional[str]` | `None` | |
+| `tone` | `Literal['default', 'success', 'warning', 'error', 'info']` | `'default'` | |
+| `animated` | `bool` | `False` | |
+| `animation` | `Optional[str]` | `None` | |
+| `animation_delay` | `Optional[float]` | `None` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("ChatMessage example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+node = db.ChatMessage(role="assistant", content="Two jobs are outside SLA.", name="Ops Copilot")
 ```
 
-## Notes
+## Integration Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- This component composes cleanly with layout primitives such as `Card`, `Grid`, `Row`, and `Column`.
+- Prefer controlled state from Python when the value matters to your business logic or backend query layer.

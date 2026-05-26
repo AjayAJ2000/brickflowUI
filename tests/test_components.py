@@ -25,11 +25,12 @@ def test_new_components_serialize_expected_props_and_nested_actions():
                 default_open=[0],
                 allow_multiple=True,
             ),
-            db.DateRangePicker(name="window", start="2026-04-01", end="2026-04-07"),
+            db.DateRangePicker(name="window", start="2026-04-01", end="2026-04-07", loading=True),
             db.MultiSelect(
                 name="layers",
                 options=[{"label": "Bronze", "value": "bronze"}],
                 values=["bronze"],
+                loading=True,
             ),
             db.Popup(visible=True, title="Quick action", children=[db.Text("Body")]),
             db.Toast("Saved", title="Success", on_close=lambda: None, auto_hide_ms=1500),
@@ -67,6 +68,8 @@ def test_new_components_serialize_expected_props_and_nested_actions():
     toast = next(child for child in payload["children"] if child["type"] == "Toast")
     image = next(child for child in payload["children"] if child["type"] == "Image")
     video = next(child for child in payload["children"] if child["type"] == "Video")
+    date_range = next(child for child in payload["children"] if child["type"] == "DateRangePicker")
+    multiselect = next(child for child in payload["children"] if child["type"] == "MultiSelect")
     assert empty_state["props"]["title"] == "No pipelines"
     assert empty_state["props"]["actions"][0]["type"] == "Button"
     assert popup["props"]["title"] == "Quick action"
@@ -74,6 +77,8 @@ def test_new_components_serialize_expected_props_and_nested_actions():
     assert toast["props"]["autoHideMs"] == 1500
     assert image["props"]["caption"] == "Example image"
     assert video["props"]["poster"] == "https://example.com/poster.png"
+    assert date_range["props"]["loading"] is True
+    assert multiselect["props"]["loading"] is True
 
 
 def test_navigation_media_and_embed_components_serialize_new_branding_props():
@@ -112,6 +117,35 @@ def test_navigation_media_and_embed_components_serialize_new_branding_props():
     assert rendered["Hero"]["props"]["image"] == "/mark.svg"
     assert rendered["Hero"]["props"]["tagline"] == "Built for operating teams"
     assert rendered["Embed"]["props"]["title"] == "Embedded dashboard"
+
+
+def test_input_and_chatinput_serialize_debounced_sync_props():
+    node = db.Column(
+        [
+            db.Input(
+                name="search",
+                value="bronze",
+                debounce_ms=250,
+                change_strategy="debounce",
+                sync_on_blur=False,
+            ),
+            db.ChatInput(
+                value="hello",
+                debounce_ms=220,
+                change_strategy="immediate",
+            ),
+        ]
+    )
+
+    payload = node.serialize({})
+    input_node = next(child for child in payload["children"] if child["type"] == "Input")
+    chat_node = next(child for child in payload["children"] if child["type"] == "ChatInput")
+
+    assert input_node["props"]["debounceMs"] == 250
+    assert input_node["props"]["changeStrategy"] == "debounce"
+    assert input_node["props"]["syncOnBlur"] is False
+    assert chat_node["props"]["debounceMs"] == 220
+    assert chat_node["props"]["changeStrategy"] == "immediate"
 
 
 def test_chart_components_expose_loading_empty_and_click_handlers():

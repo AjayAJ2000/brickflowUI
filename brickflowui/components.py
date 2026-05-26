@@ -184,14 +184,24 @@ def Input(
     required: bool = False,
     error: Optional[str] = None,
     loading: bool = False,
+    debounce_ms: int = 180,
+    change_strategy: Literal["debounce", "immediate", "blur"] = "debounce",
+    sync_on_blur: bool = True,
 ) -> VNode:
+    """Controlled text-like input with opt-in sync behavior for backend-driven apps.
+
+    By default, BrickflowUI debounces text updates so typing stays local and fast
+    while still syncing state back to Python.
+    """
     handlers: Dict[str, EventHandler] = {}
     if on_change:
         handlers["change"] = on_change
     return VNode(
         type="Input",
         props={"name": name, "label": label, "inputType": type, "placeholder": placeholder,
-               "value": value, "disabled": disabled, "required": required, "error": error, "loading": loading},
+               "value": value, "disabled": disabled, "required": required, "error": error,
+               "loading": loading, "debounceMs": debounce_ms, "changeStrategy": change_strategy,
+               "syncOnBlur": sync_on_blur},
         event_handlers=handlers,
     )
 
@@ -546,13 +556,14 @@ def DateRangePicker(
     end: str = "",
     on_change: Optional[Callable[[Dict[str, str]], None]] = None,
     disabled: bool = False,
+    loading: bool = False,
 ) -> VNode:
     handlers: Dict[str, EventHandler] = {}
     if on_change:
         handlers["change"] = on_change
     return VNode(
         type="DateRangePicker",
-        props={"name": name, "label": label, "start": start, "end": end, "disabled": disabled},
+        props={"name": name, "label": label, "start": start, "end": end, "disabled": disabled, "loading": loading},
         event_handlers=handlers,
     )
 
@@ -564,13 +575,15 @@ def MultiSelect(
     values: Optional[List[str]] = None,
     on_change: Optional[Callable[[List[str]], None]] = None,
     disabled: bool = False,
+    loading: bool = False,
 ) -> VNode:
+    """Controlled multi-value selector for filters, scopes, or tags."""
     handlers: Dict[str, EventHandler] = {}
     if on_change:
         handlers["change"] = on_change
     return VNode(
         type="MultiSelect",
-        props={"name": name, "options": options, "label": label, "values": values or [], "disabled": disabled},
+        props={"name": name, "options": options, "label": label, "values": values or [], "disabled": disabled, "loading": loading},
         event_handlers=handlers,
     )
 
@@ -867,6 +880,8 @@ def ChatInput(
     disabled: bool = False,
     loading: bool = False,
     submit_label: str = "Send",
+    debounce_ms: int = 180,
+    change_strategy: Literal["debounce", "immediate", "blur"] = "debounce",
     animated: bool = False,
     animation: Optional[str] = None,
     animation_delay: Optional[float] = None,
@@ -886,6 +901,8 @@ def ChatInput(
             "disabled": disabled,
             "loading": loading,
             "submitLabel": submit_label,
+            "debounceMs": debounce_ms,
+            "changeStrategy": change_strategy,
             "animated": animated,
             "animation": animation,
             "animationDelay": animation_delay,

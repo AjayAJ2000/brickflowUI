@@ -2,82 +2,35 @@
 
 ## What It Does
 
-`Table` renders structured rows with sorting, pagination, row click handling, CSV export, loading states, and richer cell presentation patterns.
+Shows rows of structured data with sorting, pagination, and export.
 
-## When To Use It
-
-Use `Table` for dashboards, review queues, release lists, customer scorecards, and any screen where dense operational data matters.
-
-## Inputs To Know
-
-- `data`: list of row dictionaries
-- `columns`: explicit column definitions
-- `pagination`: page size
-- `on_row_click`: callback when a row is selected
-- `loading`: show a loading state while data is in flight
-- `empty_message`: custom empty-state copy
-- `exportable`: turn on built-in CSV export
-
-## Useful Column Patterns
-
-`Table` columns can now describe richer cell formats:
+## Signature
 
 ```python
-columns = [
-    {"key": "account", "label": "Account", "format": "metric"},
-    {"key": "plan", "label": "Plan", "format": "badge", "toneKey": "planTone"},
-    {"key": "mrr", "label": "MRR", "format": "currency", "currency": "USD"},
-    {"key": "health", "label": "Health", "format": "progress", "toneKey": "statusTone"},
-    {"key": "status", "label": "Status", "format": "status", "toneKey": "statusTone"},
-]
+db.Table(data: 'List[Dict[str, Any]]', columns: 'Optional[List[Dict[str, Any]]]' = None, pagination: 'int' = 20, on_row_click: 'Optional[Callable[[Dict[str, Any]], None]]' = None, editable: 'bool' = False, loading: 'bool' = False, empty_message: 'str' = 'No data available', exportable: 'bool' = False) -> 'VNode'
 ```
 
-Supported practical formats:
+## Parameters
 
-- `text`
-- `metric`
-- `badge`
-- `status`
-- `progress`
-- `currency`
-- `image`
-- `avatar`
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `data` | `List[Dict[str, Any]]` | `required` | |
+| `columns` | `Optional[List[Dict[str, Any]]]` | `None` | |
+| `pagination` | `int` | `20` | |
+| `on_row_click` | `Optional[Callable[[Dict[str, Any]], None]]` | `None` | |
+| `editable` | `bool` | `False` | |
+| `loading` | `bool` | `False` | |
+| `empty_message` | `str` | `'No data available'` | |
+| `exportable` | `bool` | `False` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-rows = [
-    {
-        "account": "Acme Corp",
-        "plan": "Enterprise",
-        "planTone": "info",
-        "mrr": 12400,
-        "health": 88,
-        "status": "Active",
-        "statusTone": "success",
-    }
-]
-
-table = db.Table(
-    data=rows,
-    columns=[
-        {"key": "account", "label": "Account", "format": "metric"},
-        {"key": "plan", "label": "Plan", "format": "badge", "toneKey": "planTone"},
-        {"key": "mrr", "label": "MRR", "format": "currency", "currency": "USD"},
-        {"key": "health", "label": "Health", "format": "progress", "toneKey": "statusTone"},
-        {"key": "status", "label": "Status", "format": "status", "toneKey": "statusTone"},
-    ],
-    exportable=True,
-)
+node = db.Table(data=[{"name": "Bronze Orders", "status": "Healthy"}], columns=[{"key": "name", "label": "Name"}, {"key": "status", "label": "Status", "format": "status"}], pagination=10, exportable=True)
 ```
 
-## Works Well With
+## Integration Notes
 
-`Card`, `SectionHeader`, `Drawer`, `DateRangePicker`, `MultiSelect`, `PipelineGraph`
-
-## Notes
-
-- Use `loading=True` when you are waiting on backend data, or let the runtime-driven loading flow handle it from interaction events.
-- Use column formatting when you need a screenshot-grade table rather than plain strings.
+- Table supports loading, export, sorting, pagination, row clicks, and richer cell formats such as `badge`, `status`, `currency`, `progress`, and `image`.

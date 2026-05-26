@@ -2,8 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [dev, test, main]
   pull_request:
+    branches: [dev, test, main]
 
 jobs:
   validate:
@@ -40,6 +41,12 @@ jobs:
 
       - name: Run tests
         run: python -m pytest -q
+
+      - name: Regenerate component reference pages
+        run: python scripts/generate_component_reference.py
+
+      - name: Check component reference drift
+        run: git diff --exit-code -- docs/components/reference
 
       - name: Build docs
         run: python -m mkdocs build --strict

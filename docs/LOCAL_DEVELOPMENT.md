@@ -12,6 +12,12 @@ A solid local workflow should answer these questions clearly:
 - How do I debug loading, WebSocket state, and route handlers?
 - How do I test dark mode, light mode, and responsive navigation?
 
+Use these examples as your default local validation loop:
+
+- `examples/local_playground/app.py` for fast interaction, theme, media, and responsiveness checks
+- `examples/component_studio/app.py` when you want a broader component tour
+- `examples/acme_analytics_command_center/app.py` when you want to test a more product-style shell
+
 ## Run A Local App
 
 ```python
@@ -127,6 +133,10 @@ This is especially useful when:
 - you load heavy dashboard state
 - you need to prevent repeated clicks while the backend is still working
 
+For text-oriented controls such as `Input` and `ChatInput`, the framework now keeps typing local-first by default and syncs changes back to Python with a debounce. That avoids a full round-trip on every character while preserving controlled state.
+
+On top of that, frontend tree updates are now applied on the next animation frame and treated as non-urgent work in React. That means the UI is more resilient when the backend is chatty or a page has several interactive regions updating at once.
+
 ## Useful Debug Checks
 
 If something looks stuck, check these in order:
@@ -144,10 +154,7 @@ If your app defines both modes, you can test them right away:
 ```python
 app = db.App(
     theme={
-        "default_mode": "dark",
-        "light_mode": {
-            "colors": {"background": "#F8FAFC", "surface": "#FFFFFF", "text": "#0F172A"}
-        },
+        "default_mode": "light",
         "dark_mode": {
             "colors": {"background": "#0A0F1E", "surface": "#0F172A", "text": "#F1F5F9"}
         },
@@ -162,3 +169,5 @@ db.ThemeToggle()
 ```
 
 or let `Sidebar` / `TopNav` show it automatically.
+
+If you omit `dark_mode`, BrickflowUI stays in light mode by default. That is the safe baseline for older examples and new YAML theme files.

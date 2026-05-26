@@ -1,4 +1,4 @@
-brickflowui>=0.1.6
+brickflowui>=0.1.10
 
 # Optional Databricks integrations:
 # brickflowui[databricks]   — SQL connector + Unity Catalog + SDK

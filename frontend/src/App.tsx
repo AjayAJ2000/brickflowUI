@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { startTransition, useState, useEffect, useCallback, useRef } from 'react'
 import { Renderer } from './Renderer'
 import type { VNodeData, ServerMessage, Patch } from './types'
 
@@ -105,7 +105,7 @@ function LoadingVisual({ status }: { status: WsStatus }) {
 }
 
 function resolveInitialThemeMode(): 'light' | 'dark' {
-  const bootstrapMode = LOADING_BOOTSTRAP.themeMode === 'light' ? 'light' : 'dark'
+  const bootstrapMode = LOADING_BOOTSTRAP.themeMode === 'dark' ? 'dark' : 'light'
   try {
     const stored = window.localStorage.getItem('brickflowui.theme')
     return stored === 'light' || stored === 'dark' ? stored : bootstrapMode
@@ -118,16 +118,33 @@ export default function App() {
   const [vdom, setVdom] = useState<VNodeData | null>(null)
   const [status, setStatus] = useState<WsStatus>('connecting')
   const [error, setError] = useState<string | null>(null)
-  const [pendingEvents, setPendingEvents] = useState<Set<string>>(new Set())
+  const [pendingEvents, setPendingEvents] = useState<Map<string, number>>(new Map())
   const [themeMode, setThemeModeState] = useState<'light' | 'dark'>(resolveInitialThemeMode)
   const wsRef = useRef<WebSocket | null>(null)
   const vdomRef = useRef<VNodeData | null>(null)
+  const frameRef = useRef<number | null>(null)
+  const queuedTreeRef = useRef<VNodeData | null>(null)
+  const flushQueuedTree = useCallback(() => {
+    frameRef.current = null
+    const nextTree = queuedTreeRef.current
+    if (!nextTree) return
+    queuedTreeRef.current = null
+    startTransition(() => {
+      setVdom(nextTree)
+    })
+  }, [])
+
+  const scheduleTreeCommit = useCallback((nextTree: VNodeData) => {
+    queuedTreeRef.current = nextTree
+    if (frameRef.current !== null) return
+    frameRef.current = window.requestAnimationFrame(flushQueuedTree)
+  }, [flushQueuedTree])
 
   const dispatch = useCallback((event_id: string, data: Record<string, unknown> = {}) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       setPendingEvents((prev) => {
-        const next = new Set(prev)
-        next.add(event_id)
+        const next = new Map(prev)
+        next.set(event_id, (next.get(event_id) || 0) + 1)
         return next
       })
       wsRef.current.send(JSON.stringify({ type: 'event', event_id, data }))
@@ -175,7 +192,7 @@ export default function App() {
 
           if (msg.type === 'full') {
             vdomRef.current = msg.tree
-            setVdom(msg.tree)
+            scheduleTreeCommit(msg.tree)
           } else if (msg.type === 'patch') {
             if (vdomRef.current) {
               let updated = vdomRef.current
@@ -183,13 +200,15 @@ export default function App() {
                 updated = applyPatch(updated, patch)
               }
               vdomRef.current = updated
-              setVdom({ ...updated })
+              scheduleTreeCommit({ ...updated })
             }
           } else if (msg.type === 'event_complete') {
             setPendingEvents((prev) => {
-              if (!prev.has(msg.event_id)) return prev
-              const next = new Set(prev)
-              next.delete(msg.event_id)
+              const current = prev.get(msg.event_id)
+              if (!current) return prev
+              const next = new Map(prev)
+              if (current <= 1) next.delete(msg.event_id)
+              else next.set(msg.event_id, current - 1)
               return next
             })
           } else if (msg.type === 'error') {
@@ -202,13 +221,13 @@ export default function App() {
 
       ws.onclose = () => {
         setStatus('disconnected')
-        setPendingEvents(new Set())
+        setPendingEvents(new Map())
         reconnectTimer = setTimeout(connect, 2500)
       }
 
       ws.onerror = () => {
         setStatus('error')
-        setPendingEvents(new Set())
+        setPendingEvents(new Map())
         ws.close()
       }
     }
@@ -220,10 +239,13 @@ export default function App() {
 
     return () => {
       clearTimeout(reconnectTimer)
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current)
+      }
       wsRef.current?.close()
       window.removeEventListener('popstate', handlePopstate)
     }
-  }, [navigate])
+  }, [navigate, scheduleTreeCommit])
 
   if (!vdom) {
     return <LoadingVisual status={status} />

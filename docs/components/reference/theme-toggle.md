@@ -2,35 +2,31 @@
 
 ## What It Does
 
-`ThemeToggle` lets the user switch between dark mode and light mode at runtime.
+Switches between dark and light modes directly in the UI.
 
-## When To Use It
+## Signature
 
-Use `ThemeToggle` when your product defines both `dark` and `light` theme tokens and you want the viewer to control the active mode.
+```python
+db.ThemeToggle(label: 'str' = 'Theme', light_label: 'str' = 'Light', dark_label: 'str' = 'Dark') -> 'VNode'
+```
 
-## Inputs To Know
+## Parameters
 
-- `label`: visible control label
-- `light_label`: copy shown when light mode is active
-- `dark_label`: copy shown when dark mode is active
-
-## Works Well With
-
-`TopNav`, `Sidebar`, `Hero`, branded dashboards, local development previews
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `label` | `str` | `'Theme'` | |
+| `light_label` | `str` | `'Light'` | |
+| `dark_label` | `str` | `'Dark'` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-toggle = db.ThemeToggle(
-    label="Color mode",
-    light_label="Light",
-    dark_label="Dark",
-)
+node = db.ThemeToggle(label="Theme", light_label="Light", dark_label="Dark")
 ```
 
-## Notes
+## Integration Notes
 
-- Theme selection is persisted in browser storage automatically.
-- `Sidebar` and `TopNav` can render the toggle for you with `show_theme_toggle=True`.
+- This component composes cleanly with layout primitives such as `Card`, `Grid`, `Row`, and `Column`.
+- Prefer controlled state from Python when the value matters to your business logic or backend query layer.
