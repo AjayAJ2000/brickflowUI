@@ -92,6 +92,12 @@ def test_theme_supports_light_and_dark_mode_overrides():
     assert "--db-bg: #ffffff;" in css
 
 
+def test_theme_defaults_to_light_mode_when_not_explicitly_configured():
+    theme = Theme()
+
+    assert theme.default_mode() == "light"
+
+
 def test_app_uses_branding_from_theme_file_when_defaults_are_used():
     theme_path = Path(__file__).parent / "_branding_test.yaml"
     try:

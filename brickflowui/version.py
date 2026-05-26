@@ -5,7 +5,7 @@ def _detect_version() -> str:
     try:
         return version("brickflowui")
     except PackageNotFoundError:
-        return "0.1.6"
+        return "0.1.10"
 
 
 __version__ = _detect_version()

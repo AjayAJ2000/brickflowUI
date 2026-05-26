@@ -2,46 +2,31 @@
 
 ## What It Does
 
-Grid builds a responsive multi-column layout for cards, charts, or forms.
+Builds a responsive multi-column layout for cards, charts, or forms.
 
-## When To Use It
-
-Use `Grid` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
+## Signature
 
 ```python
-import brickflowui as db
-
-node = db.Grid(...)
+db.Grid(children: 'List[VNode]', cols: 'int' = 2, gap: 'int' = 4) -> 'VNode'
 ```
 
-## Inputs To Know
+## Parameters
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-Card, Table, AreaChart
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `children` | `List[VNode]` | `required` | |
+| `cols` | `int` | `2` | |
+| `gap` | `int` | `4` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("Grid example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+node = db.Grid([db.Card([db.Text("Runs")]), db.Card([db.Text("Failures")])], cols=2, gap=4)
 ```
 
-## Notes
+## Integration Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- This component composes cleanly with layout primitives such as `Card`, `Grid`, `Row`, and `Column`.
+- Prefer controlled state from Python when the value matters to your business logic or backend query layer.

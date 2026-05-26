@@ -2,46 +2,39 @@
 
 ## What It Does
 
-ComposedChart combines bars, lines, and areas in one chart.
+Combines bars, lines, and areas in one chart.
 
-## When To Use It
-
-Use `ComposedChart` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
+## Signature
 
 ```python
-import brickflowui as db
-
-node = db.ComposedChart(...)
+db.ComposedChart(data: 'List[Dict[str, Any]]', x_key: 'str', bar_keys: 'Optional[List[str]]' = None, line_keys: 'Optional[List[str]]' = None, area_keys: 'Optional[List[str]]' = None, title: 'Optional[str]' = None, colors: 'Optional[List[str]]' = None, height: 'int' = 320, loading: 'bool' = False, empty_message: 'str' = 'No chart data available', on_click: 'Optional[Callable[[Dict[str, Any]], None]]' = None) -> 'VNode'
 ```
 
-## Inputs To Know
+## Parameters
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-Card, Table
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `data` | `List[Dict[str, Any]]` | `required` | |
+| `x_key` | `str` | `required` | |
+| `bar_keys` | `Optional[List[str]]` | `None` | |
+| `line_keys` | `Optional[List[str]]` | `None` | |
+| `area_keys` | `Optional[List[str]]` | `None` | |
+| `title` | `Optional[str]` | `None` | |
+| `colors` | `Optional[List[str]]` | `None` | |
+| `height` | `int` | `320` | |
+| `loading` | `bool` | `False` | |
+| `empty_message` | `str` | `'No chart data available'` | |
+| `on_click` | `Optional[Callable[[Dict[str, Any]], None]]` | `None` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("ComposedChart example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+node = db.ComposedChart(data=[{"week": "W01", "runs": 24, "sla": 98}], x_key="week", title="Command center", height="320px")
 ```
 
-## Notes
+## Integration Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- This component composes cleanly with layout primitives such as `Card`, `Grid`, `Row`, and `Column`.
+- Prefer controlled state from Python when the value matters to your business logic or backend query layer.

@@ -89,7 +89,7 @@ function pendingEventIds(props, keys = ["click", "change", "submit", "close", "r
   return keys.map((key) => props[key]).filter((value) => typeof value === "string" && value.length > 0);
 }
 function isPending(props, ctx, keys) {
-  return pendingEventIds(props, keys).some((eventId) => ctx.pendingEvents.has(eventId));
+  return pendingEventIds(props, keys).some((eventId) => (ctx.pendingEvents.get(eventId) || 0) > 0);
 }
 function renderLoadingSkeleton(lines = 3) {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-skeleton-stack", children: Array.from({ length: lines }).map((_, index) => /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-skeleton-line" }, index)) });
@@ -199,38 +199,8 @@ function renderNode(node, ctx, key) {
         key
       );
     }
-    case "Input": {
-      const autoLoading = isPending(p, ctx, ["change"]);
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ["bf-form-field"]), style: resolveMotionStyle(p), children: [
-        p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
-        (p.loading || autoLoading) && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }),
-        p.inputType === "textarea" ? /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "textarea",
-          {
-            name: p.name,
-            className: "bf-textarea",
-            placeholder: p.placeholder,
-            value: p.value || "",
-            disabled: p.disabled,
-            "aria-busy": autoLoading,
-            onChange: (e) => ev("change", e.target.value)
-          }
-        ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "input",
-          {
-            name: p.name,
-            className: `bf-input${p.error ? " error" : ""}`,
-            type: p.inputType || "text",
-            placeholder: p.placeholder || "",
-            value: p.value || "",
-            disabled: p.disabled,
-            "aria-busy": autoLoading,
-            onChange: (e) => ev("change", e.target.value)
-          }
-        ),
-        p.error && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-input-error", children: p.error })
-      ] }, key);
-    }
+    case "Input":
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(InputComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, ["change"]) }, dispatch: (value) => ev("change", value) }, key);
     case "DateRangePicker":
       return /* @__PURE__ */ jsxRuntimeExports.jsx(DateRangePickerComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, ["change"]) }, dispatch: (value) => ev("change", value) }, key);
     case "MultiSelect":
@@ -802,6 +772,99 @@ function AnimatedValue({ value, animated }) {
   }, [animated, parsed?.decimals, parsed?.number, parsed?.prefix, parsed?.suffix, value]);
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-stat-value", children: display });
 }
+function useDebouncedDispatcher(dispatch, delayMs) {
+  const latestDispatch = reactExports.useRef(dispatch);
+  const timerRef = reactExports.useRef(null);
+  const queuedValueRef = reactExports.useRef(null);
+  reactExports.useEffect(() => {
+    latestDispatch.current = dispatch;
+  }, [dispatch]);
+  reactExports.useEffect(() => {
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+  const flush = reactExports.useCallback((explicitValue) => {
+    const nextValue = explicitValue ?? queuedValueRef.current;
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    if (nextValue === null || nextValue === void 0) return;
+    queuedValueRef.current = null;
+    latestDispatch.current(nextValue);
+  }, []);
+  const schedule = reactExports.useCallback((value) => {
+    queuedValueRef.current = value;
+    if (delayMs <= 0) {
+      flush(value);
+      return;
+    }
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+    }
+    timerRef.current = window.setTimeout(() => {
+      const queued = queuedValueRef.current;
+      queuedValueRef.current = null;
+      timerRef.current = null;
+      if (queued !== null && queued !== void 0) {
+        latestDispatch.current(queued);
+      }
+    }, delayMs);
+  }, [delayMs, flush]);
+  return { flush, schedule };
+}
+function InputComponent({ props: p, dispatch }) {
+  const incomingValue = String(p.value || "");
+  const [value, setValue] = reactExports.useState(incomingValue);
+  const localDirtyRef = reactExports.useRef(false);
+  const lastDispatchedRef = reactExports.useRef(incomingValue);
+  const inputType = String(p.inputType || "text");
+  const changeStrategy = String(p.changeStrategy || (inputType === "number" || inputType === "date" ? "immediate" : "debounce"));
+  const debounceMs = Math.max(0, Number(p.debounceMs ?? 180));
+  const syncOnBlur = p.syncOnBlur !== false;
+  const { flush, schedule } = useDebouncedDispatcher((nextValue) => {
+    lastDispatchedRef.current = nextValue;
+    dispatch(nextValue);
+  }, debounceMs);
+  reactExports.useEffect(() => {
+    if (!localDirtyRef.current || incomingValue === lastDispatchedRef.current) {
+      setValue(incomingValue);
+      localDirtyRef.current = false;
+    }
+  }, [incomingValue]);
+  const commitValue = reactExports.useCallback((nextValue, immediate = false) => {
+    localDirtyRef.current = true;
+    if (changeStrategy === "blur" && !immediate) return;
+    if (immediate || changeStrategy === "immediate") flush(nextValue);
+    else schedule(nextValue);
+  }, [changeStrategy, flush, schedule]);
+  const commonProps = {
+    name: p.name,
+    placeholder: p.placeholder || "",
+    value,
+    disabled: Boolean(p.disabled),
+    "aria-busy": Boolean(p.loading),
+    onChange: (event) => {
+      const nextValue = event.target.value;
+      setValue(nextValue);
+      commitValue(nextValue);
+    },
+    onBlur: () => {
+      if (syncOnBlur || changeStrategy === "blur") {
+        flush(value);
+      }
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-form-field"]), style: resolveMotionStyle(p), children: [
+    p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
+    p.loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }) : null,
+    inputType === "textarea" ? /* @__PURE__ */ jsxRuntimeExports.jsx("textarea", { ...commonProps, className: "bf-textarea" }) : /* @__PURE__ */ jsxRuntimeExports.jsx("input", { ...commonProps, className: `bf-input${p.error ? " error" : ""}`, type: inputType }),
+    p.error && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-input-error", children: p.error })
+  ] });
+}
 function DateRangePickerComponent({ props: p, dispatch }) {
   const [start, setStart] = reactExports.useState(p.start || "");
   const [end, setEnd] = reactExports.useState(p.end || "");
@@ -1204,13 +1267,32 @@ function ChatMessageComponent({ props: p }) {
   ] });
 }
 function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }) {
-  const [value, setValue] = reactExports.useState(p.value || "");
+  const incomingValue = String(p.value || "");
+  const [value, setValue] = reactExports.useState(incomingValue);
+  const localDirtyRef = reactExports.useRef(false);
+  const lastDispatchedRef = reactExports.useRef(incomingValue);
+  const changeStrategy = String(p.changeStrategy || "debounce");
+  const debounceMs = Math.max(0, Number(p.debounceMs ?? 180));
+  const { flush, schedule } = useDebouncedDispatcher((nextValue) => {
+    lastDispatchedRef.current = nextValue;
+    dispatchChange(nextValue);
+  }, debounceMs);
   reactExports.useEffect(() => {
-    setValue(p.value || "");
-  }, [p.value]);
+    if (!localDirtyRef.current || incomingValue === lastDispatchedRef.current) {
+      setValue(incomingValue);
+      localDirtyRef.current = false;
+    }
+  }, [incomingValue]);
+  const commitValue = reactExports.useCallback((nextValue, immediate = false) => {
+    localDirtyRef.current = true;
+    if (changeStrategy === "blur" && !immediate) return;
+    if (immediate || changeStrategy === "immediate") flush(nextValue);
+    else schedule(nextValue);
+  }, [changeStrategy, flush, schedule]);
   const submit = () => {
     const next = value.trim();
     if (!next || p.disabled || p.loading) return;
+    flush(value);
     dispatchSubmit(next);
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-chat-input"]), style: resolveMotionStyle(p), children: [
@@ -1223,9 +1305,11 @@ function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }) {
         placeholder: p.placeholder || "Ask a question",
         disabled: Boolean(p.disabled),
         onChange: (event) => {
-          setValue(event.target.value);
-          dispatchChange(event.target.value);
+          const nextValue = event.target.value;
+          setValue(nextValue);
+          commitValue(nextValue);
         },
+        onBlur: () => flush(value),
         onKeyDown: (event) => {
           if (event.key === "Enter") submit();
         }
@@ -1308,7 +1392,7 @@ function TableComponent({ props: p, dispatch }) {
     const rows = sorted.map(
       (row) => columns.map((col) => {
         const raw = String(row[col.key] ?? "");
-        return `"${raw.replaceAll('"', '""')}"`;
+        return `"${raw.split('"').join('""')}"`;
       }).join(",")
     );
     const csv = [header, ...rows].join("\n");
@@ -1424,7 +1508,7 @@ function LoadingVisual({ status }) {
   ] });
 }
 function resolveInitialThemeMode() {
-  const bootstrapMode = LOADING_BOOTSTRAP.themeMode === "light" ? "light" : "dark";
+  const bootstrapMode = LOADING_BOOTSTRAP.themeMode === "dark" ? "dark" : "light";
   try {
     const stored = window.localStorage.getItem("brickflowui.theme");
     return stored === "light" || stored === "dark" ? stored : bootstrapMode;
@@ -1436,15 +1520,31 @@ function App() {
   const [vdom, setVdom] = reactExports.useState(null);
   const [status, setStatus] = reactExports.useState("connecting");
   const [error, setError] = reactExports.useState(null);
-  const [pendingEvents, setPendingEvents] = reactExports.useState(/* @__PURE__ */ new Set());
+  const [pendingEvents, setPendingEvents] = reactExports.useState(/* @__PURE__ */ new Map());
   const [themeMode, setThemeModeState] = reactExports.useState(resolveInitialThemeMode);
   const wsRef = reactExports.useRef(null);
   const vdomRef = reactExports.useRef(null);
+  const frameRef = reactExports.useRef(null);
+  const queuedTreeRef = reactExports.useRef(null);
+  const flushQueuedTree = reactExports.useCallback(() => {
+    frameRef.current = null;
+    const nextTree = queuedTreeRef.current;
+    if (!nextTree) return;
+    queuedTreeRef.current = null;
+    reactExports.startTransition(() => {
+      setVdom(nextTree);
+    });
+  }, []);
+  const scheduleTreeCommit = reactExports.useCallback((nextTree) => {
+    queuedTreeRef.current = nextTree;
+    if (frameRef.current !== null) return;
+    frameRef.current = window.requestAnimationFrame(flushQueuedTree);
+  }, [flushQueuedTree]);
   const dispatch = reactExports.useCallback((event_id, data = {}) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       setPendingEvents((prev) => {
-        const next = new Set(prev);
-        next.add(event_id);
+        const next = new Map(prev);
+        next.set(event_id, (next.get(event_id) || 0) + 1);
         return next;
       });
       wsRef.current.send(JSON.stringify({ type: "event", event_id, data }));
@@ -1483,7 +1583,7 @@ function App() {
           const msg = JSON.parse(e.data);
           if (msg.type === "full") {
             vdomRef.current = msg.tree;
-            setVdom(msg.tree);
+            scheduleTreeCommit(msg.tree);
           } else if (msg.type === "patch") {
             if (vdomRef.current) {
               let updated = vdomRef.current;
@@ -1491,13 +1591,15 @@ function App() {
                 updated = applyPatch(updated, patch);
               }
               vdomRef.current = updated;
-              setVdom({ ...updated });
+              scheduleTreeCommit({ ...updated });
             }
           } else if (msg.type === "event_complete") {
             setPendingEvents((prev) => {
-              if (!prev.has(msg.event_id)) return prev;
-              const next = new Set(prev);
-              next.delete(msg.event_id);
+              const current = prev.get(msg.event_id);
+              if (!current) return prev;
+              const next = new Map(prev);
+              if (current <= 1) next.delete(msg.event_id);
+              else next.set(msg.event_id, current - 1);
               return next;
             });
           } else if (msg.type === "error") {
@@ -1509,12 +1611,12 @@ function App() {
       };
       ws.onclose = () => {
         setStatus("disconnected");
-        setPendingEvents(/* @__PURE__ */ new Set());
+        setPendingEvents(/* @__PURE__ */ new Map());
         reconnectTimer = setTimeout(connect, 2500);
       };
       ws.onerror = () => {
         setStatus("error");
-        setPendingEvents(/* @__PURE__ */ new Set());
+        setPendingEvents(/* @__PURE__ */ new Map());
         ws.close();
       };
     }
@@ -1523,10 +1625,13 @@ function App() {
     window.addEventListener("popstate", handlePopstate);
     return () => {
       clearTimeout(reconnectTimer);
+      if (frameRef.current !== null) {
+        window.cancelAnimationFrame(frameRef.current);
+      }
       wsRef.current?.close();
       window.removeEventListener("popstate", handlePopstate);
     };
-  }, [navigate]);
+  }, [navigate, scheduleTreeCommit]);
   if (!vdom) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingVisual, { status });
   }
@@ -1552,4 +1657,4 @@ function App() {
 ReactDOM.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-B5Epmgz9.js.map
+//# sourceMappingURL=index-DYcFmiqI.js.map

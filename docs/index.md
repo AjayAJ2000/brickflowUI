@@ -1,11 +1,56 @@
 # BrickflowUI
 
+<div class="bf-docs-hero">
+  <div class="bf-docs-hero-copy">
+    <p class="bf-docs-eyebrow">Python-First UI Framework</p>
+    <h1>Build serious dashboards, portals, copilots, and Web Apps in pure Python.</h1>
+    <p>
+      BrickflowUI is designed for teams that want a Python-first authoring experience without giving up
+      structured UI composition, interactivity, theming, professional branding, or packaged deployment.
+    </p>
+  </div>
+  <div class="bf-docs-hero-panel">
+    <div class="bf-docs-kpi">
+      <strong>What it enables</strong>
+      <span>Dashboards, pipeline portals, chatbot workspaces, landing sites, and secure internal tools.</span>
+    </div>
+    <div class="bf-docs-kpi">
+      <strong>What it optimizes</strong>
+      <span>Python-first authoring, realtime state, packaged frontend assets, and Platform-safe delivery.</span>
+    </div>
+  </div>
+</div>
 
-Build dashboards, landing pages, chatbot workspaces, internal tools, and Databricks Apps in pure Python.
+## Product Areas
 
-BrickflowUI is designed for teams that want a Python-first authoring experience without giving up structured UI composition, interactivity, theming, or packaged deployment.
+<div class="bf-docs-card-grid">
+  <a class="bf-docs-card" href="./GETTING_STARTED/">
+    <strong>Get Started</strong>
+    <span>Install the library, run your first app, and learn the runtime shape quickly.</span>
+  </a>
+  <a class="bf-docs-card" href="./learning/">
+    <strong>Learn BrickflowUI</strong>
+    <span>Follow the step-by-step learning path from first principles to a capstone app.</span>
+  </a>
+  <a class="bf-docs-card" href="./components/">
+    <strong>Component Library</strong>
+    <span>Browse the design system, grouped component guides, and detailed reference pages.</span>
+  </a>
+  <a class="bf-docs-card" href="./PORTAL_TUTORIAL/">
+    <strong>Build A Real Portal</strong>
+    <span>Walk through a larger SaaS-style portal build with multiple workflows and polished UI patterns.</span>
+  </a>
+  <a class="bf-docs-card" href="./EXAMPLES/">
+    <strong>Examples</strong>
+    <span>Explore working apps for analytics, pipelines, landing pages, secure tools, and local validation.</span>
+  </a>
+  <a class="bf-docs-card" href="./DATABRICKS_APPS/">
+    <strong>Databricks Apps</strong>
+    <span>Understand how to package, deploy, and run BrickflowUI inside stricter enterprise environments.</span>
+  </a>
+</div>
 
-## What you can build
+## What You Can Build
 
 - executive dashboards
 - data pipeline command centers
@@ -14,21 +59,20 @@ BrickflowUI is designed for teams that want a Python-first authoring experience 
 - Databricks App portals
 - operational triage and release management tools
 
-## Start here
+## Recommended Reading Order
 
 If you are new to the library, follow these in order:
 
-1. [Learn BrickflowUI](./learning/index.md)
-2. [Quick Start](./GETTING_STARTED.md)
+1. [Quick Start](./GETTING_STARTED.md)
+2. [Learn BrickflowUI](./learning/index.md)
 3. [Architecture](./ARCHITECTURE.md)
-4. [Component Gallery](./components/index.md)
-5. [Component Pages](./components/catalog.md)
-6. [Portal Tutorial](./PORTAL_TUTORIAL.md)
-7. [Examples](./EXAMPLES.md)
+4. [Component Library](./components/index.md)
+5. [Build A Real Portal](./PORTAL_TUTORIAL.md)
+6. [Examples](./EXAMPLES.md)
+7. [Local Development](./LOCAL_DEVELOPMENT.md)
 8. [Databricks Apps Guide](./DATABRICKS_APPS.md)
-9. [Local Development](./LOCAL_DEVELOPMENT.md)
 
-## Why teams choose it
+## Why Teams Choose It
 
 - Python-first UI authoring with no frontend code required for common use cases
 - session-scoped state with reactive rerenders
@@ -37,16 +81,18 @@ If you are new to the library, follow these in order:
 - packaged frontend assets that work in stricter environments like Databricks Apps
 - dark/light mode theming, branded loading screens, and local media assets
 
-## Key documentation paths
+## Key Documentation Paths
 
 - [Architecture](./ARCHITECTURE.md) for the runtime model and packaging details
-- [Component Gallery](./components/index.md) for component-by-component learning
+- [Performance And Scalability](./PERFORMANCE.md) for large-app guidance and responsiveness strategy
+- [Component Library](./components/index.md) for component-by-component learning
 - [Component Pages](./components/catalog.md) for a dedicated page per component
-- [Visualizations And Pipelines](./VISUALIZATIONS.md) for the modern chart and graph surface
+- [Visualizations And Pipelines](./VISUALIZATIONS.md) for the chart and graph surface
 - [Theming](./THEMING.md) for branding and design tokens
 - [Local Development](./LOCAL_DEVELOPMENT.md) for auth, assets, responsive testing, and runtime debugging
-- [Portal Tutorial](./PORTAL_TUTORIAL.md) for a detailed end-to-end SaaS-style build
-- [Troubleshooting](./TROUBLESHOOTING.md) for the common deployment and runtime problems
+- [Examples](./EXAMPLES.md#local-playground) when you want a fast validation sandbox before working on a bigger app
+- [Project Standards](./PROJECT_STANDARDS.md) for repository discipline, release checks, and product-grade expectations
+- [Troubleshooting](./TROUBLESHOOTING.md) for common deployment and runtime problems
 
 ## Install
 

@@ -2,46 +2,28 @@
 
 ## What It Does
 
-Plot embeds a native plotly figure for advanced visualizations.
+Embeds a native Plotly figure for advanced visualizations.
 
-## When To Use It
-
-Use `Plot` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
+## Signature
 
 ```python
-import brickflowui as db
-
-node = db.Plot(...)
+db.Plot(figure: 'Dict[str, Any]') -> 'VNode'
 ```
 
-## Inputs To Know
+## Parameters
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-Card, Hero
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `figure` | `Dict[str, Any]` | `required` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("Plot example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+node = db.Plot({"data": [{"type": "bar", "x": ["Mon", "Tue"], "y": [24, 18]}]})
 ```
 
-## Notes
+## Integration Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- Plot accepts a Plotly figure or a figure dictionary and is the escape hatch for advanced charting that goes beyond the built-in chart set.

@@ -153,7 +153,7 @@ def dashboard():
                                 placeholder="Search accounts...",
                                 value=query,
                                 on_change=set_query,
-                                style={"maxWidth": "320px"},
+                                # style={"maxWidth": "320px"},
                             ),
                             db.Button("Filter", variant="secondary"),
                             db.Text(f"Showing {len(rows)} of {len(ROWS)}", variant="caption", muted=True),

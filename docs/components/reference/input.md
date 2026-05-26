@@ -2,46 +2,42 @@
 
 ## What It Does
 
-Input captures controlled text, search, numeric, date, url, or textarea input.
+Captures controlled text, search, numeric, date, URL, or textarea input.
 
-## When To Use It
-
-Use `Input` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
+## Signature
 
 ```python
-import brickflowui as db
-
-node = db.Input(...)
+db.Input(name: 'str', label: 'Optional[str]' = None, type: 'InputType' = 'text', placeholder: 'str' = '', value: 'str' = '', on_change: 'Optional[Callable[[str], None]]' = None, disabled: 'bool' = False, required: 'bool' = False, error: 'Optional[str]' = None, loading: 'bool' = False, debounce_ms: 'int' = 180, change_strategy: "Literal['debounce', 'immediate', 'blur']" = 'debounce', sync_on_blur: 'bool' = True) -> 'VNode'
 ```
 
-## Inputs To Know
+## Parameters
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-Form, Table, ChatInput
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `name` | `str` | `required` | |
+| `label` | `Optional[str]` | `None` | |
+| `type` | `InputType` | `'text'` | |
+| `placeholder` | `str` | `''` | |
+| `value` | `str` | `''` | |
+| `on_change` | `Optional[Callable[[str], None]]` | `None` | |
+| `disabled` | `bool` | `False` | |
+| `required` | `bool` | `False` | |
+| `error` | `Optional[str]` | `None` | |
+| `loading` | `bool` | `False` | |
+| `debounce_ms` | `int` | `180` | |
+| `change_strategy` | `Literal['debounce', 'immediate', 'blur']` | `'debounce'` | |
+| `sync_on_blur` | `bool` | `True` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("Input example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+node = db.Input(name="search", label="Search", placeholder="Search pipelines...", value="", on_change=lambda value: None, debounce_ms=220)
 ```
 
-## Notes
+## Integration Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- Text-like inputs default to `change_strategy="debounce"`, which keeps typing local and fast while syncing state back to Python after `debounce_ms`.
+- Use `change_strategy="immediate"` only when every character must trigger backend logic.
+- Use `change_strategy="blur"` when the input kicks off a heavier query and should only sync once the field loses focus.

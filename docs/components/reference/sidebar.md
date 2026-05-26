@@ -2,48 +2,32 @@
 
 ## What It Does
 
-`Sidebar` creates the left navigation shell for multi-page apps and now includes mobile collapse behavior by default.
+Creates the left navigation shell for multi-page apps.
 
-## Inputs To Know
+## Signature
 
-- `items`: a list of `db.NavItem(...)`
-- `brand_name`
-- `tagline`
-- `logo`
-- `show_theme_toggle`
+```python
+db.Sidebar(items: 'List[VNode]', logo: 'Optional[str]' = None, brand_name: 'str' = 'BrickflowUI', tagline: 'Optional[str]' = None, collapsed: 'bool' = False, **kwargs) -> 'VNode'
+```
+
+## Parameters
+
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `items` | `List[VNode]` | `required` | |
+| `logo` | `Optional[str]` | `None` | |
+| `brand_name` | `str` | `'BrickflowUI'` | |
+| `tagline` | `Optional[str]` | `None` | |
+| `collapsed` | `bool` | `False` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-sidebar = db.Sidebar(
-    items=[
-        db.NavItem("Dashboard", "/"),
-        db.NavItem("Pipelines", "/pipelines"),
-        db.NavItem("Settings", "/settings"),
-    ],
-    brand_name="Acme Analytics",
-    tagline="Built with BrickflowUI",
-    logo="assets/logo.svg",
-    show_theme_toggle=True,
-)
+node = db.Sidebar([db.NavItem("Dashboard", "/"), db.NavItem("Pipelines", "/pipelines", icon="GitBranch")], brand_name="Acme Analytics", tagline="Built with BrickflowUI")
 ```
 
-## Responsive Behavior
+## Integration Notes
 
-On smaller screens, `Sidebar` automatically:
-
-- hides behind a menu button
-- opens as an overlay panel
-- closes after a navigation click
-- keeps the theme toggle accessible in the footer
-
-## Works Well With
-
-`NavItem`, `ThemeToggle`, `Image`, multi-page `App(...)` shells
-
-## Notes
-
-- If you register multiple pages with `@app.page(...)`, BrickflowUI uses `Sidebar` automatically for the built-in shell.
-- For a top navigation pattern instead, use `TopNav`.
+- Sidebar collapses behind a mobile menu automatically and can expose the shared `ThemeToggle` in the shell footer.

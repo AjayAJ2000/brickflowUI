@@ -120,3 +120,18 @@ python app.py
 ```
 
 See `docs/BUILD.md` for the full local build and publish flow.
+
+## Recommended playgrounds
+
+```bash
+python examples/local_playground/app.py
+python examples/component_studio/app.py
+```
+
+## Component reference maintenance
+
+The component reference pages are generated from the live Python signatures:
+
+```bash
+python scripts/generate_component_reference.py
+```

@@ -21,7 +21,7 @@ import brickflowui as db
 
 app = db.App(
     theme={
-        "default_mode": "dark",
+        "default_mode": "light",
         "branding": {
             "title": "Acme Control Center",
             "tagline": "React components. Python syntax.",
@@ -70,7 +70,7 @@ app = db.App(
 You can also keep the same structure in YAML or JSON and pass the file path to `App(theme=...)`.
 
 ```yaml
-default_mode: dark
+default_mode: light
 
 branding:
   title: Acme Control Center
@@ -159,6 +159,8 @@ BrickflowUI serves these through a runtime asset route automatically, so they wo
 ## Dark And Light Mode
 
 If your theme defines both modes, `ThemeToggle` and shell-level toggles switch the active mode in the browser.
+
+If you define only a light theme, or you omit `default_mode`, BrickflowUI defaults to light mode. Dark mode is opt-in unless you explicitly configure it.
 
 ```python
 db.ThemeToggle()
