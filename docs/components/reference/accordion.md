@@ -2,46 +2,31 @@
 
 ## What It Does
 
-Accordion groups expandable sections for faqs, help, or dense detail.
+Groups expandable sections for FAQs, help, or dense detail.
 
-## When To Use It
-
-Use `Accordion` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
+## Signature
 
 ```python
-import brickflowui as db
-
-node = db.Accordion(...)
+db.Accordion(items: 'List[VNode]', default_open: 'Optional[List[int]]' = None, allow_multiple: 'bool' = False) -> 'VNode'
 ```
 
-## Inputs To Know
+## Parameters
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-AccordionItem, Text
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `items` | `List[VNode]` | `required` | |
+| `default_open` | `Optional[List[int]]` | `None` | |
+| `allow_multiple` | `bool` | `False` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("Accordion example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+node = db.Accordion(items=[{"label": "Overview", "path": "/"}])
 ```
 
-## Notes
+## Integration Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- This component composes cleanly with layout primitives such as `Card`, `Grid`, `Row`, and `Column`.
+- Prefer controlled state from Python when the value matters to your business logic or backend query layer.

@@ -2,46 +2,39 @@
 
 ## What It Does
 
-`Hero` creates a premium top-of-page introduction for dashboards, portals, landing pages, and internal product surfaces.
+Creates a premium top-of-page introduction for dashboards, portals, or landing pages.
 
-## Inputs To Know
+## Signature
 
-- `title`
-- `subtitle`
-- `eyebrow`
-- `tagline`
-- `image`
-- `image_alt`
-- `actions`
-- `badges`
-- `visual`
-- `animated`, `animation`, `animation_delay`
+```python
+db.Hero(title: 'str', subtitle: 'Optional[str]' = None, eyebrow: 'Optional[str]' = None, tagline: 'Optional[str]' = None, image: 'Optional[str]' = None, image_alt: 'str' = '', actions: 'Optional[List[VNode]]' = None, badges: 'Optional[List[VNode]]' = None, visual: 'Optional[VNode]' = None, animated: 'bool' = True, animation: 'Optional[str]' = 'fade-up', animation_delay: 'Optional[float]' = None) -> 'VNode'
+```
+
+## Parameters
+
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `title` | `str` | `required` | |
+| `subtitle` | `Optional[str]` | `None` | |
+| `eyebrow` | `Optional[str]` | `None` | |
+| `tagline` | `Optional[str]` | `None` | |
+| `image` | `Optional[str]` | `None` | |
+| `image_alt` | `str` | `''` | |
+| `actions` | `Optional[List[VNode]]` | `None` | |
+| `badges` | `Optional[List[VNode]]` | `None` | |
+| `visual` | `Optional[VNode]` | `None` | |
+| `animated` | `bool` | `True` | |
+| `animation` | `Optional[str]` | `'fade-up'` | |
+| `animation_delay` | `Optional[float]` | `None` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-hero = db.Hero(
-    "Workspace command center",
-    subtitle="Monitor jobs, data products, and release readiness in one place.",
-    eyebrow="Acme Analytics",
-    tagline="Built with BrickflowUI",
-    image="assets/logo.svg",
-    badges=[db.Badge("Runtime secure", color="green")],
-    actions=[
-        db.Button("Open report", variant="secondary"),
-        db.Button("Create alert"),
-    ],
-)
+node = db.Hero("Pipeline command center", subtitle="Observe jobs, freshness, and cost from one place.", tagline="Built with BrickflowUI", image="assets/logo.svg", actions=[db.Button("Refresh")], badges=[db.Badge("Live", color="green")])
 ```
 
-## Works Well With
+## Integration Notes
 
-`Badge`, `Button`, `SectionHeader`, `StatusStrip`, `Image`, `TopNav`
-
-## Notes
-
-- Use `image` for a small inline logo or product mark in the hero header itself.
-- Use `visual` when you want the right-hand side of the hero to host charts, cards, or another composed component.
-- `Hero` is a strong fit for both dashboards and landing pages, so it is a good place to express the product brand clearly.
+- Hero is intentionally designed for product-level first impressions, so it works well at the top of dashboards, landing pages, and admin portals.

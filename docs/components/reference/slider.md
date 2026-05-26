@@ -2,46 +2,35 @@
 
 ## What It Does
 
-Slider adjusts numeric values across a bounded range.
+Adjusts numeric values across a bounded range.
 
-## When To Use It
-
-Use `Slider` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
+## Signature
 
 ```python
-import brickflowui as db
-
-node = db.Slider(...)
+db.Slider(name: 'str', label: 'Optional[str]' = None, min: 'float' = 0, max: 'float' = 100, step: 'float' = 1, value: 'float' = 0, on_change: 'Optional[Callable[[float], None]]' = None) -> 'VNode'
 ```
 
-## Inputs To Know
+## Parameters
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-Stat, GaugeChart
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `name` | `str` | `required` | |
+| `label` | `Optional[str]` | `None` | |
+| `min` | `float` | `0` | |
+| `max` | `float` | `100` | |
+| `step` | `float` | `1` | |
+| `value` | `float` | `0` | |
+| `on_change` | `Optional[Callable[[float], None]]` | `None` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("Slider example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+node = db.Slider(name="confidence", label="Confidence", min=0, max=100, step=1, value=72, on_change=lambda value: None)
 ```
 
-## Notes
+## Integration Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- This component composes cleanly with layout primitives such as `Card`, `Grid`, `Row`, and `Column`.
+- Prefer controlled state from Python when the value matters to your business logic or backend query layer.

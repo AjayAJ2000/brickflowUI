@@ -1,4 +1,4 @@
-# Examples
+﻿# Examples
 
 BrickflowUI ships with a few examples that cover different levels of complexity.
 
@@ -9,11 +9,12 @@ Use this page when you want to skip the docs theory and start from something run
 | Example | Path | Best for |
 |---|---|---|
 | Counter | `examples/counter/app.py` | Fastest possible sanity check |
+| Local Playground | `examples/local_playground/app.py` | Best place to validate typing, loading, media, theme switching, and responsiveness locally |
 | Auth Portal | `examples/auth_portal/app.py` | Login, access control, protected routes |
 | Operations + Finance Portal | `examples/operations_finance_portal/app.py` | Executive dashboard with a traditional top nav |
 | Acme Analytics Command Center | `examples/acme_analytics_command_center/app.py` | Dark SaaS-style analytics shell with responsive navigation, rich tables, and theme modes |
 | Data Pipeline Command Center | `examples/data_pipeline_command_center/app.py` | Industry-style data engineering monitoring with filters, SLA controls, cost, freshness, and Databricks SQL handoff |
-| Pipeline Observability 0.1.6 | `examples/pipeline_observability_015/app.py` | New 0.1.6 showcase with pipeline graph, chatbot UI, heatmap, treemap, funnel, radar, gauge, kanban, and table export |
+| Pipeline Observability 0.1.9 | `examples/pipeline_observability_015/app.py` | New 0.1.9 showcase with pipeline graph, chatbot UI, heatmap, treemap, funnel, radar, gauge, kanban, and table export |
 | Component Studio | `examples/component_studio/app.py` | Interactive all-components app that doubles as documentation |
 | Clinical Trial Command Center | `examples/clinical_trial_command_center/app.py` | Auth-gated study operations portal with Unity Catalog query patterns and Plotly |
 | Secure Internal Tools | `examples/secure_internal_tools/app.py` | Role-aware internal tools portal focused on governance and restricted views |
@@ -46,6 +47,22 @@ This is a good starting point for:
 - engineering + analytics stakeholder review dashboards
 - free-edition Databricks prototypes that later grow into team dashboards
 
+## Local Playground
+
+Use this example when you want a fast, low-risk place to validate framework behavior during development.
+
+- `examples/local_playground/app.py`
+- `examples/local_playground/requirements.txt`
+
+It demonstrates:
+
+- debounced local-first `Input` behavior
+- `MultiSelect` and `DateRangePicker` filter controls
+- `ThemeToggle` and light-first theme behavior
+- loading-aware buttons and live state echoing
+- charts, tables, and media in one compact page
+- a realistic pre-commit regression sandbox for local work
+
 ## Acme Analytics Command Center
 
 Use this example when you want to prove BrickflowUI can build the kind of dark, premium analytics portal teams usually expect from a dedicated frontend stack.
@@ -61,7 +78,7 @@ It demonstrates:
 - richer table cells with badge, currency, progress, and status formatting
 - a screenshot-style operational dashboard surface you can extend into a real product
 
-## Pipeline Observability 0.1.6
+## Pipeline Observability 0.1.9
 
 Use this example when you want to test the newest visual toolkit and confirm user inputs drive real state changes.
 
@@ -222,13 +239,13 @@ Put these three files in your Databricks App project:
 `requirements.txt`:
 
 ```text
-brickflowui>=0.1.6
+brickflowui>=0.1.9
 ```
 
-For the 0.1.6 visualization showcase, use:
+For the 0.1.9 visualization showcase, use:
 
 ```text
-brickflowui>=0.1.6
+brickflowui>=0.1.9
 ```
 
 `app.yaml`:
@@ -267,3 +284,4 @@ The most effective pattern is:
 - Choose `component_studio` if you want an example that behaves like documentation and showcases nearly every UI surface.
 - Choose `clinical_trial_command_center` if you want a highly regulated, analytics-heavy portal pattern.
 - Choose `secure_internal_tools` if you want security, identity governance, and role-aware page design patterns first.
+

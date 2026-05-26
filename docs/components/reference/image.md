@@ -2,58 +2,40 @@
 
 ## What It Does
 
-`Image` renders local or remote images, screenshots, logos, avatars, and GIFs directly from Python.
+Renders local or remote images, logos, screenshots, and GIFs from Python.
 
-## When To Use It
-
-Use `Image` any time media is part of the product surface rather than an afterthought, especially for:
-
-- logos in shell chrome
-- inline product marks in heroes
-- avatars in tables or chat
-- screenshots in docs-style pages
-- GIF demos inside examples
-
-## Inputs To Know
-
-- `src`
-- `alt`
-- `width`
-- `height`
-- `fit`
-- `caption`
-- `variant`
-- `loading`
-
-## Variants
-
-Use the right variant for the job:
+## Signature
 
 ```python
-db.Image("assets/logo.svg", alt="Logo", variant="inline")
-db.Image("assets/user.png", alt="Operator", variant="avatar", width="40px")
-db.Image("assets/screenshot.png", alt="Preview", variant="content")
+db.Image(src: 'str', alt: 'str' = '', width: 'str' = '100%', height: 'str' = 'auto', fit: "Literal['cover', 'contain', 'fill', 'none', 'scale-down']" = 'cover', caption: 'Optional[str]' = None, radius: 'str' = 'var(--radius-lg)', loading: "Literal['lazy', 'eager']" = 'lazy', variant: "Literal['content', 'inline', 'avatar']" = 'content', inline: 'bool' = False, animated: 'bool' = False, animation: 'Optional[str]' = None, animation_delay: 'Optional[float]' = None) -> 'VNode'
 ```
 
-- `content`: framed media surface for screenshots and larger images
-- `inline`: shrink-to-content logo or mark with no frame styling
-- `avatar`: circular small image for people or identities
+## Parameters
 
-## Local Files
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `src` | `str` | `required` | |
+| `alt` | `str` | `''` | |
+| `width` | `str` | `'100%'` | |
+| `height` | `str` | `'auto'` | |
+| `fit` | `Literal['cover', 'contain', 'fill', 'none', 'scale-down']` | `'cover'` | |
+| `caption` | `Optional[str]` | `None` | |
+| `radius` | `str` | `'var(--radius-lg)'` | |
+| `loading` | `Literal['lazy', 'eager']` | `'lazy'` | |
+| `variant` | `Literal['content', 'inline', 'avatar']` | `'content'` | |
+| `inline` | `bool` | `False` | |
+| `animated` | `bool` | `False` | |
+| `animation` | `Optional[str]` | `None` | |
+| `animation_delay` | `Optional[float]` | `None` | |
 
-Local image paths are served automatically by the runtime:
+## Example
 
 ```python
-db.Image("assets/brand/logo.svg", alt="Acme logo", variant="inline")
+import brickflowui as db
+
+node = db.Image("assets/logo.svg", alt="Acme logo", variant="inline")
 ```
 
-You do not need a separate static hosting setup just to display local images.
+## Integration Notes
 
-## Works Well With
-
-`Hero`, `Sidebar`, `TopNav`, `Table`, `ChatMessage`, `Card`
-
-## Notes
-
-- Use `variant="inline"` for logos to avoid the heavier framed screenshot treatment.
-- Use `variant="avatar"` when the media should feel like identity rather than content.
+- Use `variant="inline"` for logos and product marks, `variant="avatar"` for circular profile images, and `variant="content"` for screenshots or larger visuals.

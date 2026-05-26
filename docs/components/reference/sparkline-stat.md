@@ -2,46 +2,36 @@
 
 ## What It Does
 
-SparklineStat combines a compact kpi value with a tiny embedded trend line.
+Combines a compact KPI value with a tiny embedded trend line.
 
-## When To Use It
-
-Use `SparklineStat` when you want a purposeful, reusable building block instead of hand-assembling HTML-like structure in every page.
-
-## Typical Pattern
+## Signature
 
 ```python
-import brickflowui as db
-
-node = db.SparklineStat(...)
+db.SparklineStat(label: 'str', value: 'str', data: 'List[Dict[str, Any]]', x_key: 'str', y_key: 'str', delta: 'Optional[str]' = None, delta_type: "Literal['increase', 'decrease', 'neutral']" = 'neutral', color: 'Optional[str]' = None) -> 'VNode'
 ```
 
-## Inputs To Know
+## Parameters
 
-Check the Python signature in the installed package or API reference for the full list. In practice, most teams should focus on:
-
-- content props that define what the user sees
-- state props that keep the component controlled from Python
-- event props such as `on_change`, `on_click`, or `on_close`
-- additive visual props such as `animated`, `animation`, and `animation_delay` when supported
-
-## Works Well With
-
-StatusStrip, Card
+| Name | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `label` | `str` | `required` | |
+| `value` | `str` | `required` | |
+| `data` | `List[Dict[str, Any]]` | `required` | |
+| `x_key` | `str` | `required` | |
+| `y_key` | `str` | `required` | |
+| `delta` | `Optional[str]` | `None` | |
+| `delta_type` | `Literal['increase', 'decrease', 'neutral']` | `'neutral'` | |
+| `color` | `Optional[str]` | `None` | |
 
 ## Example
 
 ```python
 import brickflowui as db
 
-example = db.Card([
-    db.Text("SparklineStat example", variant="h3"),
-    db.Text("Replace this with real app data or actions.", muted=True),
-])
+node = db.SparklineStat(label="Pipeline health", value="active", data=[{"day": "Mon", "value": 14}, {"day": "Tue", "value": 12}], x_key="week", y_key="cost")
 ```
 
-## Notes
+## Integration Notes
 
-- BrickflowUI components are designed to compose with each other cleanly.
-- Prefer controlled state from Python when the value matters to your business logic.
-- When you need stronger visual polish, layer the component inside `Card`, `Grid`, `Hero`, or `SectionHeader` rather than over-customizing every instance.
+- This component composes cleanly with layout primitives such as `Card`, `Grid`, `Row`, and `Column`.
+- Prefer controlled state from Python when the value matters to your business logic or backend query layer.

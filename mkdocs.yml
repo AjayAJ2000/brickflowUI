@@ -6,12 +6,13 @@ repo_name: AjayAJ2000/brickflowUI
 
 theme:
   name: material
-  logo: assets/brickflowui-mark.svg
-  # favicon: assets/brickflowui-mark.svg
+  logo: assets/favicon-light.svg
+  favicon: assets/favicon.svg
   features:
-    - navigation.tabs
+    - navigation.indexes
     - navigation.sections
     - navigation.top
+    - toc.follow
     - content.code.copy
     - search.highlight
     - search.suggest
@@ -49,8 +50,16 @@ markdown_extensions:
   - tables
 
 nav:
-  - Home: index.md
-  - Architecture: ARCHITECTURE.md
+  - Product Overview:
+      - Documentation Home: index.md
+      - Quick Start: GETTING_STARTED.md
+      - Architecture: ARCHITECTURE.md
+      - How It Works: HOW_IT_WORKS.md
+      - Performance And Scalability: PERFORMANCE.md
+      - Branch Strategy: BRANCH_STRATEGY.md
+      - Project Standards: PROJECT_STANDARDS.md
+      - Repository Administration: REPOSITORY_ADMIN.md
+      - Roadmap: ROADMAP.md
   - Learn BrickflowUI:
       - Overview: learning/index.md
       - What Is BrickflowUI: learning/01-what-is-brickflowui.md
@@ -73,8 +82,22 @@ nav:
       - Production Checklist: learning/18-production-checklist.md
       - Capstone Project: learning/19-capstone-project.md
       - Glossary: learning/glossary.md
-  - Quick Start: GETTING_STARTED.md
-  - Component Gallery:
+  - Build And Operate:
+      - First App Tutorial: TUTORIAL.md
+      - Build A Real Portal: PORTAL_TUTORIAL.md
+      - Databricks Apps: DATABRICKS_APPS.md
+      - Local Development: LOCAL_DEVELOPMENT.md
+      - Theming: THEMING.md
+      - Build Guide: BUILD.md
+      - Publishing: PUBLISHING.md
+      - Troubleshooting: TROUBLESHOOTING.md
+      - FAQ: FAQ.md
+  - Examples And Recipes:
+      - Examples: EXAMPLES.md
+      - Visualizations And Pipelines: VISUALIZATIONS.md
+      - Recipes: RECIPES.md
+      - Polish Guide: POLISH_GUIDE.md
+  - Component Library:
       - Overview: components/index.md
       - Component Pages: components/catalog.md
       - Layout And Surfaces: components/layout-and-surfaces.md
@@ -151,18 +174,4 @@ nav:
           - Tree Map: components/reference/tree-map.md
           - Video: components/reference/video.md
           - Warehouse Selector: components/reference/warehouse-selector.md
-  - First App Tutorial: TUTORIAL.md
-  - Build A Real Portal: PORTAL_TUTORIAL.md
-  - Examples: EXAMPLES.md
-  - Databricks Apps: DATABRICKS_APPS.md
-  - Local Development: LOCAL_DEVELOPMENT.md
-  - Troubleshooting: TROUBLESHOOTING.md
-  - FAQ: FAQ.md
-  - How It Works: HOW_IT_WORKS.md
-  - Polish Guide: POLISH_GUIDE.md
-  - Visualizations And Pipelines: VISUALIZATIONS.md
-  - Recipes: RECIPES.md
   - API Reference: API_REFERENCE.md
-  - Theming: THEMING.md
-  - Build Guide: BUILD.md
-  - Publishing: PUBLISHING.md
