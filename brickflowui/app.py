@@ -24,7 +24,7 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union, Tuple
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from .auth import (
     AccessLevel,
@@ -107,6 +107,9 @@ class App:
         auth_provider: Optional[AuthProvider] = None,
         app_principal: Optional[Principal] = None,
         allow_anonymous: bool = True,
+        csrf_protection: bool = True,
+        audit_events: bool = False,
+        allowed_embed_origins: Optional[List[str]] = None,
     ):
         self.title = title
         self.theme = Theme(theme)
@@ -120,6 +123,7 @@ class App:
         self.brand_tagline = self.theme.branding_value("tagline")
         self.show_theme_toggle = bool(self.theme.branding_value("show_theme_toggle", True))
         self.default_theme_mode = self.theme.default_mode()
+        self.style_preset = self.theme.style_preset()
         self.loading = self._normalize_loading_config(loading)
         self.cors_origins = list(cors_origins or [])
         self.trusted_hosts = list(trusted_hosts or [])
@@ -129,6 +133,9 @@ class App:
         self.auth_provider = auth_provider
         self.app_principal = app_principal
         self.allow_anonymous = allow_anonymous
+        self.csrf_protection = csrf_protection
+        self.audit_events = audit_events
+        self.allowed_embed_origins = list(allowed_embed_origins or [])
 
         # page path → Page
         self._pages: Dict[str, Page] = {}
@@ -156,19 +163,37 @@ class App:
             **(loading or {}),
         }
 
-        asset = merged.get("asset") or merged.get("logo") or merged.get("image")
-        video = merged.get("video")
-        if video:
-            merged["video"] = self.resolve_asset_url(video)
-            merged["asset"] = None
-            merged["asset_kind"] = "video"
-        elif asset:
-            merged["asset"] = self.resolve_asset_url(asset)
-            merged["asset_kind"] = self._asset_kind(asset)
-        else:
-            merged["asset"] = None
-            merged["asset_kind"] = None
+        merged["modes"] = self._normalize_loading_modes(merged.get("light"), merged.get("dark"))
+        merged.pop("light", None)
+        merged.pop("dark", None)
+        self._normalize_loading_media(merged)
         return merged
+
+    def _normalize_loading_modes(self, light: Any, dark: Any) -> Dict[str, Dict[str, Any]]:
+        modes: Dict[str, Dict[str, Any]] = {}
+        if isinstance(light, dict):
+            payload = dict(light)
+            self._normalize_loading_media(payload)
+            modes["light"] = payload
+        if isinstance(dark, dict):
+            payload = dict(dark)
+            self._normalize_loading_media(payload)
+            modes["dark"] = payload
+        return modes
+
+    def _normalize_loading_media(self, payload: Dict[str, Any]) -> None:
+        asset = payload.get("asset") or payload.get("logo") or payload.get("image")
+        video = payload.get("video")
+        if video:
+            payload["video"] = self.resolve_asset_url(video)
+            payload["asset"] = None
+            payload["asset_kind"] = "video"
+        elif asset:
+            payload["asset"] = self.resolve_asset_url(asset)
+            payload["asset_kind"] = self._asset_kind(asset)
+        else:
+            payload["asset"] = None
+            payload["asset_kind"] = None
 
     def _asset_kind(self, value: Any) -> str:
         suffix = Path(str(value)).suffix.lower()
@@ -212,6 +237,8 @@ class App:
 
     def transform_serialized_tree(self, payload: Any) -> Any:
         if isinstance(payload, dict):
+            if payload.get("type") == "Embed":
+                self._validate_embed_payload(payload)
             transformed = {}
             for key, value in payload.items():
                 if key in _ASSET_PROP_KEYS:
@@ -224,6 +251,23 @@ class App:
             return [self.transform_serialized_tree(item) for item in payload]
 
         return payload
+
+    def _validate_embed_payload(self, payload: Dict[str, Any]) -> None:
+        if not self.allowed_embed_origins:
+            return
+
+        props = payload.get("props", {})
+        src = props.get("src")
+        if not isinstance(src, str):
+            return
+
+        parsed = urlparse(src)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("Embed sources must be absolute HTTP(S) URLs when allowlists are enabled.")
+
+        origin = f"{parsed.scheme}://{parsed.netloc}"
+        if origin.rstrip("/") not in {item.rstrip("/") for item in self.allowed_embed_origins}:
+            raise ValueError(f"Embed origin '{origin}' is not in the allowed_embed_origins list.")
 
     def loading_bootstrap(self) -> Dict[str, Any]:
         return {
@@ -238,6 +282,8 @@ class App:
             "assetKind": self.loading.get("asset_kind"),
             "video": self.loading.get("video"),
             "themeMode": self.default_theme_mode,
+            "modes": self.loading.get("modes") or {},
+            "stylePreset": self.style_preset,
         }
 
     def _invalidate_server(self) -> None:
@@ -351,11 +397,14 @@ class App:
 
     def _render_with_shell(self, session_id: str, current_page: Page) -> VNode:
         """Wrap page content in the app shell (sidebar + topbar)."""
-        from .components import Column, Row, Sidebar, NavItem, Text, Divider
+        from .components import Column, Row, Sidebar, NavItem
+
+        principal = current_principal()
 
         nav_items = [
             NavItem(label=p.title, path=p.path, icon=p.icon)
             for p in self._pages.values()
+            if self._page_is_visible(principal, p)
         ]
 
         return Row(
@@ -377,6 +426,13 @@ class App:
             align="stretch",
             style={"minHeight": "100vh", "width": "100%"},
         )
+
+    def _page_is_visible(self, principal: Principal, page: Page) -> bool:
+        try:
+            authorize_principal(principal, access=page.access, roles=page.roles)
+            return True
+        except (AuthenticationRequired, AuthorizationError):
+            return False
 
     def _navigate(self, session_id: str, path: str) -> None:
         """Handle page navigation for a session."""

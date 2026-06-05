@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import * as LucideIcons from 'lucide-react'
 import type { VNodeData } from './types'
 import {
   AreaChart, Area,
@@ -50,26 +51,73 @@ interface RenderCtx {
 }
 
 // ── Icon component ──────────────────────────────────────────────────────────
-function Icon({ name, size = 16 }: { name: string; size?: number }) {
-  const path = LUCIDE_ICON_MAP[name]
-  if (!path) return <span style={{ fontSize: size - 2, opacity: 0.6 }}>◆</span>
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      {path.split('M').filter(Boolean).map((d, i) => (
-        <path key={i} d={'M' + d} />
-      ))}
-    </svg>
-  )
+function resolveIconName(name: string) {
+  const cleaned = name
+    .replace(/^lucide:/i, '')
+    .replace(/^icon:/i, '')
+    .trim()
+
+  if (!cleaned) return ''
+  if ((LucideIcons as Record<string, unknown>)[cleaned]) return cleaned
+
+  const pascal = cleaned
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('')
+
+  if ((LucideIcons as Record<string, unknown>)[pascal]) return pascal
+  return ''
+}
+
+type LucideGlyph = React.ComponentType<{
+  size?: number
+  strokeWidth?: number
+  className?: string
+}>
+
+function Icon({
+  name,
+  size = 16,
+  strokeWidth = 2,
+  className,
+}: {
+  name: string
+  size?: number
+  strokeWidth?: number
+  className?: string
+}) {
+  const resolvedName = resolveIconName(name)
+  const LucideIcon = resolvedName
+    ? (LucideIcons as unknown as Record<string, LucideGlyph>)[resolvedName]
+    : undefined
+  const legacyPath =
+    LUCIDE_ICON_MAP[resolvedName] ||
+    LUCIDE_ICON_MAP[name] ||
+    LUCIDE_ICON_MAP[name.trim()]
+
+  if (LucideIcon) return React.createElement(LucideIcon, { size, strokeWidth, className })
+  if (legacyPath) {
+    return (
+      <svg
+        className={className}
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d={legacyPath} />
+      </svg>
+    )
+  }
+
+  if (!LucideIcon) return <span className={className} style={{ fontSize: size - 2, opacity: 0.6 }}>◆</span>
+  return <span className={className} style={{ fontSize: size - 2, opacity: 0.6 }}>*</span>
 }
 
 function resolveMotionClass(props: Record<string, any>, base: string[] = []) {
@@ -268,45 +316,10 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return <MultiSelectComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['change']) }} dispatch={(value) => ev('change', value)} />
 
     case 'Select':
-      {
-      const autoLoading = isPending(p, ctx, ['change'])
-      return (
-        <div key={key} className={resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ['bf-form-field'])} style={resolveMotionStyle(p)}>
-          {p.label && <label className="bf-label">{p.label as string}</label>}
-          {(p.loading || autoLoading) && <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div>}
-          <select
-            name={p.name as string}
-            className="bf-select"
-            value={(p.value as string) || ''}
-            disabled={Boolean(p.disabled) || autoLoading}
-            onChange={e => ev('change', e.target.value)}
-          >
-            {p.placeholder && <option value="">{p.placeholder as string}</option>}
-            {((p.options as Array<{ label: string; value: string }>) || []).map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-        </div>
-      )
-      }
+      return <SelectComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['change']) }} dispatch={(value) => ev('change', value)} />
 
     case 'Checkbox':
-      {
-      const autoLoading = isPending(p, ctx, ['change'])
-      return (
-        <label key={key} className={`bf-checkbox-wrapper ${autoLoading ? 'is-loading' : ''}`}>
-          <input
-            type="checkbox"
-            name={p.name as string}
-            checked={Boolean(p.checked)}
-            disabled={Boolean(p.disabled) || autoLoading}
-            onChange={e => ev('change', e.target.checked)}
-          />
-          {p.label as string}
-          {autoLoading ? <span className="bf-spinner bf-spinner-sm" /> : null}
-        </label>
-      )
-      }
+      return <CheckboxComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['change']) }} dispatch={(value) => ev('change', value)} />
 
     case 'Toggle': {
       return (
@@ -315,26 +328,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
     }
 
     case 'Slider':
-      {
-      const autoLoading = isPending(p, ctx, ['change'])
-      return (
-        <div key={key} className={`bf-slider-wrapper ${autoLoading ? 'bf-is-loading' : ''}`}>
-          {p.label && <label className="bf-label">{p.label as string}</label>}
-          <input
-            type="range"
-            className="bf-slider"
-            name={p.name as string}
-            min={p.min as number}
-            max={p.max as number}
-            step={p.step as number}
-            value={p.value as number}
-            disabled={Boolean(p.disabled) || autoLoading}
-            onChange={e => ev('change', parseFloat(e.target.value))}
-          />
-          {autoLoading ? <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div> : null}
-        </div>
-      )
-      }
+      return <SliderComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['change']) }} dispatch={(value) => ev('change', value)} />
 
     // ── Data display ───────────────────────────────────────────────────────
     case 'Breadcrumbs':
@@ -791,18 +785,119 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 // ── Sub-components (need their own state) ─────────────────────────────────
 
 function ToggleComponent({ props: p, dispatch, pending }: { props: Record<string, any>; dispatch: (v: boolean) => void; pending: boolean }) {
-  const checked = Boolean(p.checked)
+  const incomingChecked = Boolean(p.checked)
+  const [checked, setChecked] = useState(incomingChecked)
+
+  useEffect(() => {
+    setChecked(incomingChecked)
+  }, [incomingChecked])
+
   return (
     <label
-      className={`bf-toggle-wrapper ${pending ? 'is-loading' : ''}`}
+      className={resolveMotionClass(p, [`bf-toggle-wrapper`, pending ? 'is-loading' : ''])}
+      style={resolveMotionStyle(p)}
       onClick={() => {
-        if (!p.disabled && !pending) dispatch(!checked)
+        if (!p.disabled && !pending) {
+          const next = !checked
+          setChecked(next)
+          dispatch(next)
+        }
       }}
     >
       <div className={`bf-toggle-switch ${checked ? 'checked' : ''}`} />
       {p.label as string}
       {pending ? <span className="bf-spinner bf-spinner-sm" /> : null}
     </label>
+  )
+}
+
+function CheckboxComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: boolean) => void }) {
+  const incomingChecked = Boolean(p.checked)
+  const [checked, setChecked] = useState(incomingChecked)
+
+  useEffect(() => {
+    setChecked(incomingChecked)
+  }, [incomingChecked])
+
+  return (
+    <label className={resolveMotionClass(p, ['bf-checkbox-wrapper', p.loading ? 'is-loading' : ''])} style={resolveMotionStyle(p)}>
+      <input
+        type="checkbox"
+        name={p.name as string}
+        checked={checked}
+        disabled={Boolean(p.disabled) || Boolean(p.loading)}
+        onChange={(event) => {
+          const next = event.target.checked
+          setChecked(next)
+          dispatch(next)
+        }}
+      />
+      {p.label as string}
+      {p.loading ? <span className="bf-spinner bf-spinner-sm" /> : null}
+    </label>
+  )
+}
+
+function SelectComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: string) => void }) {
+  const incomingValue = String((p.value as string) || '')
+  const [value, setValue] = useState(incomingValue)
+
+  useEffect(() => {
+    setValue(incomingValue)
+  }, [incomingValue])
+
+  return (
+    <div className={resolveMotionClass(p, ['bf-form-field'])} style={resolveMotionStyle(p)}>
+      {p.label && <label className="bf-label">{p.label as string}</label>}
+      {p.loading ? <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div> : null}
+      <select
+        name={p.name as string}
+        className="bf-select"
+        value={value}
+        disabled={Boolean(p.disabled) || Boolean(p.loading)}
+        onChange={(event) => {
+          const next = event.target.value
+          setValue(next)
+          dispatch(next)
+        }}
+      >
+        {p.placeholder ? <option value="">{p.placeholder as string}</option> : null}
+        {((p.options as Array<{ label: string; value: string }>) || []).map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+function SliderComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: number) => void }) {
+  const incomingValue = Number(p.value ?? 0)
+  const [value, setValue] = useState(incomingValue)
+
+  useEffect(() => {
+    setValue(incomingValue)
+  }, [incomingValue])
+
+  return (
+    <div className={resolveMotionClass(p, ['bf-slider-wrapper', p.loading ? 'bf-is-loading' : ''])} style={resolveMotionStyle(p)}>
+      {p.label && <label className="bf-label">{p.label as string}</label>}
+      <input
+        type="range"
+        className="bf-slider"
+        name={p.name as string}
+        min={p.min as number}
+        max={p.max as number}
+        step={p.step as number}
+        value={value}
+        disabled={Boolean(p.disabled) || Boolean(p.loading)}
+        onChange={(event) => {
+          const next = parseFloat(event.target.value)
+          setValue(next)
+          dispatch(next)
+        }}
+      />
+      {p.loading ? <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div> : null}
+    </div>
   )
 }
 
@@ -1124,7 +1219,7 @@ function DateRangePickerComponent({ props: p, dispatch }: { props: Record<string
   const emit = (nextStart: string, nextEnd: string) => dispatch({ start: nextStart, end: nextEnd })
 
   return (
-    <div className={`bf-form-field ${p.loading ? 'bf-is-loading' : ''}`}>
+    <div className={resolveMotionClass(p, ['bf-form-field', p.loading ? 'bf-is-loading' : ''])} style={resolveMotionStyle(p)}>
       {p.label && <label className="bf-label">{p.label as string}</label>}
       {p.loading ? <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div> : null}
       <div className="bf-date-range">
@@ -1159,25 +1254,34 @@ function DateRangePickerComponent({ props: p, dispatch }: { props: Record<string
 }
 
 function MultiSelectComponent({ props: p, dispatch }: { props: Record<string, any>; dispatch: (v: string[]) => void }) {
-  const selected = new Set(((p.values as string[]) || []).map(String))
+  const incomingValues = ((p.values as string[]) || []).map(String)
+  const [selectedValues, setSelectedValues] = useState<string[]>(incomingValues)
   const options = (p.options as Array<{ label: string; value: string }>) || []
 
+  useEffect(() => {
+    setSelectedValues(incomingValues)
+  }, [p.values])
+
   const toggleValue = (value: string) => {
+    const selected = new Set(selectedValues)
     if (selected.has(value)) selected.delete(value)
     else selected.add(value)
-    dispatch(Array.from(selected))
+    const next = Array.from(selected)
+    setSelectedValues(next)
+    dispatch(next)
   }
 
   return (
-    <div className={`bf-form-field ${p.loading ? 'bf-is-loading' : ''}`}>
+    <div className={resolveMotionClass(p, ['bf-form-field', p.loading ? 'bf-is-loading' : ''])} style={resolveMotionStyle(p)}>
       {p.label && <label className="bf-label">{p.label as string}</label>}
       {p.loading ? <div className="bf-field-loading"><div className="bf-spinner bf-spinner-sm" /></div> : null}
       <div className="bf-multiselect">
-        {Array.from(selected).map((value) => (
+        {selectedValues.map((value) => (
           <input key={`hidden-${value}`} type="hidden" name={p.name as string} value={value} />
         ))}
+        {!selectedValues.length && p.placeholder ? <div className="bf-multiselect-placeholder">{p.placeholder as string}</div> : null}
         {options.map((option) => {
-          const active = selected.has(option.value)
+          const active = selectedValues.includes(option.value)
           return (
             <button
               key={option.value}
@@ -1325,6 +1429,15 @@ function TopNavComponent({ props: p, children, ctx }: { props: Record<string, an
 function FormComponent({ props: p, children, ctx, nodeKey }: { props: Record<string, any>; children: VNodeData[]; ctx: RenderCtx; nodeKey: string }) {
   const [submitting, setSubmitting] = useState(false)
 
+  const csrfToken = typeof document !== 'undefined'
+    ? document.cookie
+        .split('; ')
+        .find((entry) => entry.startsWith('brickflowui_csrf='))
+        ?.split('=')
+        .slice(1)
+        .join('=')
+    : undefined
+
   return (
     <form
       className={`bf-form ${submitting ? 'bf-is-loading' : ''}`}
@@ -1345,7 +1458,10 @@ function FormComponent({ props: p, children, ctx, nodeKey }: { props: Record<str
           const resp = await fetch(p.action as string, {
             method: (p.method as string) || 'POST',
             credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              ...(csrfToken ? { 'X-Brickflow-Csrf': decodeURIComponent(csrfToken) } : {}),
+            },
             body: JSON.stringify(data),
           })
           if (resp.ok && p.successRedirect) {
@@ -1766,6 +1882,10 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
     </div>
   )
 
+  if (p.errorMessage) return (
+    <div className="bf-table-empty">{p.errorMessage as string}</div>
+  )
+
   if (!data.length) return (
     <div className="bf-table-empty">{p.emptyMessage as string || 'No data'}</div>
   )
@@ -1823,8 +1943,12 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
 function TabsComponent({ props: p, children, ctx, nodeKey, dispatch }: { props: Record<string, any>; children: VNodeData[]; ctx: RenderCtx; nodeKey: string; dispatch: RenderCtx['dispatch'] }) {
   const [active, setActive] = useState((p.defaultActive as number) || 0)
 
+  useEffect(() => {
+    setActive((p.defaultActive as number) || 0)
+  }, [p.defaultActive])
+
   return (
-    <div className="bf-tabs">
+    <div className={resolveMotionClass(p, ['bf-tabs'])} style={resolveMotionStyle(p)}>
       <div className="bf-tabs-list">
         {children.map((child, i) => {
           const cp = child.props as Record<string, unknown>

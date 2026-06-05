@@ -8,6 +8,18 @@ Pair this page with:
 - [Examples](./EXAMPLES.md)
 - [How It Works](./HOW_IT_WORKS.md)
 - [Polish Guide](./POLISH_GUIDE.md)
+- [Why BrickflowUI](./WHY_BRICKFLOWUI.md)
+
+## API Usage Model
+
+Think about the API in four layers:
+
+1. `db.App(...)` and page/route registration
+2. state hooks like `db.use_state(...)`
+3. composable components like `db.Column(...)`, `db.Table(...)`, and `db.PipelineGraph(...)`
+4. theme, auth, media, and deployment behavior around the app
+
+This page is intentionally organized around those layers.
 
 ## Core
 
@@ -27,6 +39,12 @@ Important parameters:
 - `cors_origins`
 - `trusted_hosts`
 - `websocket_origins`
+- `loading`
+
+Notes:
+
+- `theme` accepts light/dark sections and style preset configuration
+- `loading` accepts branded loading fields such as title, message, asset, animation, and mode-specific overrides
 
 Methods:
 
@@ -68,6 +86,7 @@ Useful additive props:
 
 - `Card(..., elevated=True, animated=True, animation="fade-up", animation_delay=0.1)`
 - `Button(..., animated=True, animation="pulse")`
+- `Button(..., icon="ArrowRight")`
 
 ## Content Components
 
@@ -116,6 +135,7 @@ Notes:
 - `MultiSelect` emits `list[str]` to its `on_change`
 - `MultiSelect(..., loading=True)` and `DateRangePicker(..., loading=True)` can reflect backend work directly
 - `Form` preserves repeated field names as arrays when posting JSON
+- components that accept `icon=` can use current Lucide icon names such as `"ArrowRight"`, `"ShieldCheck"`, `"LayoutDashboard"`, or `"Database"`
 
 ## Navigation And Surface Components
 
@@ -180,7 +200,7 @@ db.BarChart(
 
 ## Pipeline And App Composition Components
 
-These components were added for richer `0.1.9` dashboards and internal apps:
+These components were added for richer `0.1.12` dashboards and internal apps:
 
 - `db.PipelineGraph(nodes, edges, on_node_click=...)` renders a simple pipeline/DAG-style flow from plain dictionaries.
 - `db.StatusStrip(items=[...])` renders compact signal cards for freshness, SLA, cost, latency, and incident counts.
@@ -226,6 +246,8 @@ db.ChatInput(
 Supported theme sections:
 
 - `branding`
+- `light`
+- `dark`
 - `colors`
 - `surfaces`
 - `typography`
@@ -262,4 +284,5 @@ Useful aliases:
 - `list_tables(catalog, schema)`
 - `table_schema(catalog, schema, table)`
 - `get_table(catalog, schema, table, limit=100)`
+
 

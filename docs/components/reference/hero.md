@@ -38,3 +38,11 @@ node = db.Hero("Pipeline command center", subtitle="Observe jobs, freshness, and
 ## Integration Notes
 
 - Hero is intentionally designed for product-level first impressions, so it works well at the top of dashboards, landing pages, and admin portals.
+
+## Responsive Notes
+
+Hero supports large landing-page presentations but should still keep its subtitle and actions concise enough for tablet and mobile layouts.
+
+## Accessibility Notes
+
+Pair this component with clear visible copy and predictable state changes so keyboard and assistive-technology users are not surprised.

@@ -74,7 +74,7 @@ npm run build
 cd ..
 python -m mkdocs build
 python -m build
-python -m twine check dist/brickflowui-0.1.9*
+python -m twine check dist/brickflowui-0.1.12*
 ```
 
 ## Common Mistakes
@@ -91,4 +91,5 @@ Take one example app and review it against this checklist. Write down the first 
 ## Checkpoint
 
 You should be able to judge whether a BrickflowUI app is ready for team use.
+
 

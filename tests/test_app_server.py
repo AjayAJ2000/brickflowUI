@@ -120,6 +120,28 @@ def test_shell_bootstrap_includes_theme_mode_and_subtitle():
     assert "Querying warehouse metadata" in response.text
     assert "\"themeMode\": \"light\"" in response.text
 
+
+def test_shell_bootstrap_includes_style_preset_and_loading_modes():
+    asset = Path("docs/assets/brickflowui-mark.svg").resolve()
+    app = App(
+        theme={"style_preset": "bento"},
+        loading={
+            "light": {"asset": str(asset), "message": "Loading light workspace"},
+            "dark": {"message": "Loading dark workspace", "animation": "pulse"},
+        },
+    )
+    app.mount(lambda: VNode(type="div"))
+    client = TestClient(create_asgi_app(app))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "\"stylePreset\": \"bento\"" in response.text
+    assert "Loading light workspace" in response.text
+    assert "Loading dark workspace" in response.text
+    assert "/__brickflow_asset__/" in response.text
+
+
 def test_custom_api_route():
     app = App()
     
@@ -163,6 +185,41 @@ def test_security_headers_present_on_shell():
     assert response.status_code == 200
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["x-frame-options"] == "SAMEORIGIN"
+
+
+def test_safe_requests_receive_csrf_cookie_by_default():
+    app = App()
+    app.mount(lambda: VNode(type="div"))
+    client = TestClient(create_asgi_app(app))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert "brickflowui_csrf" in response.cookies
+
+
+def test_unsafe_browser_requests_require_valid_csrf_token():
+    app = App()
+
+    @app.route("/api/submit", methods=["POST"])
+    async def submit():
+        return {"status": "ok"}
+
+    client = TestClient(create_asgi_app(app))
+    seed = client.get("/")
+    csrf = seed.cookies.get("brickflowui_csrf")
+    assert csrf
+
+    denied = client.post("/api/submit", json={"name": "blocked"}, headers={"origin": "http://testserver"})
+    assert denied.status_code == 403
+
+    allowed = client.post(
+        "/api/submit",
+        json={"name": "allowed"},
+        headers={"origin": "http://testserver", "x-brickflow-csrf": csrf},
+    )
+    assert allowed.status_code == 200
+    assert allowed.json() == {"status": "ok"}
 
 def test_protected_route_requires_authenticated_user():
     app = App(auth_mode="user", auth_provider=HeaderAuthProvider())
@@ -210,6 +267,29 @@ def test_websocket_page_renders_access_denied_without_user():
 
     assert payload["type"] == "full"
     assert payload["tree"]["type"] == "Column"
+
+
+def test_shell_sidebar_hides_pages_user_cannot_access():
+    app = App(auth_mode="user", auth_provider=HeaderAuthProvider())
+
+    @app.page("/", title="Overview")
+    def overview():
+        return db.Text("Overview")
+
+    @app.page("/admin", title="Admin", access="user", roles=["admin"])
+    def admin():
+        return db.Text("Admin")
+
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events", headers={"x-brickflow-user-id": "alice", "x-brickflow-user-roles": "viewer"}) as websocket:
+        payload = websocket.receive_json()
+
+    sidebar = _find_node_by_type(payload["tree"], "Sidebar")
+    assert sidebar is not None
+    labels = [child["props"]["label"] for child in sidebar["children"]]
+    assert "Overview" in labels
+    assert "Admin" not in labels
 
 def test_extract_event_payload_unwraps_single_value():
     from brickflowui.server import _extract_event_payload
@@ -437,6 +517,18 @@ def test_websocket_serializes_local_media_paths_as_asset_urls():
     assert video_node is not None
     assert str(image_node["props"]["src"]).startswith("/__brickflow_asset__/")
     assert str(video_node["props"]["src"]).startswith("/__brickflow_asset__/")
+
+
+def test_embed_allowlist_rejects_unapproved_origins():
+    app = App(allowed_embed_origins=["https://allowed.example.com"])
+
+    with pytest.raises(ValueError, match="allowed_embed_origins"):
+        app.transform_serialized_tree(
+            {
+                "type": "Embed",
+                "props": {"src": "https://blocked.example.com/dashboard", "title": "Blocked"},
+            }
+        )
 
 
 def test_pipeline_node_click_payload_updates_state_and_rerenders():

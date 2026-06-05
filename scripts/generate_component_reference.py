@@ -123,6 +123,26 @@ SPECIAL_NOTES = {
     ],
 }
 
+RESPONSIVE_NOTES = {
+    "Sidebar": "Sidebar auto-collapses behind a mobile menu on smaller screens, so keep labels concise and rely on icons plus text rather than icons alone.",
+    "TopNav": "TopNav collapses route links into a mobile panel. Keep high-priority actions in the `actions` slot so they remain reachable on dense screens.",
+    "Table": "Tables can overflow horizontally on small screens. Keep the most important columns first and use cell formats like `status`, `badge`, and `progress` to reduce wordiness.",
+    "Hero": "Hero supports large landing-page presentations but should still keep its subtitle and actions concise enough for tablet and mobile layouts.",
+    "Grid": "Prefer fewer columns on dense portal screens. The framework will wrap, but your card content should still read cleanly in a single-column stack.",
+    "PipelineGraph": "PipelineGraph is horizontally scrollable on smaller screens. Keep node labels short and use status layers or tooltips for deeper detail.",
+}
+
+ACCESSIBILITY_NOTES = {
+    "Button": "Use action-oriented labels and avoid relying only on iconography for meaning.",
+    "Input": "Always provide `label` for production forms unless the field is purely decorative or already described by adjacent UI copy.",
+    "Select": "Pair `label` with concise option labels so screen-reader and keyboard navigation stay predictable.",
+    "Checkbox": "Checkbox works best for explicit yes/no or on/off decisions where the label clearly communicates the resulting state.",
+    "Toggle": "Prefer Toggle for app-like settings and live feature switches, but keep the label explicit because the visual control alone is ambiguous.",
+    "Image": "Always set meaningful `alt` text for informative images. Use empty `alt` only for decorative brand marks that repeat nearby text.",
+    "Video": "Use caption or surrounding copy to explain what the user is seeing, especially when the video demonstrates workflow or onboarding steps.",
+    "Embed": "Use a descriptive `title` so embedded dashboards and external artifacts remain understandable to assistive technologies.",
+}
+
 
 def slugify(name: str) -> str:
     return re.sub(r"(?<!^)(?=[A-Z])", "-", name).lower()
@@ -359,6 +379,14 @@ def render_page(component_name: str, description: str, signature: inspect.Signat
         ],
     )
     note_block = "\n".join(f"- {note}" for note in notes)
+    responsive_note = RESPONSIVE_NOTES.get(
+        component_name,
+        "Check the component inside a realistic layout, not only in isolation, so spacing, overflow, and action density stay comfortable on smaller screens.",
+    )
+    accessibility_note = ACCESSIBILITY_NOTES.get(
+        component_name,
+        "Pair this component with clear visible copy and predictable state changes so keyboard and assistive-technology users are not surprised.",
+    )
     example = build_example(component_name, signature)
     return f"""# {component_name}
 
@@ -389,6 +417,14 @@ node = {example}
 ## Integration Notes
 
 {note_block}
+
+## Responsive Notes
+
+{responsive_note}
+
+## Accessibility Notes
+
+{accessibility_note}
 """
 
 

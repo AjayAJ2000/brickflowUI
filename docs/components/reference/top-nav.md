@@ -33,3 +33,11 @@ node = db.TopNav([db.NavItem("Dashboard", "/"), db.NavItem("Analytics", "/analyt
 ## Integration Notes
 
 - TopNav collapses its route list into a menu button on smaller screens and can host secondary action buttons on the right.
+
+## Responsive Notes
+
+TopNav collapses route links into a mobile panel. Keep high-priority actions in the `actions` slot so they remain reachable on dense screens.
+
+## Accessibility Notes
+
+Pair this component with clear visible copy and predictable state changes so keyboard and assistive-technology users are not surprised.

@@ -2,97 +2,152 @@
 
 <div class="bf-docs-hero">
   <div class="bf-docs-hero-copy">
-    <p class="bf-docs-eyebrow">Python-First UI Framework</p>
-    <h1>Build serious dashboards, portals, copilots, and Web Apps in pure Python.</h1>
+    <p class="bf-docs-eyebrow">Python-first internal app platform</p>
+    <h1>Build dashboards, portals, copilots, and product-grade internal apps in pure Python.</h1>
     <p>
-      BrickflowUI is designed for teams that want a Python-first authoring experience without giving up
-      structured UI composition, interactivity, theming, professional branding, or packaged deployment.
+      BrickflowUI is for teams that want a Python-first authoring experience without giving up
+      application shells, structured interactions, branding, responsive layouts, packaged frontend
+      assets, or enterprise-style deployment guidance.
     </p>
+    <div class="bf-docs-pill-row">
+      <span>Dashboards</span>
+      <span>Secure internal tools</span>
+      <span>Pipeline command centers</span>
+      <span>Copilot workspaces</span>
+      <span>Databricks portals</span>
+    </div>
   </div>
   <div class="bf-docs-hero-panel">
     <div class="bf-docs-kpi">
-      <strong>What it enables</strong>
-      <span>Dashboards, pipeline portals, chatbot workspaces, landing sites, and secure internal tools.</span>
+      <strong>Why teams evaluate it</strong>
+      <span>It aims to close the gap between notebook UI speed and custom frontend ambition.</span>
     </div>
     <div class="bf-docs-kpi">
       <strong>What it optimizes</strong>
-      <span>Python-first authoring, realtime state, packaged frontend assets, and Platform-safe delivery.</span>
+      <span>Python ownership, reactive state, richer UI surfaces, brand control, and evaluator-friendly docs.</span>
+    </div>
+    <div class="bf-docs-kpi">
+      <strong>Who it serves</strong>
+      <span>Data platform teams, analytics builders, internal tool engineers, and regulated enterprise workflows.</span>
     </div>
   </div>
 </div>
+
+![BrickflowUI brand lockup](assets/brand-lockup-dark.png)
+
+## Start Here
+
+<div class="bf-docs-card-grid">
+  <a class="bf-docs-card" href="./WHY_BRICKFLOWUI/">
+    <strong>Why BrickflowUI</strong>
+    <span>Understand the product wedge, end users, and where the framework fits against notebook-style tools.</span>
+  </a>
+  <a class="bf-docs-card" href="./GETTING_STARTED/">
+    <strong>Quick Start</strong>
+    <span>Install the package, run your first app, and verify the runtime in minutes.</span>
+  </a>
+  <a class="bf-docs-card" href="./learning/">
+    <strong>Learn BrickflowUI</strong>
+    <span>Follow the structured curriculum from first principles to a capstone portal build.</span>
+  </a>
+  <a class="bf-docs-card" href="./API_REFERENCE/">
+    <strong>API Reference</strong>
+    <span>Review the current public surface, hooks, theme sections, auth helpers, and component categories.</span>
+  </a>
+  <a class="bf-docs-card" href="./EXAMPLES/">
+    <strong>Examples</strong>
+    <span>See flagship apps that prove shell design, analytics, media, pipelines, security, and chat workflows.</span>
+  </a>
+  <a class="bf-docs-card" href="./DATABRICKS_APPS/">
+    <strong>Deploy</strong>
+    <span>Understand how BrickflowUI packages for Databricks Apps and stricter enterprise environments.</span>
+  </a>
+</div>
+
+## What A Serious Evaluation Looks Like
+
+If you are evaluating BrickflowUI as a platform rather than casually exploring it, use this path:
+
+1. [Why BrickflowUI](./WHY_BRICKFLOWUI.md)
+2. [Architecture](./ARCHITECTURE.md)
+3. [Performance And Scalability](./PERFORMANCE.md)
+4. [Auth And Security](./AUTH_AND_SECURITY.md)
+5. [API Reference](./API_REFERENCE.md)
+6. [Examples](./EXAMPLES.md)
+7. [Databricks Apps](./DATABRICKS_APPS.md)
+
+## Built-To-Ship Surfaces
+
+<div class="bf-docs-showcase-grid">
+  <div class="bf-docs-showcase-card">
+    <strong>Analytics command centers</strong>
+    <span>Sidebars, KPI cards, premium tables, charts, filters, drilldowns, and theme-aware shells.</span>
+  </div>
+  <div class="bf-docs-showcase-card">
+    <strong>Pipeline operations portals</strong>
+    <span>Freshness, DAGs, SLA controls, warehouse views, incidents, and operator-friendly status surfaces.</span>
+  </div>
+  <div class="bf-docs-showcase-card">
+    <strong>Secure internal tools</strong>
+    <span>Auth-aware pages, route guards, governed views, deployment notes, and enterprise-style navigation.</span>
+  </div>
+  <div class="bf-docs-showcase-card">
+    <strong>Copilot workspaces</strong>
+    <span>Chat UI, assistant workflows, source drawers, structured filters, and media-rich support surfaces.</span>
+  </div>
+</div>
+
+## Runtime Overview
+
+![BrickflowUI runtime flow](assets/runtime-flow.png)
 
 ## Product Areas
 
 <div class="bf-docs-card-grid">
-  <a class="bf-docs-card" href="./GETTING_STARTED/">
-    <strong>Get Started</strong>
-    <span>Install the library, run your first app, and learn the runtime shape quickly.</span>
-  </a>
-  <a class="bf-docs-card" href="./learning/">
-    <strong>Learn BrickflowUI</strong>
-    <span>Follow the step-by-step learning path from first principles to a capstone app.</span>
-  </a>
   <a class="bf-docs-card" href="./components/">
     <strong>Component Library</strong>
-    <span>Browse the design system, grouped component guides, and detailed reference pages.</span>
+    <span>Browse grouped component guides and detailed pages for layout, controls, data, navigation, charts, and workflow patterns.</span>
   </a>
   <a class="bf-docs-card" href="./PORTAL_TUTORIAL/">
     <strong>Build A Real Portal</strong>
-    <span>Walk through a larger SaaS-style portal build with multiple workflows and polished UI patterns.</span>
+    <span>Follow a larger SaaS-style app build that connects shells, filters, state, tables, charts, and deployment thinking.</span>
   </a>
-  <a class="bf-docs-card" href="./EXAMPLES/">
-    <strong>Examples</strong>
-    <span>Explore working apps for analytics, pipelines, landing pages, secure tools, and local validation.</span>
+  <a class="bf-docs-card" href="./VISUALIZATIONS/">
+    <strong>Visualizations And Pipelines</strong>
+    <span>Learn the chart, Plotly, pipeline graph, and workflow visualization surface in one place.</span>
   </a>
-  <a class="bf-docs-card" href="./DATABRICKS_APPS/">
-    <strong>Databricks Apps</strong>
-    <span>Understand how to package, deploy, and run BrickflowUI inside stricter enterprise environments.</span>
+  <a class="bf-docs-card" href="./LOCAL_DEVELOPMENT/">
+    <strong>Local Development</strong>
+    <span>Validate runtime behavior, auth patterns, assets, responsiveness, and debugging workflows locally.</span>
+  </a>
+  <a class="bf-docs-card" href="./FAQ/">
+    <strong>FAQ</strong>
+    <span>Get direct answers to the questions evaluators and builders ask most often.</span>
+  </a>
+  <a class="bf-docs-card" href="./RECIPES/">
+    <strong>Recipes</strong>
+    <span>Find targeted implementation patterns for auth, Databricks SQL, charts, chatbot UI, and deployment flows.</span>
   </a>
 </div>
 
-## What You Can Build
+## Enterprise Checkpoints
 
-- executive dashboards
-- data pipeline command centers
-- chatbot and copilot workspaces
-- landing pages and internal product sites
-- Databricks App portals
-- operational triage and release management tools
+![Auth and route guards](assets/auth-guard-flow.png)
+
+![Theme system](assets/theme-system.png)
+
+![Deployment topology](assets/deployment-topology.png)
 
 ## Recommended Reading Order
 
-If you are new to the library, follow these in order:
+If you are new to the framework, this is the fastest way to build confidence:
 
 1. [Quick Start](./GETTING_STARTED.md)
 2. [Learn BrickflowUI](./learning/index.md)
-3. [Architecture](./ARCHITECTURE.md)
-4. [Component Library](./components/index.md)
-5. [Build A Real Portal](./PORTAL_TUTORIAL.md)
-6. [Examples](./EXAMPLES.md)
-7. [Local Development](./LOCAL_DEVELOPMENT.md)
-8. [Databricks Apps Guide](./DATABRICKS_APPS.md)
-
-## Why Teams Choose It
-
-- Python-first UI authoring with no frontend code required for common use cases
-- session-scoped state with reactive rerenders
-- built-in layout, forms, tables, charts, overlays, and workflow patterns
-- runtime-aware loading feedback on common interactive components
-- packaged frontend assets that work in stricter environments like Databricks Apps
-- dark/light mode theming, branded loading screens, and local media assets
-
-## Key Documentation Paths
-
-- [Architecture](./ARCHITECTURE.md) for the runtime model and packaging details
-- [Performance And Scalability](./PERFORMANCE.md) for large-app guidance and responsiveness strategy
-- [Component Library](./components/index.md) for component-by-component learning
-- [Component Pages](./components/catalog.md) for a dedicated page per component
-- [Visualizations And Pipelines](./VISUALIZATIONS.md) for the chart and graph surface
-- [Theming](./THEMING.md) for branding and design tokens
-- [Local Development](./LOCAL_DEVELOPMENT.md) for auth, assets, responsive testing, and runtime debugging
-- [Examples](./EXAMPLES.md#local-playground) when you want a fast validation sandbox before working on a bigger app
-- [Project Standards](./PROJECT_STANDARDS.md) for repository discipline, release checks, and product-grade expectations
-- [Troubleshooting](./TROUBLESHOOTING.md) for common deployment and runtime problems
+3. [Examples](./EXAMPLES.md)
+4. [API Reference](./API_REFERENCE.md)
+5. [Local Development](./LOCAL_DEVELOPMENT.md)
+6. [Databricks Apps](./DATABRICKS_APPS.md)
 
 ## Install
 
@@ -104,7 +159,7 @@ pip install brickflowui
 import brickflowui as db
 ```
 
-## First app
+## First App
 
 ```python
 import brickflowui as db
@@ -118,7 +173,7 @@ def home():
         [
             db.Text("Hello BrickflowUI", variant="h1"),
             db.Text(f"Count: {count}"),
-            db.Button("Increment", on_click=lambda: set_count(count + 1)),
+            db.Button("Increment", on_click=lambda: set_count(count + 1), icon="Plus"),
         ],
         gap=4,
         padding=6,

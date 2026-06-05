@@ -27,3 +27,11 @@ node = db.Plot({"data": [{"type": "bar", "x": ["Mon", "Tue"], "y": [24, 18]}]})
 ## Integration Notes
 
 - Plot accepts a Plotly figure or a figure dictionary and is the escape hatch for advanced charting that goes beyond the built-in chart set.
+
+## Responsive Notes
+
+Check the component inside a realistic layout, not only in isolation, so spacing, overflow, and action density stay comfortable on smaller screens.
+
+## Accessibility Notes
+
+Pair this component with clear visible copy and predictable state changes so keyboard and assistive-technology users are not surprised.

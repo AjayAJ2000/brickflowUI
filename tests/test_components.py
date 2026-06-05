@@ -81,6 +81,92 @@ def test_new_components_serialize_expected_props_and_nested_actions():
     assert multiselect["props"]["loading"] is True
 
 
+def test_interactive_controls_serialize_busy_state_motion_and_placeholders():
+    node = db.Column(
+        [
+            db.Select(
+                name="site",
+                options=[{"label": "Network", "value": "network"}],
+                value="network",
+                loading=True,
+                animated=True,
+                animation="fade-up",
+                animation_delay=0.2,
+            ),
+            db.Checkbox(
+                name="urgent",
+                label="Urgent only",
+                checked=True,
+                loading=True,
+                animated=True,
+                animation="fade-up",
+                animation_delay=0.3,
+            ),
+            db.Toggle(
+                name="bench",
+                label="Show benchmark",
+                checked=False,
+                loading=True,
+                animated=True,
+                animation="fade-up",
+                animation_delay=0.4,
+            ),
+            db.Slider(
+                name="confidence",
+                label="Confidence",
+                value=92,
+                min=0,
+                max=100,
+                disabled=True,
+                loading=True,
+                animated=True,
+                animation="fade-up",
+                animation_delay=0.5,
+            ),
+            db.Tabs(
+                [db.TabItem("Overview", [db.Text("Body")])],
+                animated=True,
+                animation="fade-up",
+                animation_delay=0.6,
+            ),
+            db.MultiSelect(
+                name="layers",
+                options=[{"label": "Bronze", "value": "bronze"}],
+                values=[],
+                placeholder="Choose layers",
+                animated=True,
+                animation="fade-up",
+                animation_delay=0.7,
+            ),
+            db.Table(
+                data=[],
+                columns=[{"key": "name", "label": "Name"}],
+                error_message="Warehouse query failed",
+            ),
+            db.Sidebar(
+                items=[db.NavItem("Overview", "/")],
+                show_theme_toggle=True,
+                sticky=False,
+            ),
+        ]
+    )
+
+    payload = node.serialize({})
+    rendered = {child["type"]: child for child in payload["children"]}
+
+    assert rendered["Select"]["props"]["loading"] is True
+    assert rendered["Select"]["props"]["animation"] == "fade-up"
+    assert rendered["Checkbox"]["props"]["loading"] is True
+    assert rendered["Toggle"]["props"]["loading"] is True
+    assert rendered["Slider"]["props"]["disabled"] is True
+    assert rendered["Slider"]["props"]["loading"] is True
+    assert rendered["Tabs"]["props"]["animated"] is True
+    assert rendered["MultiSelect"]["props"]["placeholder"] == "Choose layers"
+    assert rendered["Table"]["props"]["errorMessage"] == "Warehouse query failed"
+    assert rendered["Sidebar"]["props"]["showThemeToggle"] is True
+    assert rendered["Sidebar"]["props"]["sticky"] is False
+
+
 def test_navigation_media_and_embed_components_serialize_new_branding_props():
     node = db.Column(
         [
