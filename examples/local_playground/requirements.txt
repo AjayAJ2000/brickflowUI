@@ -1,1 +1,2 @@
-brickflowui>=0.1.9
+﻿brickflowui>=0.1.12
+

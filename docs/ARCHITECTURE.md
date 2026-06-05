@@ -12,16 +12,7 @@ Pair this page with:
 
 BrickflowUI is a Python runtime plus a packaged frontend bundle.
 
-```text
-Python app code
-  -> page functions
-  -> VNode tree
-  -> FastAPI + WebSocket runtime
-  -> JSON full tree / JSON patches
-  -> React renderer in the browser
-  -> user events
-  -> Python handlers and state updates
-```
+![Runtime flow](assets/runtime-flow.png)
 
 ## Runtime layers
 
@@ -159,8 +150,13 @@ The server currently applies:
 - `X-Content-Type-Options: nosniff`
 - `X-Frame-Options: SAMEORIGIN`
 - origin checks for WebSocket sessions
+- browser-focused CSRF protection for state-changing HTTP form/API calls
 - optional trusted host middleware
 - page and route access control
+- optional embed origin allowlists
+- optional event audit logging
+
+![Auth and route-guard flow](assets/auth-guard-flow.png)
 
 Security design principle:
 
@@ -216,6 +212,8 @@ Recommended deployment flow:
 3. Verify the wheel contains `brickflowui/frontend/dist`.
 4. Install from the wheel or a GitHub ref.
 5. Deploy with `app.py`, `app.yaml`, and `requirements.txt`.
+
+![Deployment topology](assets/deployment-topology.png)
 
 ## File map
 

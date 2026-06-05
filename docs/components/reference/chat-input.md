@@ -40,3 +40,11 @@ node = db.ChatInput(value="", placeholder="Ask about delayed jobs", on_change=la
 
 - Chat input uses the same debounced local-first sync model as `Input`, so composing prompts stays smooth.
 - Call `on_submit` for the actual send action and reserve `on_change` for draft-aware UX, prompt suggestions, or validation.
+
+## Responsive Notes
+
+Check the component inside a realistic layout, not only in isolation, so spacing, overflow, and action density stay comfortable on smaller screens.
+
+## Accessibility Notes
+
+Pair this component with clear visible copy and predictable state changes so keyboard and assistive-technology users are not surprised.

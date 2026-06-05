@@ -9,6 +9,7 @@ theme:
   logo: assets/favicon-light.svg
   favicon: assets/favicon.svg
   features:
+    - navigation.expand
     - navigation.indexes
     - navigation.sections
     - navigation.top
@@ -17,18 +18,18 @@ theme:
     - search.highlight
     - search.suggest
   palette:
-    - scheme: slate
-      primary: indigo
-      accent: amber
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to light mode
     - scheme: default
       primary: indigo
       accent: amber
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
   font:
     text: Inter
     code: JetBrains Mono
@@ -50,17 +51,14 @@ markdown_extensions:
   - tables
 
 nav:
-  - Product Overview:
+  - Get Started:
       - Documentation Home: index.md
+      - Why BrickflowUI: WHY_BRICKFLOWUI.md
       - Quick Start: GETTING_STARTED.md
+      - Vibe Coding Skills: VIBECODING.md
       - Architecture: ARCHITECTURE.md
       - How It Works: HOW_IT_WORKS.md
-      - Performance And Scalability: PERFORMANCE.md
-      - Branch Strategy: BRANCH_STRATEGY.md
-      - Project Standards: PROJECT_STANDARDS.md
-      - Repository Administration: REPOSITORY_ADMIN.md
-      - Roadmap: ROADMAP.md
-  - Learn BrickflowUI:
+  - Learn:
       - Overview: learning/index.md
       - What Is BrickflowUI: learning/01-what-is-brickflowui.md
       - Install And Run: learning/02-install-and-run.md
@@ -82,22 +80,7 @@ nav:
       - Production Checklist: learning/18-production-checklist.md
       - Capstone Project: learning/19-capstone-project.md
       - Glossary: learning/glossary.md
-  - Build And Operate:
-      - First App Tutorial: TUTORIAL.md
-      - Build A Real Portal: PORTAL_TUTORIAL.md
-      - Databricks Apps: DATABRICKS_APPS.md
-      - Local Development: LOCAL_DEVELOPMENT.md
-      - Theming: THEMING.md
-      - Build Guide: BUILD.md
-      - Publishing: PUBLISHING.md
-      - Troubleshooting: TROUBLESHOOTING.md
-      - FAQ: FAQ.md
-  - Examples And Recipes:
-      - Examples: EXAMPLES.md
-      - Visualizations And Pipelines: VISUALIZATIONS.md
-      - Recipes: RECIPES.md
-      - Polish Guide: POLISH_GUIDE.md
-  - Component Library:
+  - Components:
       - Overview: components/index.md
       - Component Pages: components/catalog.md
       - Layout And Surfaces: components/layout-and-surfaces.md
@@ -174,4 +157,30 @@ nav:
           - Tree Map: components/reference/tree-map.md
           - Video: components/reference/video.md
           - Warehouse Selector: components/reference/warehouse-selector.md
-  - API Reference: API_REFERENCE.md
+  - API Reference:
+      - API Reference: API_REFERENCE.md
+      - Theming: THEMING.md
+  - Examples:
+      - Examples: EXAMPLES.md
+      - First App Tutorial: TUTORIAL.md
+      - Build A Real Portal: PORTAL_TUTORIAL.md
+      - Visualizations And Pipelines: VISUALIZATIONS.md
+      - Recipes: RECIPES.md
+      - Polish Guide: POLISH_GUIDE.md
+  - Deploy:
+      - Local Development: LOCAL_DEVELOPMENT.md
+      - Databricks Apps: DATABRICKS_APPS.md
+      - Build Guide: BUILD.md
+      - Publishing: PUBLISHING.md
+  - Operate:
+      - Performance And Scalability: PERFORMANCE.md
+      - Auth And Security: AUTH_AND_SECURITY.md
+      - Troubleshooting: TROUBLESHOOTING.md
+      - FAQ: FAQ.md
+      - Changelog: CHANGELOG.md
+      - Migration Guide: MIGRATION_GUIDE.md
+      - Community: COMMUNITY.md
+      - Branch Strategy: BRANCH_STRATEGY.md
+      - Project Standards: PROJECT_STANDARDS.md
+      - Repository Administration: REPOSITORY_ADMIN.md
+      - Roadmap: ROADMAP.md

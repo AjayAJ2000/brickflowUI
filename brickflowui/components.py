@@ -215,6 +215,9 @@ def Select(
     on_change: Optional[Callable[[str], None]] = None,
     disabled: bool = False,
     loading: bool = False,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     """Dropdown select. options = [{"label": "...", "value": "..."}]"""
     handlers: Dict[str, EventHandler] = {}
@@ -223,7 +226,8 @@ def Select(
     return VNode(
         type="Select",
         props={"name": name, "options": options, "label": label, "value": value,
-               "placeholder": placeholder, "disabled": disabled, "loading": loading},
+               "placeholder": placeholder, "disabled": disabled, "loading": loading,
+               "animated": animated, "animation": animation, "animationDelay": animation_delay},
         event_handlers=handlers,
     )
 
@@ -234,13 +238,18 @@ def Checkbox(
     checked: bool = False,
     on_change: Optional[Callable[[bool], None]] = None,
     disabled: bool = False,
+    loading: bool = False,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     handlers: Dict[str, EventHandler] = {}
     if on_change:
         handlers["change"] = on_change
     return VNode(
         type="Checkbox",
-        props={"name": name, "label": label, "checked": checked, "disabled": disabled},
+        props={"name": name, "label": label, "checked": checked, "disabled": disabled,
+               "loading": loading, "animated": animated, "animation": animation, "animationDelay": animation_delay},
         event_handlers=handlers,
     )
 
@@ -251,13 +260,18 @@ def Toggle(
     checked: bool = False,
     on_change: Optional[Callable[[bool], None]] = None,
     disabled: bool = False,
+    loading: bool = False,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     handlers: Dict[str, EventHandler] = {}
     if on_change:
         handlers["change"] = on_change
     return VNode(
         type="Toggle",
-        props={"name": name, "label": label, "checked": checked, "disabled": disabled},
+        props={"name": name, "label": label, "checked": checked, "disabled": disabled,
+               "loading": loading, "animated": animated, "animation": animation, "animationDelay": animation_delay},
         event_handlers=handlers,
     )
 
@@ -270,13 +284,20 @@ def Slider(
     step: float = 1,
     value: float = 0,
     on_change: Optional[Callable[[float], None]] = None,
+    disabled: bool = False,
+    loading: bool = False,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     handlers: Dict[str, EventHandler] = {}
     if on_change:
         handlers["change"] = on_change
     return VNode(
         type="Slider",
-        props={"name": name, "label": label, "min": min, "max": max, "step": step, "value": value},
+        props={"name": name, "label": label, "min": min, "max": max, "step": step, "value": value,
+               "disabled": disabled, "loading": loading, "animated": animated,
+               "animation": animation, "animationDelay": animation_delay},
         event_handlers=handlers,
     )
 
@@ -292,6 +313,7 @@ def Table(
     editable: bool = False,
     loading: bool = False,
     empty_message: str = "No data available",
+    error_message: Optional[str] = None,
     exportable: bool = False,
 ) -> VNode:
     """
@@ -306,7 +328,8 @@ def Table(
     return VNode(
         type="Table",
         props={"data": data, "columns": columns or [], "pagination": pagination,
-               "editable": editable, "loading": loading, "emptyMessage": empty_message, "exportable": exportable},
+               "editable": editable, "loading": loading, "emptyMessage": empty_message,
+               "errorMessage": error_message, "exportable": exportable},
         event_handlers=handlers,
     )
 
@@ -369,6 +392,9 @@ def Tabs(
     items: List[VNode],
     default_active: int = 0,
     on_change: Optional[Callable[[int], None]] = None,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     """Tab container. Children should be TabItem nodes."""
     handlers: Dict[str, EventHandler] = {}
@@ -376,7 +402,7 @@ def Tabs(
         handlers["change"] = on_change
     return VNode(
         type="Tabs",
-        props={"defaultActive": default_active},
+        props={"defaultActive": default_active, "animated": animated, "animation": animation, "animationDelay": animation_delay},
         children=items,
         event_handlers=handlers,
     )
@@ -392,11 +418,14 @@ def Sidebar(
     brand_name: str = "BrickflowUI",
     tagline: Optional[str] = None,
     collapsed: bool = False,
+    show_theme_toggle: bool = False,
+    sticky: bool = True,
     **kwargs,
 ) -> VNode:
     return VNode(
         type="Sidebar",
-        props={"logo": logo, "brandName": brand_name, "tagline": tagline, "collapsed": collapsed, **kwargs},
+        props={"logo": logo, "brandName": brand_name, "tagline": tagline, "collapsed": collapsed,
+               "showThemeToggle": show_theme_toggle, "sticky": sticky, **kwargs},
         children=items,
     )
 
@@ -557,13 +586,17 @@ def DateRangePicker(
     on_change: Optional[Callable[[Dict[str, str]], None]] = None,
     disabled: bool = False,
     loading: bool = False,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     handlers: Dict[str, EventHandler] = {}
     if on_change:
         handlers["change"] = on_change
     return VNode(
         type="DateRangePicker",
-        props={"name": name, "label": label, "start": start, "end": end, "disabled": disabled, "loading": loading},
+        props={"name": name, "label": label, "start": start, "end": end, "disabled": disabled, "loading": loading,
+               "animated": animated, "animation": animation, "animationDelay": animation_delay},
         event_handlers=handlers,
     )
 
@@ -576,6 +609,10 @@ def MultiSelect(
     on_change: Optional[Callable[[List[str]], None]] = None,
     disabled: bool = False,
     loading: bool = False,
+    placeholder: Optional[str] = None,
+    animated: bool = False,
+    animation: Optional[str] = None,
+    animation_delay: Optional[float] = None,
 ) -> VNode:
     """Controlled multi-value selector for filters, scopes, or tags."""
     handlers: Dict[str, EventHandler] = {}
@@ -583,7 +620,8 @@ def MultiSelect(
         handlers["change"] = on_change
     return VNode(
         type="MultiSelect",
-        props={"name": name, "options": options, "label": label, "values": values or [], "disabled": disabled, "loading": loading},
+        props={"name": name, "options": options, "label": label, "values": values or [], "disabled": disabled, "loading": loading,
+               "placeholder": placeholder, "animated": animated, "animation": animation, "animationDelay": animation_delay},
         event_handlers=handlers,
     )
 

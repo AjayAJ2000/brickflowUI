@@ -5,6 +5,7 @@ from typing import Any, Dict, Mapping, Optional, Union
 
 
 DEFAULT_THEME = {
+    "style_preset": "modern",
     "default_mode": "light",
     "branding": {
         "title": "BrickflowUI App",
@@ -18,6 +19,8 @@ DEFAULT_THEME = {
         "message": "Connecting to runtime...",
         "subtitle": "Preparing the workspace runtime.",
         "animation": "spinner",
+        "light": {},
+        "dark": {},
     },
     "colors": {
         "primary": "#4361EE",
@@ -110,6 +113,111 @@ DEFAULT_THEME = {
 }
 
 
+THEME_PRESETS = {
+    "modern": {},
+    "executive": {
+        "colors": {
+            "primary": "#1D4ED8",
+            "primary-hover": "#1E40AF",
+            "primary-light": "rgba(29, 78, 216, 0.12)",
+            "info": "#0F766E",
+        },
+        "surfaces": {
+            "card": "#EEF2FF",
+            "hover": "#DBEAFE",
+        },
+        "radius": {
+            "lg": "16px",
+            "xl": "22px",
+        },
+        "shadows": {
+            "md": "0 16px 36px rgba(15, 23, 42, 0.08)",
+            "lg": "0 28px 64px rgba(15, 23, 42, 0.12)",
+        },
+    },
+    "bento": {
+        "colors": {
+            "primary": "#7C3AED",
+            "primary-hover": "#6D28D9",
+            "primary-light": "rgba(124, 58, 237, 0.14)",
+            "info": "#0891B2",
+        },
+        "surfaces": {
+            "card": "#F8FAFC",
+            "hover": "#F1F5F9",
+        },
+        "radius": {
+            "lg": "20px",
+            "xl": "28px",
+        },
+        "shadows": {
+            "md": "0 18px 40px rgba(15, 23, 42, 0.08)",
+            "lg": "0 32px 72px rgba(15, 23, 42, 0.12)",
+        },
+    },
+    "cyberpunk": {
+        "colors": {
+            "primary": "#22D3EE",
+            "primary-hover": "#06B6D4",
+            "primary-light": "rgba(34, 211, 238, 0.16)",
+            "bg": "#050816",
+            "surface": "#0B1223",
+            "surface-2": "#111B33",
+            "text": "#E0F2FE",
+            "text-muted": "#7DD3FC",
+            "border": "#1D4ED8",
+            "warning": "#F59E0B",
+            "error": "#F43F5E",
+            "info": "#A855F7",
+        },
+        "surfaces": {
+            "canvas": "#050816",
+            "muted": "#091224",
+            "overlay": "rgba(5, 8, 22, 0.88)",
+            "card": "#0B1223",
+            "hover": "#13213D",
+        },
+        "radius": {
+            "md": "12px",
+            "lg": "18px",
+            "xl": "24px",
+        },
+        "shadows": {
+            "sm": "0 0 0 1px rgba(34, 211, 238, 0.14)",
+            "md": "0 0 0 1px rgba(34, 211, 238, 0.18), 0 18px 40px rgba(2, 6, 23, 0.45)",
+            "lg": "0 0 0 1px rgba(168, 85, 247, 0.16), 0 28px 70px rgba(2, 6, 23, 0.58)",
+        },
+        "motion": {
+            "duration-fast": "120ms",
+            "duration-normal": "180ms",
+            "duration-slow": "300ms",
+        },
+    },
+    "minimal": {
+        "colors": {
+            "primary": "#111827",
+            "primary-hover": "#030712",
+            "primary-light": "rgba(17, 24, 39, 0.08)",
+            "info": "#2563EB",
+        },
+        "surfaces": {
+            "card": "#FFFFFF",
+            "hover": "#F8FAFC",
+        },
+        "radius": {
+            "md": "10px",
+            "lg": "14px",
+            "xl": "18px",
+        },
+        "shadows": {
+            "sm": "0 1px 2px rgba(15, 23, 42, 0.04)",
+            "md": "0 10px 20px rgba(15, 23, 42, 0.06)",
+            "lg": "0 20px 40px rgba(15, 23, 42, 0.08)",
+        },
+    },
+}
+
+
 _SECTION_ALIASES = {
     "brand": "branding",
     "branding": "branding",
@@ -125,6 +233,10 @@ _SECTION_ALIASES = {
     "modes": "modes",
     "light_mode": "light_mode",
     "dark_mode": "dark_mode",
+    "light": "light_mode",
+    "dark": "dark_mode",
+    "style_preset": "style_preset",
+    "preset": "style_preset",
 }
 
 _KEY_ALIASES = {
@@ -220,6 +332,10 @@ class Theme:
         mode = str(self.config.get("default_mode", "light")).lower()
         return mode if mode in {"light", "dark"} else "light"
 
+    def style_preset(self) -> str:
+        preset = str(self.config.get("style_preset", "modern")).lower()
+        return preset if preset in THEME_PRESETS else "modern"
+
     def branding_value(self, key: str, default: Any = None) -> Any:
         return self.config.get("branding", {}).get(key, default)
 
@@ -254,6 +370,11 @@ class Theme:
 
     def _normalize_theme(self, raw_config: Mapping[str, Any]) -> Dict[str, Any]:
         normalized: Dict[str, Any] = {}
+        preset_name = raw_config.get("style_preset") or raw_config.get("preset")
+        if isinstance(preset_name, str):
+            preset = THEME_PRESETS.get(preset_name.strip().lower())
+            if preset:
+                normalized = _deep_merge(normalized, deepcopy(preset))
         for raw_section, raw_values in raw_config.items():
             section = _SECTION_ALIASES.get(raw_section, raw_section)
 

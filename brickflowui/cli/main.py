@@ -9,6 +9,7 @@ Commands:
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -23,6 +24,29 @@ app = typer.Typer(
 )
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
+
+
+def _env_copy_hint(app_name: str) -> str:
+    if os.name == "nt":
+        return f"cd {app_name}\n    copy .env.example .env"
+    return f"cd {app_name}\n    cp .env.example .env"
+
+
+def _cleanup_scaffold(path: Path) -> None:
+    if not path.exists():
+        return
+
+    def _on_error(func, target, exc_info):
+        try:
+            os.chmod(target, 0o700)
+        except OSError:
+            pass
+        try:
+            func(target)
+        except OSError:
+            pass
+
+    shutil.rmtree(path, onerror=_on_error)
 
 
 @app.command()
@@ -40,14 +64,26 @@ def new(
         raise typer.Exit(1)
 
     template_dir = _TEMPLATES_DIR / "default"
-    target.mkdir(parents=True)
 
-    for template_file in template_dir.iterdir():
-        if not template_file.is_file():
-            continue
-        content = template_file.read_text(encoding="utf-8")
-        content = content.replace("{{APP_NAME}}", name)
-        (target / template_file.name).write_text(content, encoding="utf-8")
+    try:
+        target.mkdir(parents=True, exist_ok=False)
+
+        for template_file in template_dir.iterdir():
+            if not template_file.is_file():
+                continue
+            content = template_file.read_text(encoding="utf-8")
+            content = content.replace("{{APP_NAME}}", name)
+            (target / template_file.name).write_text(content, encoding="utf-8")
+    except PermissionError as exc:
+        _cleanup_scaffold(target)
+        typer.echo(
+            f"[ERROR] BrickflowUI could not finish scaffolding '{name}' because of a filesystem permission error: {exc}",
+            err=True,
+        )
+        raise typer.Exit(1) from exc
+    except Exception:
+        _cleanup_scaffold(target)
+        raise
 
     typer.echo(
         f"""
@@ -60,8 +96,7 @@ def new(
     {name}/.env.example     -> Environment variables template
 
   [bold]Next steps:[/bold]
-    cd {name}
-    cp .env.example .env
+    {_env_copy_hint(name)}
     # Edit .env with your DATABRICKS_HOST and DATABRICKS_TOKEN
     brickflowui dev
 """

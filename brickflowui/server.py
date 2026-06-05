@@ -14,6 +14,7 @@ import html
 import inspect
 import json
 import logging
+import secrets
 import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Dict, Optional
@@ -41,6 +42,8 @@ if TYPE_CHECKING:
     from .app import App
 
 logger = logging.getLogger("brickflowui.server")
+CSRF_COOKIE_NAME = "brickflowui_csrf"
+CSRF_HEADER_NAME = "x-brickflow-csrf"
 
 # Path to bundled frontend
 _FRONTEND_DIST = Path(__file__).parent / "frontend" / "dist"
@@ -111,6 +114,24 @@ def _extract_event_payload(event_data: object) -> object:
     return event_data
 
 
+def _is_safe_http_method(method: str) -> bool:
+    return method.upper() in {"GET", "HEAD", "OPTIONS", "TRACE"}
+
+
+def _request_looks_browser_originated(request: Request) -> bool:
+    return bool(
+        request.cookies.get(CSRF_COOKIE_NAME)
+        or request.headers.get("origin")
+        or request.headers.get("referer")
+    )
+
+
+def _validate_csrf(request: Request) -> bool:
+    cookie_token = request.cookies.get(CSRF_COOKIE_NAME)
+    header_token = request.headers.get(CSRF_HEADER_NAME)
+    return bool(cookie_token and header_token and secrets.compare_digest(cookie_token, header_token))
+
+
 # ---------------------------------------------------------------------------
 # ASGI app factory
 # ---------------------------------------------------------------------------
@@ -143,6 +164,14 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
 
     @fastapi_app.middleware("http")
     async def add_security_headers(request, call_next):
+        if (
+            dbrx_app.csrf_protection
+            and not _is_safe_http_method(request.method)
+            and _request_looks_browser_originated(request)
+            and not _validate_csrf(request)
+        ):
+            return JSONResponse({"detail": "Invalid or missing CSRF token."}, status_code=403)
+
         try:
             principal = resolve_principal(
                 auth_mode=dbrx_app.auth_mode,
@@ -161,6 +190,15 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
             response = await call_next(request)
         finally:
             reset_current_principal(token)
+        if dbrx_app.csrf_protection and _is_safe_http_method(request.method):
+            if not request.cookies.get(CSRF_COOKIE_NAME):
+                response.set_cookie(
+                    CSRF_COOKIE_NAME,
+                    secrets.token_urlsafe(24),
+                    secure=request.url.scheme == "https",
+                    httponly=False,
+                    samesite="lax",
+                )
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
         response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
@@ -314,6 +352,14 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                         if handler is not None:
                             try:
                                 payload = _extract_event_payload(event_data)
+                                if dbrx_app.audit_events:
+                                    logger.info(
+                                        "[%s] audit event=%s principal=%s path=%s",
+                                        session_id,
+                                        event_id,
+                                        principal.subject,
+                                        dbrx_app._session_paths.get(session_id, "/"),
+                                    )
                                 principal_token = set_current_principal(principal)
                                 sig = inspect.signature(handler)
                                 if not sig.parameters:

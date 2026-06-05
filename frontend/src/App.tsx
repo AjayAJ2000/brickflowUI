@@ -16,6 +16,8 @@ type LoadingBootstrap = {
   assetKind?: 'image' | 'video' | null
   video?: string | null
   themeMode?: 'light' | 'dark'
+  modes?: Partial<Record<'light' | 'dark', Partial<LoadingBootstrap>>>
+  stylePreset?: 'modern' | 'executive' | 'bento' | 'cyberpunk' | 'minimal'
 }
 
 declare global {
@@ -25,6 +27,14 @@ declare global {
 }
 
 const LOADING_BOOTSTRAP: LoadingBootstrap = window.__BRICKFLOW_BOOTSTRAP__ || {}
+
+function resolveLoadingConfig(mode: 'light' | 'dark'): LoadingBootstrap {
+  const modeOverrides = LOADING_BOOTSTRAP.modes?.[mode] || {}
+  return {
+    ...LOADING_BOOTSTRAP,
+    ...modeOverrides,
+  }
+}
 
 function applyPatch(tree: VNodeData, patch: Patch): VNodeData {
   const { op, path, node, props } = patch
@@ -64,24 +74,25 @@ function applyPatch(tree: VNodeData, patch: Patch): VNodeData {
   return { ...tree, children: newChildren }
 }
 
-function LoadingVisual({ status }: { status: WsStatus }) {
-  const asset = LOADING_BOOTSTRAP.video || LOADING_BOOTSTRAP.asset
-  const kind = LOADING_BOOTSTRAP.video ? 'video' : LOADING_BOOTSTRAP.assetKind
-  const animation = LOADING_BOOTSTRAP.animation || 'spinner'
-  const title = LOADING_BOOTSTRAP.title || 'BrickflowUI'
-  const subtitle = LOADING_BOOTSTRAP.subtitle
+function LoadingVisual({ status, themeMode }: { status: WsStatus; themeMode: 'light' | 'dark' }) {
+  const config = resolveLoadingConfig(themeMode)
+  const asset = config.video || config.asset
+  const kind = config.video ? 'video' : config.assetKind
+  const animation = config.animation || 'spinner'
+  const title = config.title || 'BrickflowUI'
+  const subtitle = config.subtitle
   const message =
     status === 'connecting'
-      ? (LOADING_BOOTSTRAP.message || 'Connecting to runtime...')
+      ? (config.message || 'Connecting to runtime...')
       : status === 'disconnected'
-        ? (LOADING_BOOTSTRAP.reconnectingMessage || 'Reconnecting...')
+        ? (config.reconnectingMessage || 'Reconnecting...')
         : status === 'error'
-          ? (LOADING_BOOTSTRAP.errorMessage || 'Connection error - retrying...')
+          ? (config.errorMessage || 'Connection error - retrying...')
           : 'Loading...'
 
   return (
     <div className={`bf-loading-screen bf-loading-${animation}`}>
-      {!LOADING_BOOTSTRAP.textOnly ? (
+      {!config.textOnly ? (
         kind === 'video' && asset ? (
           <video
             className="bf-loading-media"
@@ -114,12 +125,17 @@ function resolveInitialThemeMode(): 'light' | 'dark' {
   }
 }
 
+function resolveInitialStylePreset(): string {
+  return LOADING_BOOTSTRAP.stylePreset || 'modern'
+}
+
 export default function App() {
   const [vdom, setVdom] = useState<VNodeData | null>(null)
   const [status, setStatus] = useState<WsStatus>('connecting')
   const [error, setError] = useState<string | null>(null)
   const [pendingEvents, setPendingEvents] = useState<Map<string, number>>(new Map())
   const [themeMode, setThemeModeState] = useState<'light' | 'dark'>(resolveInitialThemeMode)
+  const [stylePreset] = useState<string>(resolveInitialStylePreset)
   const wsRef = useRef<WebSocket | null>(null)
   const vdomRef = useRef<VNodeData | null>(null)
   const frameRef = useRef<number | null>(null)
@@ -171,6 +187,10 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.themeMode = themeMode
   }, [themeMode])
+
+  useEffect(() => {
+    document.documentElement.dataset.uiPreset = stylePreset
+  }, [stylePreset])
 
   useEffect(() => {
     let reconnectTimer: ReturnType<typeof setTimeout>
@@ -248,7 +268,7 @@ export default function App() {
   }, [navigate, scheduleTreeCommit])
 
   if (!vdom) {
-    return <LoadingVisual status={status} />
+    return <LoadingVisual status={status} themeMode={themeMode} />
   }
 
   return (

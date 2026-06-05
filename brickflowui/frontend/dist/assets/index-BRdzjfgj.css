@@ -93,6 +93,26 @@
   --shadow-lg: 0 0 0 1px rgba(67, 97, 238, 0.12), 0 24px 48px rgba(2, 6, 23, 0.48);
 }
 
+:root[data-ui-preset='executive'] {
+  --font-heading: 'Plus Jakarta Sans', 'Inter', sans-serif;
+}
+
+:root[data-ui-preset='bento'] {
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+}
+
+:root[data-ui-preset='cyberpunk'] {
+  --motion-duration-normal: 180ms;
+  --motion-duration-slow: 300ms;
+}
+
+:root[data-ui-preset='minimal'] {
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+}
+
 /* ── Reset ──────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -154,7 +174,9 @@ body {
 .bf-sidebar {
   width: 260px;
   min-width: 260px;
-  background: var(--db-surface);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--db-surface) 92%, transparent), var(--db-surface)),
+    var(--db-surface);
   border-right: 1px solid var(--db-border);
   display: flex;
   flex-direction: column;
@@ -294,7 +316,8 @@ body {
 
 .bf-topnav {
   width: 100%;
-  background: color-mix(in srgb, var(--db-surface) 92%, transparent);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--db-surface) 95%, transparent), color-mix(in srgb, var(--db-surface) 88%, transparent));
   border-bottom: 1px solid var(--db-border);
   backdrop-filter: blur(14px);
   z-index: 40;
@@ -449,7 +472,7 @@ body {
 .bf-btn:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
 
 .bf-btn-primary { background: var(--db-primary); color: white; border-color: var(--db-primary); }
-.bf-btn-primary:hover:not(:disabled) { background: var(--db-primary-hover); border-color: var(--db-primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(255,54,33,0.3); }
+.bf-btn-primary:hover:not(:disabled) { background: var(--db-primary-hover); border-color: var(--db-primary-hover); transform: translateY(-1px); box-shadow: 0 12px 28px var(--db-primary-muted); }
 .bf-btn-primary:active { transform: translateY(0); }
 
 .bf-btn-secondary { background: var(--db-surface-2); color: var(--db-text); border-color: var(--db-border); }
@@ -466,7 +489,9 @@ body {
 
 /* ── Card ───────────────────────────────────────────────────────────────── */
 .bf-card {
-  background: var(--db-surface);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--db-surface) 100%, transparent), color-mix(in srgb, var(--db-surface-muted) 55%, var(--db-surface))),
+    var(--db-surface);
   border: 1px solid var(--db-border);
   border-radius: var(--radius-lg);
   padding: var(--space-5);
@@ -1760,6 +1785,12 @@ body {
   padding: 6px;
   background: var(--db-surface);
   box-shadow: var(--shadow-sm);
+}
+
+.bf-multiselect-placeholder {
+  color: var(--db-text-subtle);
+  font-size: 12px;
+  margin-right: var(--space-2);
 }
 
 .bf-chat-input .bf-input {

@@ -205,68 +205,15 @@ function renderNode(node, ctx, key) {
       return /* @__PURE__ */ jsxRuntimeExports.jsx(DateRangePickerComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, ["change"]) }, dispatch: (value) => ev("change", value) }, key);
     case "MultiSelect":
       return /* @__PURE__ */ jsxRuntimeExports.jsx(MultiSelectComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, ["change"]) }, dispatch: (value) => ev("change", value) }, key);
-    case "Select": {
-      const autoLoading = isPending(p, ctx, ["change"]);
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ["bf-form-field"]), style: resolveMotionStyle(p), children: [
-        p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
-        (p.loading || autoLoading) && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }),
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "select",
-          {
-            name: p.name,
-            className: "bf-select",
-            value: p.value || "",
-            disabled: Boolean(p.disabled) || autoLoading,
-            onChange: (e) => ev("change", e.target.value),
-            children: [
-              p.placeholder && /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: p.placeholder }),
-              (p.options || []).map((opt) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: opt.value, children: opt.label }, opt.value))
-            ]
-          }
-        )
-      ] }, key);
-    }
-    case "Checkbox": {
-      const autoLoading = isPending(p, ctx, ["change"]);
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: `bf-checkbox-wrapper ${autoLoading ? "is-loading" : ""}`, children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "input",
-          {
-            type: "checkbox",
-            name: p.name,
-            checked: Boolean(p.checked),
-            disabled: Boolean(p.disabled) || autoLoading,
-            onChange: (e) => ev("change", e.target.checked)
-          }
-        ),
-        p.label,
-        autoLoading ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-spinner bf-spinner-sm" }) : null
-      ] }, key);
-    }
+    case "Select":
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(SelectComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, ["change"]) }, dispatch: (value) => ev("change", value) }, key);
+    case "Checkbox":
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(CheckboxComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, ["change"]) }, dispatch: (value) => ev("change", value) }, key);
     case "Toggle": {
       return /* @__PURE__ */ jsxRuntimeExports.jsx(ToggleComponent, { props: p, dispatch: (v) => ev("change", v), pending: isPending(p, ctx, ["change"]) }, key);
     }
-    case "Slider": {
-      const autoLoading = isPending(p, ctx, ["change"]);
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-slider-wrapper ${autoLoading ? "bf-is-loading" : ""}`, children: [
-        p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "input",
-          {
-            type: "range",
-            className: "bf-slider",
-            name: p.name,
-            min: p.min,
-            max: p.max,
-            step: p.step,
-            value: p.value,
-            disabled: Boolean(p.disabled) || autoLoading,
-            onChange: (e) => ev("change", parseFloat(e.target.value))
-          }
-        ),
-        autoLoading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }) : null
-      ] }, key);
-    }
+    case "Slider":
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(SliderComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, ["change"]) }, dispatch: (value) => ev("change", value) }, key);
     // ── Data display ───────────────────────────────────────────────────────
     case "Breadcrumbs":
       return /* @__PURE__ */ jsxRuntimeExports.jsx("nav", { className: "bf-breadcrumbs", "aria-label": "Breadcrumb", children: (p.items || []).map((item, index, items) => {
@@ -598,13 +545,22 @@ function renderNode(node, ctx, key) {
   }
 }
 function ToggleComponent({ props: p, dispatch, pending }) {
-  const checked = Boolean(p.checked);
+  const incomingChecked = Boolean(p.checked);
+  const [checked, setChecked] = reactExports.useState(incomingChecked);
+  reactExports.useEffect(() => {
+    setChecked(incomingChecked);
+  }, [incomingChecked]);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "label",
     {
-      className: `bf-toggle-wrapper ${pending ? "is-loading" : ""}`,
+      className: resolveMotionClass(p, [`bf-toggle-wrapper`, pending ? "is-loading" : ""]),
+      style: resolveMotionStyle(p),
       onClick: () => {
-        if (!p.disabled && !pending) dispatch(!checked);
+        if (!p.disabled && !pending) {
+          const next = !checked;
+          setChecked(next);
+          dispatch(next);
+        }
       },
       children: [
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `bf-toggle-switch ${checked ? "checked" : ""}` }),
@@ -613,6 +569,89 @@ function ToggleComponent({ props: p, dispatch, pending }) {
       ]
     }
   );
+}
+function CheckboxComponent({ props: p, dispatch }) {
+  const incomingChecked = Boolean(p.checked);
+  const [checked, setChecked] = reactExports.useState(incomingChecked);
+  reactExports.useEffect(() => {
+    setChecked(incomingChecked);
+  }, [incomingChecked]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("label", { className: resolveMotionClass(p, ["bf-checkbox-wrapper", p.loading ? "is-loading" : ""]), style: resolveMotionStyle(p), children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "input",
+      {
+        type: "checkbox",
+        name: p.name,
+        checked,
+        disabled: Boolean(p.disabled) || Boolean(p.loading),
+        onChange: (event) => {
+          const next = event.target.checked;
+          setChecked(next);
+          dispatch(next);
+        }
+      }
+    ),
+    p.label,
+    p.loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-spinner bf-spinner-sm" }) : null
+  ] });
+}
+function SelectComponent({ props: p, dispatch }) {
+  const incomingValue = String(p.value || "");
+  const [value, setValue] = reactExports.useState(incomingValue);
+  reactExports.useEffect(() => {
+    setValue(incomingValue);
+  }, [incomingValue]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-form-field"]), style: resolveMotionStyle(p), children: [
+    p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
+    p.loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }) : null,
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "select",
+      {
+        name: p.name,
+        className: "bf-select",
+        value,
+        disabled: Boolean(p.disabled) || Boolean(p.loading),
+        onChange: (event) => {
+          const next = event.target.value;
+          setValue(next);
+          dispatch(next);
+        },
+        children: [
+          p.placeholder ? /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: "", children: p.placeholder }) : null,
+          (p.options || []).map((opt) => /* @__PURE__ */ jsxRuntimeExports.jsx("option", { value: opt.value, children: opt.label }, opt.value))
+        ]
+      }
+    )
+  ] });
+}
+function SliderComponent({ props: p, dispatch }) {
+  const incomingValue = Number(p.value ?? 0);
+  const [value, setValue] = reactExports.useState(incomingValue);
+  reactExports.useEffect(() => {
+    setValue(incomingValue);
+  }, [incomingValue]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-slider-wrapper", p.loading ? "bf-is-loading" : ""]), style: resolveMotionStyle(p), children: [
+    p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "input",
+      {
+        type: "range",
+        className: "bf-slider",
+        name: p.name,
+        min: p.min,
+        max: p.max,
+        step: p.step,
+        value,
+        disabled: Boolean(p.disabled) || Boolean(p.loading),
+        onChange: (event) => {
+          const next = parseFloat(event.target.value);
+          setValue(next);
+          dispatch(next);
+        }
+      }
+    ),
+    p.loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }) : null
+  ] });
 }
 function AlertComponent({ props: p }) {
   const [dismissed, setDismissed] = reactExports.useState(false);
@@ -873,7 +912,7 @@ function DateRangePickerComponent({ props: p, dispatch }) {
     setEnd(p.end || "");
   }, [p.start, p.end]);
   const emit = (nextStart, nextEnd) => dispatch({ start: nextStart, end: nextEnd });
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-form-field ${p.loading ? "bf-is-loading" : ""}`, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-form-field", p.loading ? "bf-is-loading" : ""]), style: resolveMotionStyle(p), children: [
     p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
     p.loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }) : null,
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-date-range", children: [
@@ -912,20 +951,28 @@ function DateRangePickerComponent({ props: p, dispatch }) {
   ] });
 }
 function MultiSelectComponent({ props: p, dispatch }) {
-  const selected = new Set((p.values || []).map(String));
+  const incomingValues = (p.values || []).map(String);
+  const [selectedValues, setSelectedValues] = reactExports.useState(incomingValues);
   const options = p.options || [];
+  reactExports.useEffect(() => {
+    setSelectedValues(incomingValues);
+  }, [p.values]);
   const toggleValue = (value) => {
+    const selected = new Set(selectedValues);
     if (selected.has(value)) selected.delete(value);
     else selected.add(value);
-    dispatch(Array.from(selected));
+    const next = Array.from(selected);
+    setSelectedValues(next);
+    dispatch(next);
   };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-form-field ${p.loading ? "bf-is-loading" : ""}`, children: [
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-form-field", p.loading ? "bf-is-loading" : ""]), style: resolveMotionStyle(p), children: [
     p.label && /* @__PURE__ */ jsxRuntimeExports.jsx("label", { className: "bf-label", children: p.label }),
     p.loading ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-field-loading", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-sm" }) }) : null,
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-multiselect", children: [
-      Array.from(selected).map((value) => /* @__PURE__ */ jsxRuntimeExports.jsx("input", { type: "hidden", name: p.name, value }, `hidden-${value}`)),
+      selectedValues.map((value) => /* @__PURE__ */ jsxRuntimeExports.jsx("input", { type: "hidden", name: p.name, value }, `hidden-${value}`)),
+      !selectedValues.length && p.placeholder ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-multiselect-placeholder", children: p.placeholder }) : null,
       options.map((option) => {
-        const active = selected.has(option.value);
+        const active = selectedValues.includes(option.value);
         return /* @__PURE__ */ jsxRuntimeExports.jsx(
           "button",
           {
@@ -1043,6 +1090,7 @@ function TopNavComponent({ props: p, children, ctx }) {
 }
 function FormComponent({ props: p, children, ctx, nodeKey }) {
   const [submitting, setSubmitting] = reactExports.useState(false);
+  const csrfToken = typeof document !== "undefined" ? document.cookie.split("; ").find((entry) => entry.startsWith("brickflowui_csrf="))?.split("=").slice(1).join("=") : void 0;
   return /* @__PURE__ */ jsxRuntimeExports.jsx(
     "form",
     {
@@ -1064,7 +1112,10 @@ function FormComponent({ props: p, children, ctx, nodeKey }) {
           const resp = await fetch(p.action, {
             method: p.method || "POST",
             credentials: "same-origin",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              ...csrfToken ? { "X-Brickflow-Csrf": decodeURIComponent(csrfToken) } : {}
+            },
             body: JSON.stringify(data)
           });
           if (resp.ok && p.successRedirect) {
@@ -1405,6 +1456,7 @@ function TableComponent({ props: p, dispatch }) {
     URL.revokeObjectURL(url);
   };
   if (p.loading) return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { display: "flex", justifyContent: "center", padding: 40 }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-lg" }) });
+  if (p.errorMessage) return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-table-empty", children: p.errorMessage });
   if (!data.length) return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-table-empty", children: p.emptyMessage || "No data" });
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
     p.exportable && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-table-toolbar", children: /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-btn bf-btn-secondary", style: { padding: "6px 12px", fontSize: 12 }, onClick: exportCsv, children: "Export CSV" }) }),
@@ -1436,7 +1488,10 @@ function TableComponent({ props: p, dispatch }) {
 }
 function TabsComponent({ props: p, children, ctx, nodeKey, dispatch }) {
   const [active, setActive] = reactExports.useState(p.defaultActive || 0);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-tabs", children: [
+  reactExports.useEffect(() => {
+    setActive(p.defaultActive || 0);
+  }, [p.defaultActive]);
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, ["bf-tabs"]), style: resolveMotionStyle(p), children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-tabs-list", children: children.map((child, i) => {
       const cp = child.props;
       return /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { className: `bf-tab-trigger ${active === i ? "active" : ""}`, onClick: () => {
@@ -1452,6 +1507,13 @@ function TabsComponent({ props: p, children, ctx, nodeKey, dispatch }) {
   ] });
 }
 const LOADING_BOOTSTRAP = window.__BRICKFLOW_BOOTSTRAP__ || {};
+function resolveLoadingConfig(mode) {
+  const modeOverrides = LOADING_BOOTSTRAP.modes?.[mode] || {};
+  return {
+    ...LOADING_BOOTSTRAP,
+    ...modeOverrides
+  };
+}
 function applyPatch(tree, patch) {
   const { op, path, node, props } = patch;
   if (path.length === 0) {
@@ -1483,15 +1545,16 @@ function applyPatch(tree, patch) {
   }
   return { ...tree, children: newChildren };
 }
-function LoadingVisual({ status }) {
-  const asset = LOADING_BOOTSTRAP.video || LOADING_BOOTSTRAP.asset;
-  const kind = LOADING_BOOTSTRAP.video ? "video" : LOADING_BOOTSTRAP.assetKind;
-  const animation = LOADING_BOOTSTRAP.animation || "spinner";
-  const title = LOADING_BOOTSTRAP.title || "BrickflowUI";
-  const subtitle = LOADING_BOOTSTRAP.subtitle;
-  const message = status === "connecting" ? LOADING_BOOTSTRAP.message || "Connecting to runtime..." : status === "disconnected" ? LOADING_BOOTSTRAP.reconnectingMessage || "Reconnecting..." : status === "error" ? LOADING_BOOTSTRAP.errorMessage || "Connection error - retrying..." : "Loading...";
+function LoadingVisual({ status, themeMode }) {
+  const config = resolveLoadingConfig(themeMode);
+  const asset = config.video || config.asset;
+  const kind = config.video ? "video" : config.assetKind;
+  const animation = config.animation || "spinner";
+  const title = config.title || "BrickflowUI";
+  const subtitle = config.subtitle;
+  const message = status === "connecting" ? config.message || "Connecting to runtime..." : status === "disconnected" ? config.reconnectingMessage || "Reconnecting..." : status === "error" ? config.errorMessage || "Connection error - retrying..." : "Loading...";
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-loading-screen bf-loading-${animation}`, children: [
-    !LOADING_BOOTSTRAP.textOnly ? kind === "video" && asset ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+    !config.textOnly ? kind === "video" && asset ? /* @__PURE__ */ jsxRuntimeExports.jsx(
       "video",
       {
         className: "bf-loading-media",
@@ -1516,12 +1579,16 @@ function resolveInitialThemeMode() {
     return bootstrapMode;
   }
 }
+function resolveInitialStylePreset() {
+  return LOADING_BOOTSTRAP.stylePreset || "modern";
+}
 function App() {
   const [vdom, setVdom] = reactExports.useState(null);
   const [status, setStatus] = reactExports.useState("connecting");
   const [error, setError] = reactExports.useState(null);
   const [pendingEvents, setPendingEvents] = reactExports.useState(/* @__PURE__ */ new Map());
   const [themeMode, setThemeModeState] = reactExports.useState(resolveInitialThemeMode);
+  const [stylePreset] = reactExports.useState(resolveInitialStylePreset);
   const wsRef = reactExports.useRef(null);
   const vdomRef = reactExports.useRef(null);
   const frameRef = reactExports.useRef(null);
@@ -1567,6 +1634,9 @@ function App() {
   reactExports.useEffect(() => {
     document.documentElement.dataset.themeMode = themeMode;
   }, [themeMode]);
+  reactExports.useEffect(() => {
+    document.documentElement.dataset.uiPreset = stylePreset;
+  }, [stylePreset]);
   reactExports.useEffect(() => {
     let reconnectTimer;
     function connect() {
@@ -1633,7 +1703,7 @@ function App() {
     };
   }, [navigate, scheduleTreeCommit]);
   if (!vdom) {
-    return /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingVisual, { status });
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingVisual, { status, themeMode });
   }
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-page-shell", children: /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -1657,4 +1727,4 @@ function App() {
 ReactDOM.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-DYcFmiqI.js.map
+//# sourceMappingURL=index-C210lFNz.js.map
