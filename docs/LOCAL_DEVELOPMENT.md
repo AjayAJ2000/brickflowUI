@@ -47,6 +47,20 @@ python app.py
 4. Watch the WebSocket connection at `/events`
 5. Trigger controls and confirm you see state patches come back
 
+## Recommended Testing Playground
+
+Start with `examples/local_playground/app.py` whenever you change framework code.
+
+That app is intended to validate:
+
+- input smoothness
+- loading transitions
+- theme switching
+- local asset serving
+- responsive shell collapse
+- chart and table rendering
+- auth-aware routes and forms when you extend it locally
+
 ## Local Auth Patterns
 
 BrickflowUI supports application identity and user identity patterns. For local development, the most practical path is header-based testing.
@@ -74,6 +88,8 @@ This is useful for:
 - testing page-level access control
 - validating role-gated flows
 - building secure internal tools before identity is wired to the real platform
+
+For the broader auth model, pair this page with [Auth And Security](./AUTH_AND_SECURITY.md).
 
 ## Local Images, GIFs, Videos, And Logos
 
@@ -146,6 +162,7 @@ If something looks stuck, check these in order:
 3. Confirm the packaged frontend assets exist in `brickflowui/frontend/dist`.
 4. Confirm local asset paths point to real files.
 5. Confirm the browser is not serving an older cached bundle.
+6. Confirm your POST route is receiving the CSRF header if you are testing forms or protected JSON endpoints from a browser session.
 
 ## Theme Modes During Local Development
 

@@ -34,3 +34,11 @@ node = db.PipelineGraph(nodes=[{"id": "extract", "label": "Extract", "status": "
 
 - This component composes cleanly with layout primitives such as `Card`, `Grid`, `Row`, and `Column`.
 - Prefer controlled state from Python when the value matters to your business logic or backend query layer.
+
+## Responsive Notes
+
+PipelineGraph is horizontally scrollable on smaller screens. Keep node labels short and use status layers or tooltips for deeper detail.
+
+## Accessibility Notes
+
+Pair this component with clear visible copy and predictable state changes so keyboard and assistive-technology users are not surprised.

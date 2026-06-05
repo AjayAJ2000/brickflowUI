@@ -1,6 +1,8 @@
 # BrickflowUI Theming
 
-BrickflowUI supports product-level theming, branded loading experiences, local media assets, and dual dark/light modes directly from Python.
+BrickflowUI supports product-level theming, branded loading experiences, local media assets, dual dark/light modes, and additive style presets directly from Python.
+
+![Theme system flow](assets/theme-system.png)
 
 ## Fast Mental Model
 
@@ -13,6 +15,7 @@ The theme surface is split into these areas:
 - `typography`: body, heading, and mono stacks
 - `spacing`, `radius`, `shadows`, `motion`
 - `default_mode`, `light_mode`, `dark_mode`
+- `style_preset`
 
 ## Example Theme
 
@@ -22,6 +25,7 @@ import brickflowui as db
 app = db.App(
     theme={
         "default_mode": "light",
+        "style_preset": "executive",
         "branding": {
             "title": "Acme Control Center",
             "tagline": "React components. Python syntax.",
@@ -71,6 +75,7 @@ You can also keep the same structure in YAML or JSON and pass the file path to `
 
 ```yaml
 default_mode: light
+style_preset: executive
 
 branding:
   title: Acme Control Center
@@ -138,6 +143,32 @@ app = db.App(
         "message": "Connecting to secured trial services...",
         "animation": "pulse",
         "asset": "assets/astellas-loader.gif",
+        "dark": {
+            "asset": "assets/astellas-loader-dark.gif"
+        },
+    }
+)
+```
+
+If you provide `loading.light` and `loading.dark`, BrickflowUI uses the matching visual for the active theme mode.
+
+## Style Presets
+
+BrickflowUI now supports additive presets so apps do not all feel like they come from one visual template.
+
+- `modern`: balanced default for most dashboards and portals
+- `executive`: cleaner enterprise presentation with softer surfaces and stronger hierarchy
+- `bento`: rounder cards and more editorial composition for product-style layouts
+- `cyberpunk`: higher contrast, neon-accent control rooms and observability views
+- `minimal`: stripped-back, quieter surfaces for simple internal tools
+
+Use them like this:
+
+```python
+app = db.App(
+    theme={
+        "style_preset": "bento",
+        "default_mode": "light",
     }
 )
 ```

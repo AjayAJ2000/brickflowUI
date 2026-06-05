@@ -98,6 +98,27 @@ def test_theme_defaults_to_light_mode_when_not_explicitly_configured():
     assert theme.default_mode() == "light"
 
 
+def test_theme_supports_style_presets_and_light_dark_alias_sections():
+    theme = Theme(
+        {
+            "preset": "executive",
+            "light": {
+                "colors": {"background": "#FEFEFD"},
+            },
+            "dark": {
+                "colors": {"background": "#040712"},
+            },
+        }
+    )
+
+    css = theme.to_css_variables()
+
+    assert theme.style_preset() == "executive"
+    assert theme.config["shadows"]["md"] == "0 16px 36px rgba(15, 23, 42, 0.08)"
+    assert "--db-bg: #FEFEFD;" in css
+    assert "--db-bg: #040712;" in css
+
+
 def test_app_uses_branding_from_theme_file_when_defaults_are_used():
     theme_path = Path(__file__).parent / "_branding_test.yaml"
     try:

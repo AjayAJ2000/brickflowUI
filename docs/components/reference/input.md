@@ -41,3 +41,11 @@ node = db.Input(name="search", label="Search", placeholder="Search pipelines..."
 - Text-like inputs default to `change_strategy="debounce"`, which keeps typing local and fast while syncing state back to Python after `debounce_ms`.
 - Use `change_strategy="immediate"` only when every character must trigger backend logic.
 - Use `change_strategy="blur"` when the input kicks off a heavier query and should only sync once the field loses focus.
+
+## Responsive Notes
+
+Check the component inside a realistic layout, not only in isolation, so spacing, overflow, and action density stay comfortable on smaller screens.
+
+## Accessibility Notes
+
+Always provide `label` for production forms unless the field is purely decorative or already described by adjacent UI copy.

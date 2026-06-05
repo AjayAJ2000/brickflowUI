@@ -39,3 +39,11 @@ node = db.Image("assets/logo.svg", alt="Acme logo", variant="inline")
 ## Integration Notes
 
 - Use `variant="inline"` for logos and product marks, `variant="avatar"` for circular profile images, and `variant="content"` for screenshots or larger visuals.
+
+## Responsive Notes
+
+Check the component inside a realistic layout, not only in isolation, so spacing, overflow, and action density stay comfortable on smaller screens.
+
+## Accessibility Notes
+
+Always set meaningful `alt` text for informative images. Use empty `alt` only for decorative brand marks that repeat nearby text.

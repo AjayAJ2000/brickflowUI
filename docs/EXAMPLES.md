@@ -4,6 +4,19 @@ BrickflowUI ships with a few examples that cover different levels of complexity.
 
 Use this page when you want to skip the docs theory and start from something runnable.
 
+## Flagship example set
+
+These are the examples we actively want evaluators, buyers, and engineering teams to judge BrickflowUI by.
+
+| Example | Path | Best for |
+|---|---|---|
+| Acme Analytics Command Center | `examples/acme_analytics_command_center/app.py` | Premium SaaS-style analytics shell with theme modes and richer table presentation |
+| Data Pipeline Command Center | `examples/data_pipeline_command_center/app.py` | Data and AI platform monitoring with freshness, SLAs, cost, and Databricks SQL handoff |
+| Component Studio | `examples/component_studio/app.py` | Interactive documentation-style lab that exercises the broadest component surface |
+| Clinical Trial Command Center | `examples/clinical_trial_command_center/app.py` | Regulated, auth-aware, Plotly-enabled study operations portal |
+| Secure Internal Tools | `examples/secure_internal_tools/app.py` | Governance, protected sections, role-aware views, and internal operations flows |
+| Workspace Studio | `examples/workspace_studio/app.py` | Broad end-to-end portal with top nav, filters, forms, charts, tabs, tables, and a themes page |
+
 ## Recommended starting points
 
 | Example | Path | Best for |
@@ -14,13 +27,24 @@ Use this page when you want to skip the docs theory and start from something run
 | Operations + Finance Portal | `examples/operations_finance_portal/app.py` | Executive dashboard with a traditional top nav |
 | Acme Analytics Command Center | `examples/acme_analytics_command_center/app.py` | Dark SaaS-style analytics shell with responsive navigation, rich tables, and theme modes |
 | Data Pipeline Command Center | `examples/data_pipeline_command_center/app.py` | Industry-style data engineering monitoring with filters, SLA controls, cost, freshness, and Databricks SQL handoff |
-| Pipeline Observability 0.1.9 | `examples/pipeline_observability_015/app.py` | New 0.1.9 showcase with pipeline graph, chatbot UI, heatmap, treemap, funnel, radar, gauge, kanban, and table export |
+| Pipeline Observability 0.1.12 | `examples/pipeline_observability_015/app.py` | New 0.1.12 showcase with pipeline graph, chatbot UI, heatmap, treemap, funnel, radar, gauge, kanban, and table export |
 | Component Studio | `examples/component_studio/app.py` | Interactive all-components app that doubles as documentation |
 | Clinical Trial Command Center | `examples/clinical_trial_command_center/app.py` | Auth-gated study operations portal with Unity Catalog query patterns and Plotly |
 | Secure Internal Tools | `examples/secure_internal_tools/app.py` | Role-aware internal tools portal focused on governance and restricted views |
 | Chatbot Workspace | `examples/chatbot_workspace/app.py` | Assistant-style UI with drawers, toast, timelines, and multi-value inputs |
 | Landing Site | `examples/landing_site/app.py` | Product-style landing page and launch-site composition |
 | Workspace Studio | `examples/workspace_studio/app.py` | Rich app structure with filters, tables, tabs, forms, modal flows, charts, and a dedicated themes page |
+
+## Lightweight and legacy examples
+
+These are still useful for sanity checks, experiments, or backwards-compatibility coverage, but they are not the primary product proof points we recommend leading with.
+
+| Example | Path | Why it still exists |
+|---|---|---|
+| Counter | `examples/counter/app.py` | Fastest install/runtime sanity check |
+| Demo App | `examples/demo_app/app.py` | Small generic demo for low-risk experimentation |
+| Showcase | `examples/showcase/app.py` | Older visual reference while the newer flagship apps continue to replace it |
+| Weather Dashboard | `examples/weather_dashboard/app.py` | Simple chart-and-filter example for lightweight tutorials |
 
 ## Data Pipeline Command Center
 
@@ -78,7 +102,7 @@ It demonstrates:
 - richer table cells with badge, currency, progress, and status formatting
 - a screenshot-style operational dashboard surface you can extend into a real product
 
-## Pipeline Observability 0.1.9
+## Pipeline Observability 0.1.12
 
 Use this example when you want to test the newest visual toolkit and confirm user inputs drive real state changes.
 
@@ -239,13 +263,13 @@ Put these three files in your Databricks App project:
 `requirements.txt`:
 
 ```text
-brickflowui>=0.1.9
+brickflowui>=0.1.12
 ```
 
-For the 0.1.9 visualization showcase, use:
+For the 0.1.12 visualization showcase, use:
 
 ```text
-brickflowui>=0.1.9
+brickflowui>=0.1.12
 ```
 
 `app.yaml`:
@@ -284,4 +308,5 @@ The most effective pattern is:
 - Choose `component_studio` if you want an example that behaves like documentation and showcases nearly every UI surface.
 - Choose `clinical_trial_command_center` if you want a highly regulated, analytics-heavy portal pattern.
 - Choose `secure_internal_tools` if you want security, identity governance, and role-aware page design patterns first.
+
 

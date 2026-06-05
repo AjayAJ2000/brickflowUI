@@ -1,6 +1,6 @@
 ﻿# Visualizations And Pipelines
 
-BrickflowUI `0.1.9` expands beyond basic dashboard charts. The goal is to let a data team represent operational reality directly: pipelines, freshness, failures, cost, triage, chatbot assistants, and executive signals.
+BrickflowUI `0.1.12` expands beyond basic dashboard charts. The goal is to let a data team represent operational reality directly: pipelines, freshness, failures, cost, triage, chatbot assistants, and executive signals.
 
 ## Chart Selection Guide
 
@@ -87,4 +87,5 @@ python app.py
 ```
 
 This example shows pipeline graphs, multiple controls, chatbot UI, chart variety, heatmaps, kanban triage, and table export in one Databricks-ready app.
+
 
