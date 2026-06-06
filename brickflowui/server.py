@@ -482,6 +482,7 @@ def _minimal_html_shell(
     title: str = "BrickflowUI App",
     loading: Optional[Dict[str, object]] = None,
 ) -> str:
+    """Render a lightweight fallback shell when the packaged frontend is unavailable."""
     loading = loading or {}
     loading_title = html.escape(str(loading.get("title") or title))
     loading_message = html.escape(str(loading.get("message") or "Connecting to runtime..."))
@@ -498,7 +499,15 @@ def _minimal_html_shell(
         else:
             loading_media = f'<img class="loading-media" src="{escaped_asset}" alt="{loading_title} loading" />'
     elif not bool(loading.get("textOnly")):
-        loading_media = '<div class="spinner"></div>'
+        loading_media = (
+            '<div class="loading-mark" aria-hidden="true">'
+            '<div class="loading-mark-tile">'
+            '<span class="loading-mark-bar loading-mark-bar-long"></span>'
+            '<span class="loading-mark-bar loading-mark-bar-medium"></span>'
+            '<span class="loading-mark-bar loading-mark-bar-short"></span>'
+            "</div>"
+            "</div>"
+        )
 
     subtitle_html = (
         f'<div class="loading-subtitle">{html.escape(loading_subtitle)}</div>'
@@ -537,6 +546,39 @@ def _minimal_html_shell(
       flex: 1;
       gap: 16px;
     }}
+    .loading-mark {{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at top, color-mix(in srgb, var(--db-primary) 12%, transparent), transparent 68%),
+        color-mix(in srgb, var(--db-surface) 90%, transparent);
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14);
+      border: 1px solid color-mix(in srgb, var(--db-primary) 18%, var(--db-border));
+    }}
+    .loading-mark-tile {{
+      width: 84px;
+      height: 84px;
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--db-primary) 10%, var(--db-surface));
+      border: 1px solid color-mix(in srgb, var(--db-primary) 24%, var(--db-border));
+      display: grid;
+      align-content: center;
+      gap: 7px;
+      padding: 0 16px;
+    }}
+    .loading-mark-bar {{
+      display: block;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--db-primary), color-mix(in srgb, var(--db-primary) 64%, white));
+      box-shadow: 0 8px 18px color-mix(in srgb, var(--db-primary) 24%, transparent);
+    }}
+    .loading-mark-bar-long {{ width: 44px; }}
+    .loading-mark-bar-medium {{ width: 34px; }}
+    .loading-mark-bar-short {{ width: 26px; }}
     .spinner {{
       width: 40px; height: 40px;
       border: 3px solid var(--db-border);

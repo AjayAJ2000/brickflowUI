@@ -221,9 +221,11 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
     // ── Text ───────────────────────────────────────────────────────────────
     case 'Text': {
       const variant = (p.variant as string) || 'body'
-      const cls = ['bf-text-' + variant, p.muted ? 'bf-text-muted' : '', p.bold ? 'bf-text-bold' : '', p.italic ? 'bf-text-italic' : ''].filter(Boolean).join(' ')
+      const cls = ['bf-text-' + variant, p.muted ? 'bf-text-muted' : '', p.bold ? 'bf-text-bold' : '', p.italic ? 'bf-text-italic' : '', p.className as string || ''].filter(Boolean).join(' ')
       const Tag = ({ h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', code: 'code', label: 'label', caption: 'small' } as Record<string, string>)[variant] || 'p'
-      return React.createElement(Tag, { key, className: cls, style: p.color ? { color: p.color as string } : undefined }, p.value as string)
+      const style = { ...(p.style as object || {}) } as React.CSSProperties
+      if (p.color) style.color = p.color as string
+      return React.createElement(Tag, { key, className: cls, style: Object.keys(style).length ? style : undefined }, p.value as string)
     }
 
     case 'Code':
@@ -372,7 +374,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return <TableComponent key={key} props={p} dispatch={ctx.dispatch} />
 
     case 'Badge':
-      return <span key={key} className={`bf-badge bf-badge-${(p.color as string) || 'blue'}`}>{p.label as string}</span>
+      return <span key={key} className={`bf-badge bf-badge-${(p.color as string) || 'blue'} ${p.className || ''}`.trim()} style={p.style as React.CSSProperties | undefined}>{p.label as string}</span>
 
     case 'Alert':
       return <AlertComponent key={key} props={p} />

@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 import brickflowui as db
 from brickflowui.app import App
 from brickflowui.auth import HeaderAuthProvider, current_user
-from brickflowui.server import create_asgi_app
+from brickflowui.server import _minimal_html_shell, create_asgi_app
 from brickflowui.vdom import VNode
 from pathlib import Path
 
@@ -140,6 +140,21 @@ def test_shell_bootstrap_includes_style_preset_and_loading_modes():
     assert "Loading light workspace" in response.text
     assert "Loading dark workspace" in response.text
     assert "/__brickflow_asset__/" in response.text
+
+
+def test_minimal_shell_uses_builtin_loading_mark_when_no_custom_media_is_configured():
+    html = _minimal_html_shell(
+        title="Fallback App",
+        loading={
+            "title": "Fallback App",
+            "message": "Connecting to runtime...",
+            "subtitle": "Built-in brand mark should render.",
+        },
+    )
+
+    assert 'class="loading-mark"' in html
+    assert "Built-in brand mark should render." in html
+    assert 'class="spinner"' not in html
 
 
 def test_custom_api_route():

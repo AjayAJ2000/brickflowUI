@@ -1,8 +1,8 @@
-# Roadmap
+﻿# Roadmap
 
 This roadmap focuses on making BrickflowUI feel dependable in enterprise dashboard, portal, and internal-tool scenarios while keeping the framework practical for Python-first builders.
 
-It is shaped by both BrickflowUI’s current direction and recurring pain seen in similar frameworks and internal-tool platforms.
+It is shaped by both BrickflowUI's current direction and recurring pain seen in similar frameworks and internal-tool platforms.
 
 ## What Similar Products Keep Getting Wrong
 
@@ -19,7 +19,7 @@ These are not edge cases. They are the problems teams run into when they try to 
 
 ## Immediate Direction
 
-The near-term goal is not to make BrickflowUI “feature busy.” It is to make the framework more reliable, more scalable, and more deployment-ready while continuing to broaden the product surface in additive ways.
+The near-term goal is not to make BrickflowUI "feature busy." It is to make the framework more reliable, more scalable, and more deployment-ready while continuing to broaden the product surface in additive ways.
 
 ## Next Update Tracks
 
@@ -53,6 +53,15 @@ Expected work:
 - better left-nav and top-nav composition patterns
 - denser admin/dashboard layout options
 - improved responsive behavior for data-heavy pages
+- premium visual primitives for design-led surfaces:
+  - `IconButton`
+  - `SegmentedControl`
+  - `Stack` / overlay helper
+  - `AspectFrame`
+  - glass surface tokens
+  - richer display typography control
+  - breakpoint-aware shell helpers for desktop-first composition
+  - stronger image framing and hero-media placement controls
 
 ### Track 3: Security, Identity, And Governance
 
@@ -144,3 +153,4 @@ Operationally, roadmap work should move through:
 - `main` for production release
 
 That keeps product evolution fast without making public release quality accidental.
+

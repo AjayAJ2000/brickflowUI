@@ -74,6 +74,18 @@ function applyPatch(tree: VNodeData, patch: Patch): VNodeData {
   return { ...tree, children: newChildren }
 }
 
+function BuiltinLoadingMark() {
+  return (
+    <div className="bf-loading-mark" aria-hidden="true">
+      <div className="bf-loading-mark-tile">
+        <span className="bf-loading-mark-bar bf-loading-mark-bar-long" />
+        <span className="bf-loading-mark-bar bf-loading-mark-bar-medium" />
+        <span className="bf-loading-mark-bar bf-loading-mark-bar-short" />
+      </div>
+    </div>
+  )
+}
+
 function LoadingVisual({ status, themeMode }: { status: WsStatus; themeMode: 'light' | 'dark' }) {
   const config = resolveLoadingConfig(themeMode)
   const asset = config.video || config.asset
@@ -105,7 +117,7 @@ function LoadingVisual({ status, themeMode }: { status: WsStatus; themeMode: 'li
         ) : asset ? (
           <img className="bf-loading-media" src={asset} alt={`${title} loading`} />
         ) : (
-          <div className={`bf-spinner bf-spinner-lg ${animation === 'pulse' ? 'bf-spinner-pulse' : ''}`} />
+          <BuiltinLoadingMark />
         )
       ) : null}
       <div className="bf-loading-brand">{title}</div>
