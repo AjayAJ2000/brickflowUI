@@ -175,6 +175,7 @@ nav:
       - Publishing: PUBLISHING.md
   - Operate:
       - Performance And Scalability: PERFORMANCE.md
+      - Stability Contract: STABILITY.md
       - Auth And Security: AUTH_AND_SECURITY.md
       - Troubleshooting: TROUBLESHOOTING.md
       - FAQ: FAQ.md

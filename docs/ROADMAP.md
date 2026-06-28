@@ -95,32 +95,20 @@ Expected work:
 
 ## Proposed Release Shape
 
-### `0.1.10`
+### `0.1.13`
 
-Current stabilization release:
+Current stabilization baseline:
 
-- local-first input handling
-- deferred frontend tree updates
-- lighter docs navigation and stronger portal-style docs structure
-- repo standards and admin guidance
-
-### `0.1.11`
-
-Recommended focus:
-
-- table interaction preservation
-- better data refresh ergonomics
-- loading-state consistency for data-driven components
-- additional mobile polish for dense portal layouts
-
-### `0.1.12`
-
-Recommended focus:
-
-- richer enterprise shell patterns
-- observability hooks for event timing and loading behavior
-- stronger auth/RBAC examples
-- cleaner dashboard workflow primitives
+- session-scoped state and effect cleanup
+- token-safe render-context restoration
+- validated WebSocket origins and browser CSRF protection
+- hardened HTML configuration boundaries
+- explicit failure when the packaged frontend bundle is unavailable
+- correct browser Back and Forward navigation
+- validated immutable frontend patch application and reconnect recovery
+- formula-safe CSV export and IME-safe chat input
+- backend and frontend automated test gates
+- Python package, documentation, security, and release workflows
 
 ### `0.2.0`
 
@@ -130,6 +118,8 @@ Recommended focus:
 - formalize preferred composition patterns
 - tighten visual-state conventions across components
 - ship a migration guide for any intentional cleanup
+- complete functional Databricks contracts for `CatalogBrowser`, `WarehouseSelector`, and `JobTrigger`
+- add production lifecycle, load, and session observability validation
 
 ## The Product Standard
 
@@ -153,4 +143,3 @@ Operationally, roadmap work should move through:
 - `main` for production release
 
 That keeps product evolution fast without making public release quality accidental.
-
