@@ -35,7 +35,7 @@ from .auth import (
     resolve_principal,
     set_current_principal,
 )
-from .state import RenderContext, set_render_context
+from .state import RenderContext, reset_render_context, set_render_context
 from .vdom import VNode, diff
 
 if TYPE_CHECKING:
@@ -284,7 +284,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                 await ws.send_text(_error_msg(str(exc)))
                 return None
             finally:
-                set_render_context(None)
+                reset_render_context(render_token)
                 reset_current_principal(principal_token)
 
         # ── Helper: re-render + send patch ────────────────────────────────
@@ -308,7 +308,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                 await ws.send_text(_error_msg(str(exc)))
                 return old_tree
             finally:
-                set_render_context(None)
+                reset_render_context(render_token)
                 reset_current_principal(principal_token)
 
         current_tree = await send_full_tree()

@@ -1,4 +1,5 @@
 import pytest
+import brickflowui.state as state
 from brickflowui.state import (
     RenderContext,
     set_context,
@@ -13,7 +14,7 @@ def ctx():
     c = RenderContext(session_id="test-session")
     token = set_render_context(c)
     yield c
-    set_render_context(None)
+    state.reset_render_context(token)
 
 def test_use_state_initial(ctx):
     val, setter = use_state(42)
@@ -114,3 +115,15 @@ def test_cleanup_effects_runs_registered_cleanup(ctx):
 
     assert cleaned["count"] == 1
     assert ctx.effects == []
+
+
+def test_reset_render_context_restores_previous_context():
+    outer = RenderContext(session_id="outer")
+    inner = RenderContext(session_id="inner")
+    outer_token = set_render_context(outer)
+    try:
+        inner_token = set_render_context(inner)
+        state.reset_render_context(inner_token)
+        assert state.get_context() is outer
+    finally:
+        state.reset_render_context(outer_token)
