@@ -1,9 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
 import brickflowui as db
+import brickflowui.server as server
 from brickflowui.app import App
 from brickflowui.auth import HeaderAuthProvider, current_user
-from brickflowui.server import _minimal_html_shell, create_asgi_app
+from brickflowui.server import _missing_frontend_shell, create_asgi_app
 from brickflowui.vdom import VNode
 from pathlib import Path
 
@@ -142,19 +143,50 @@ def test_shell_bootstrap_includes_style_preset_and_loading_modes():
     assert "/__brickflow_asset__/" in response.text
 
 
-def test_minimal_shell_uses_builtin_loading_mark_when_no_custom_media_is_configured():
-    html = _minimal_html_shell(
-        title="Fallback App",
-        loading={
-            "title": "Fallback App",
-            "message": "Connecting to runtime...",
-            "subtitle": "Built-in brand mark should render.",
-        },
-    )
+def test_missing_frontend_shell_is_static_and_actionable():
+    shell = _missing_frontend_shell("", "Fallback App")
 
-    assert 'class="loading-mark"' in html
-    assert "Built-in brand mark should render." in html
-    assert 'class="spinner"' not in html
+    assert "BrickflowUI frontend bundle is missing" in shell
+    assert "npm ci" in shell
+    assert "new WebSocket" not in shell
+
+
+def test_shell_escapes_title_and_favicon_html():
+    app = App(title='</title><img src=x>', favicon='" onload="alert(1)')
+    app.mount(lambda: VNode(type="div"))
+
+    response = TestClient(create_asgi_app(app)).get("/")
+
+    assert response.status_code == 200
+    assert "<title>&lt;/title&gt;&lt;img src=x&gt;</title>" in response.text
+    assert '<link rel="icon" href="&quot; onload=&quot;alert(1)" />' in response.text
+
+
+def test_shell_contains_theme_and_bootstrap_values_as_data():
+    app = App(
+        theme={"colors": {"primary": "</style><img src=theme>"}},
+        loading={"message": "</script><img src=bootstrap>"},
+    )
+    app.mount(lambda: VNode(type="div"))
+
+    response = TestClient(create_asgi_app(app)).get("/")
+
+    assert response.status_code == 200
+    assert "</style><img src=theme>" not in response.text
+    assert "</script><img src=bootstrap>" not in response.text
+    assert 'type="application/json"' in response.text
+
+
+def test_missing_frontend_bundle_returns_diagnostic(monkeypatch):
+    monkeypatch.setattr(server, "_FRONTEND_DIST", Path("missing-frontend-dist"))
+    app = App()
+    app.mount(lambda: VNode(type="div"))
+
+    response = TestClient(create_asgi_app(app)).get("/")
+
+    assert response.status_code == 503
+    assert "frontend bundle is missing" in response.text.lower()
+    assert "new WebSocket" not in response.text
 
 
 def test_custom_api_route():
