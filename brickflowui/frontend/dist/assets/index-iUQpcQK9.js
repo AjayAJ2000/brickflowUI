@@ -19388,6 +19388,20 @@ const LucideIcons = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineP
   createLucideIcon,
   icons: index
 }, Symbol.toStringTag, { value: "Module" }));
+function shouldSubmitChatInput(key, isComposing) {
+  return key === "Enter" && !isComposing;
+}
+const SPREADSHEET_FORMULA_PREFIX = /^(?:[=+\-@\t\r]|[ \f\v]+[=+\-@\t\r])/;
+function encodeCell(value) {
+  const raw = String(value ?? "");
+  const safe = SPREADSHEET_FORMULA_PREFIX.test(raw) ? `'${raw}` : raw;
+  return `"${safe.replaceAll('"', '""')}"`;
+}
+function serializeCsv(columns, rows) {
+  const header = columns.map((column) => encodeCell(column.label)).join(",");
+  const body = rows.map((row) => columns.map((column) => encodeCell(row[column.key])).join(","));
+  return `\uFEFF${[header, ...body].join("\r\n")}`;
+}
 const LUCIDE_ICON_MAP = {
   Home: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10",
   Database: "M12 2C6.48 2 2 4.24 2 7s4.48 5 10 5 10-2.24 10-5S17.52 2 12 2zM2 17c0 2.76 4.48 5 10 5s10-2.24 10-5M2 12c0 2.76 4.48 5 10 5s10-2.24 10-5",
@@ -19691,7 +19705,7 @@ function renderNode(node, ctx, key) {
     case "Popup":
       if (!p.visible) return null;
       return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: `bf-popup-shell bf-popup-${p.placement || "center"}`, children: [
-        Boolean(p.backdrop) ? /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-popup-backdrop", onClick: () => ev("close"), "aria-label": "Close popup" }) : null,
+        p.backdrop ? /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-popup-backdrop", onClick: () => ev("close"), "aria-label": "Close popup" }) : null,
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, [`bf-popup`, `bf-popup-${p.size || "sm"}`]), style: resolveMotionStyle(p), onClick: (e) => e.stopPropagation(), children: [
           /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-popup-header", children: [
             /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-popup-title", children: p.title }),
@@ -20045,7 +20059,7 @@ function AlertComponent({ props: p }) {
       p.title ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-alert-title", children: p.title }) : null,
       /* @__PURE__ */ jsxRuntimeExports.jsx("div", { children: p.message })
     ] }),
-    Boolean(p.dismissible) ? /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-alert-close", onClick: () => setDismissed(true), "aria-label": "Dismiss alert", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: "X", size: 14 }) }) : null
+    p.dismissible ? /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-alert-close", onClick: () => setDismissed(true), "aria-label": "Dismiss alert", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: "X", size: 14 }) }) : null
   ] });
 }
 function ImageComponent({ props: p }) {
@@ -20411,7 +20425,7 @@ function SidebarComponent({ props: p, children, ctx }) {
           `${cp.path}-${index2}`
         );
       }) }),
-      Boolean(p.showThemeToggle) ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-sidebar-footer", children: /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeToggleComponent, { props: { label: "Theme", lightLabel: "Light", darkLabel: "Dark" }, ctx }) }) : null
+      p.showThemeToggle ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-sidebar-footer", children: /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeToggleComponent, { props: { label: "Theme", lightLabel: "Light", darkLabel: "Dark" }, ctx }) }) : null
     ] })
   ] });
 }
@@ -20438,7 +20452,7 @@ function TopNavComponent({ props: p, children, ctx }) {
         ] }, `${cp.path}-${index2}`);
       }) }),
       /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-topnav-actions", children: [
-        Boolean(p.showThemeToggle) ? /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeToggleComponent, { props: { label: "Theme", lightLabel: "Light", darkLabel: "Dark" }, ctx }) : null,
+        p.showThemeToggle ? /* @__PURE__ */ jsxRuntimeExports.jsx(ThemeToggleComponent, { props: { label: "Theme", lightLabel: "Light", darkLabel: "Dark" }, ctx }) : null,
         actions.length ? renderChildren(actions, ctx, "topnav-actions") : null,
         /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-topnav-menu", onClick: () => setMobileOpen((open) => !open), "aria-label": "Toggle navigation menu", children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: mobileOpen ? "X" : "LayoutDashboard", size: 16 }) })
       ] })
@@ -20743,7 +20757,10 @@ function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }) {
         },
         onBlur: () => flush(value),
         onKeyDown: (event) => {
-          if (event.key === "Enter") submit();
+          if (shouldSubmitChatInput(event.key, event.nativeEvent.isComposing)) {
+            event.preventDefault();
+            submit();
+          }
         }
       }
     ),
@@ -20801,7 +20818,7 @@ function TableComponent({ props: p, dispatch }) {
   const [page, setPage] = reactExports.useState(0);
   const [sortKey, setSortKey] = reactExports.useState(null);
   const [sortDir, setSortDir] = reactExports.useState("asc");
-  let sorted = [...data];
+  const sorted = [...data];
   if (sortKey) {
     sorted.sort((a, b) => {
       const av = String(a[sortKey] ?? "");
@@ -20820,14 +20837,7 @@ function TableComponent({ props: p, dispatch }) {
     setPage(0);
   };
   const exportCsv = () => {
-    const header = columns.map((col) => col.label).join(",");
-    const rows = sorted.map(
-      (row) => columns.map((col) => {
-        const raw = String(row[col.key] ?? "");
-        return `"${raw.split('"').join('""')}"`;
-      }).join(",")
-    );
-    const csv = [header, ...rows].join("\n");
+    const csv = serializeCsv(columns, sorted);
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -20887,18 +20897,25 @@ function TabsComponent({ props: p, children, ctx, nodeKey, dispatch }) {
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-tab-content", children: children[active]?.children && renderChildren(children[active].children, ctx, `${nodeKey}-tab-${active}`) })
   ] });
 }
-const LOADING_BOOTSTRAP = window.__BRICKFLOW_BOOTSTRAP__ || {};
-function resolveLoadingConfig(mode) {
-  const modeOverrides = LOADING_BOOTSTRAP.modes?.[mode] || {};
-  return {
-    ...LOADING_BOOTSTRAP,
-    ...modeOverrides
-  };
+class PatchApplicationError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = "PatchApplicationError";
+  }
+}
+function requireNode(patch) {
+  if (!patch.node) throw new PatchApplicationError(`${patch.op} patch requires a node`);
+  return patch.node;
+}
+function requireIndex(index2) {
+  if (!Number.isInteger(index2) || index2 < 0) {
+    throw new PatchApplicationError(`Invalid patch index: ${index2}`);
+  }
 }
 function applyPatch(tree, patch) {
-  const { op, path, node, props } = patch;
+  const { op, path, props } = patch;
   if (path.length === 0) {
-    if (op === "replace" && node) return node;
+    if (op === "replace") return requireNode(patch);
     if (op === "update_props" && props) {
       const nextProps = { ...tree.props };
       for (const [key, value] of Object.entries(props)) {
@@ -20907,24 +20924,65 @@ function applyPatch(tree, patch) {
       }
       return { ...tree, props: nextProps };
     }
-    return tree;
+    throw new PatchApplicationError(`Invalid ${op} operation at the root path`);
   }
-  const [idx, ...rest] = path;
-  const newChildren = [...tree.children];
-  if (op === "remove" && rest.length === 0) {
-    newChildren.splice(idx, 1);
-    return { ...tree, children: newChildren };
+  const [index2, ...rest] = path;
+  requireIndex(index2);
+  const nextChildren = [...tree.children];
+  if (rest.length === 0) {
+    if (op === "insert") {
+      if (index2 > nextChildren.length) {
+        throw new PatchApplicationError(`Insert index ${index2} is outside the child list`);
+      }
+      nextChildren.splice(index2, 0, requireNode(patch));
+      return { ...tree, children: nextChildren };
+    }
+    if (index2 >= nextChildren.length) {
+      throw new PatchApplicationError(`Patch index ${index2} is outside the child list`);
+    }
+    if (op === "remove") {
+      nextChildren.splice(index2, 1);
+      return { ...tree, children: nextChildren };
+    }
+    if (op === "replace") {
+      nextChildren[index2] = requireNode(patch);
+      return { ...tree, children: nextChildren };
+    }
   }
-  if (op === "insert" && rest.length === 0 && node) {
-    newChildren.splice(idx, 0, node);
-    return { ...tree, children: newChildren };
+  if (index2 >= nextChildren.length) {
+    throw new PatchApplicationError(`Parent index ${index2} is outside the child list`);
   }
-  if (idx < newChildren.length) {
-    newChildren[idx] = applyPatch(newChildren[idx], { op, path: rest, node, props });
-  } else if (op === "insert" && node) {
-    newChildren.push(node);
+  nextChildren[index2] = applyPatch(nextChildren[index2], { ...patch, path: rest });
+  return { ...tree, children: nextChildren };
+}
+function applyPatches(tree, patches) {
+  return patches.reduce((current, patch) => applyPatch(current, patch), tree);
+}
+function parseBootstrapData(serialized, fallback) {
+  if (!serialized) return fallback;
+  try {
+    return JSON.parse(serialized);
+  } catch {
+    return fallback;
   }
-  return { ...tree, children: newChildren };
+}
+function navigationAction(path, source) {
+  return {
+    message: { type: "navigate", path },
+    history: source === "user" ? "push" : "none"
+  };
+}
+const bootstrapData = document.getElementById("__BRICKFLOW_BOOTSTRAP__")?.textContent || null;
+const LOADING_BOOTSTRAP = parseBootstrapData(
+  bootstrapData,
+  window.__BRICKFLOW_BOOTSTRAP__ || {}
+);
+function resolveLoadingConfig(mode) {
+  const modeOverrides = LOADING_BOOTSTRAP.modes?.[mode] || {};
+  return {
+    ...LOADING_BOOTSTRAP,
+    ...modeOverrides
+  };
 }
 function BuiltinLoadingMark() {
   return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-loading-mark", "aria-hidden": "true", children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-loading-mark-tile", children: [
@@ -21013,12 +21071,14 @@ function App() {
     } catch {
     }
   }, []);
-  const navigate = reactExports.useCallback((path) => {
+  const navigateFrom = reactExports.useCallback((path, source) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: "navigate", path }));
-      window.history.pushState({}, "", path);
+      const action = navigationAction(path, source);
+      wsRef.current.send(JSON.stringify(action.message));
+      if (action.history === "push") window.history.pushState({}, "", path);
     }
   }, []);
+  const navigate = reactExports.useCallback((path) => navigateFrom(path, "user"), [navigateFrom]);
   reactExports.useEffect(() => {
     document.documentElement.dataset.themeMode = themeMode;
   }, [themeMode]);
@@ -21044,10 +21104,7 @@ function App() {
             scheduleTreeCommit(msg.tree);
           } else if (msg.type === "patch") {
             if (vdomRef.current) {
-              let updated = vdomRef.current;
-              for (const patch of msg.patches) {
-                updated = applyPatch(updated, patch);
-              }
+              const updated = applyPatches(vdomRef.current, msg.patches);
               vdomRef.current = updated;
               scheduleTreeCommit({ ...updated });
             }
@@ -21065,6 +21122,10 @@ function App() {
           }
         } catch (err) {
           console.error("[BrickflowUI] Failed to parse server message", err);
+          if (err instanceof PatchApplicationError) {
+            setError(`Runtime protocol error: ${err.message}. Reconnecting...`);
+            ws.close();
+          }
         }
       };
       ws.onclose = () => {
@@ -21079,7 +21140,10 @@ function App() {
       };
     }
     connect();
-    const handlePopstate = () => navigate(window.location.pathname);
+    const handlePopstate = () => navigateFrom(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      "popstate"
+    );
     window.addEventListener("popstate", handlePopstate);
     return () => {
       clearTimeout(reconnectTimer);
@@ -21089,7 +21153,7 @@ function App() {
       wsRef.current?.close();
       window.removeEventListener("popstate", handlePopstate);
     };
-  }, [navigate, scheduleTreeCommit]);
+  }, [navigateFrom, scheduleTreeCommit]);
   if (!vdom) {
     return /* @__PURE__ */ jsxRuntimeExports.jsx(LoadingVisual, { status, themeMode });
   }
@@ -21115,4 +21179,4 @@ function App() {
 ReactDOM.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-5Dh4ZXnD.js.map
+//# sourceMappingURL=index-iUQpcQK9.js.map

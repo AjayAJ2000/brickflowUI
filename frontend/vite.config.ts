@@ -10,7 +10,7 @@ export default defineConfig({
   },
   build: {
     outDir: '../brickflowui/frontend/dist',
-    emptyOutDir: false,
+    emptyOutDir: true,
     minify: false,
     cssMinify: false,
     sourcemap: true,

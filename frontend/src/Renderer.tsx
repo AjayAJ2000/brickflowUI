@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import * as LucideIcons from 'lucide-react'
 import type { VNodeData } from './types'
+import { shouldSubmitChatInput } from './runtime/chat'
+import { serializeCsv } from './runtime/csv'
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -1769,7 +1771,10 @@ function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }: { prop
         }}
         onBlur={() => flush(value)}
         onKeyDown={(event) => {
-          if (event.key === 'Enter') submit()
+          if (shouldSubmitChatInput(event.key, event.nativeEvent.isComposing)) {
+            event.preventDefault()
+            submit()
+          }
         }}
       />
       <button type="button" className="bf-btn bf-btn-primary" disabled={Boolean(p.disabled) || Boolean(p.loading) || !value.trim()} onClick={submit}>
@@ -1859,16 +1864,7 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
   }
 
   const exportCsv = () => {
-    const header = columns.map((col) => col.label).join(',')
-    const rows = sorted.map((row) =>
-      columns
-        .map((col) => {
-          const raw = String(row[col.key] ?? '')
-          return `"${raw.split('"').join('""')}"`
-        })
-        .join(',')
-    )
-    const csv = [header, ...rows].join('\n')
+    const csv = serializeCsv(columns, sorted)
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
