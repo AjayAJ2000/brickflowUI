@@ -471,7 +471,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       if (!p.visible) return null
       return (
         <div key={key} className={`bf-popup-shell bf-popup-${(p.placement as string) || 'center'}`}>
-          {Boolean(p.backdrop) ? <button type="button" className="bf-popup-backdrop" onClick={() => ev('close')} aria-label="Close popup" /> : null}
+          {p.backdrop ? <button type="button" className="bf-popup-backdrop" onClick={() => ev('close')} aria-label="Close popup" /> : null}
           <div className={resolveMotionClass(p, [`bf-popup`, `bf-popup-${(p.size as string) || 'sm'}`])} style={resolveMotionStyle(p)} onClick={e => e.stopPropagation()}>
             <div className="bf-popup-header">
               <span className="bf-popup-title">{p.title as string}</span>
@@ -918,7 +918,7 @@ function AlertComponent({ props: p }: { props: Record<string, any> }) {
         {p.title ? <div className="bf-alert-title">{p.title as string}</div> : null}
         <div>{p.message as string}</div>
       </div>
-      {Boolean(p.dismissible) ? (
+      {p.dismissible ? (
         <button type="button" className="bf-alert-close" onClick={() => setDismissed(true)} aria-label="Dismiss alert">
           <Icon name="X" size={14} />
         </button>
@@ -1352,7 +1352,7 @@ function SidebarComponent({ props: p, children, ctx }: { props: Record<string, a
             )
           })}
         </nav>
-        {Boolean(p.showThemeToggle) ? (
+        {p.showThemeToggle ? (
           <div className="bf-sidebar-footer">
             <ThemeToggleComponent props={{ label: 'Theme', lightLabel: 'Light', darkLabel: 'Dark' }} ctx={ctx} />
           </div>
@@ -1391,7 +1391,7 @@ function TopNavComponent({ props: p, children, ctx }: { props: Record<string, an
           })}
         </nav>
         <div className="bf-topnav-actions">
-          {Boolean(p.showThemeToggle) ? <ThemeToggleComponent props={{ label: 'Theme', lightLabel: 'Light', darkLabel: 'Dark' }} ctx={ctx} /> : null}
+          {p.showThemeToggle ? <ThemeToggleComponent props={{ label: 'Theme', lightLabel: 'Light', darkLabel: 'Dark' }} ctx={ctx} /> : null}
           {actions.length ? renderChildren(actions, ctx, 'topnav-actions') : null}
           <button type="button" className="bf-topnav-menu" onClick={() => setMobileOpen((open) => !open)} aria-label="Toggle navigation menu">
             <Icon name={mobileOpen ? 'X' : 'LayoutDashboard'} size={16} />
@@ -1840,7 +1840,7 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
-  let sorted = [...data]
+  const sorted = [...data]
   if (sortKey) {
     sorted.sort((a, b) => {
       const av = String(a[sortKey] ?? '')

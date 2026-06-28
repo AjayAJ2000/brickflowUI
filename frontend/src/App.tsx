@@ -1,6 +1,9 @@
 import React, { startTransition, useState, useEffect, useCallback, useRef } from 'react'
 import { Renderer } from './Renderer'
-import type { VNodeData, ServerMessage, Patch } from './types'
+import type { VNodeData, ServerMessage } from './types'
+import { applyPatches, PatchApplicationError } from './runtime/applyPatch'
+import { parseBootstrapData } from './runtime/bootstrap'
+import { navigationAction, type NavigationSource } from './runtime/navigation'
 
 type WsStatus = 'connecting' | 'connected' | 'disconnected' | 'error'
 
@@ -26,7 +29,11 @@ declare global {
   }
 }
 
-const LOADING_BOOTSTRAP: LoadingBootstrap = window.__BRICKFLOW_BOOTSTRAP__ || {}
+const bootstrapData = document.getElementById('__BRICKFLOW_BOOTSTRAP__')?.textContent || null
+const LOADING_BOOTSTRAP: LoadingBootstrap = parseBootstrapData(
+  bootstrapData,
+  window.__BRICKFLOW_BOOTSTRAP__ || {},
+)
 
 function resolveLoadingConfig(mode: 'light' | 'dark'): LoadingBootstrap {
   const modeOverrides = LOADING_BOOTSTRAP.modes?.[mode] || {}
@@ -34,44 +41,6 @@ function resolveLoadingConfig(mode: 'light' | 'dark'): LoadingBootstrap {
     ...LOADING_BOOTSTRAP,
     ...modeOverrides,
   }
-}
-
-function applyPatch(tree: VNodeData, patch: Patch): VNodeData {
-  const { op, path, node, props } = patch
-
-  if (path.length === 0) {
-    if (op === 'replace' && node) return node
-    if (op === 'update_props' && props) {
-      const nextProps = { ...tree.props }
-      for (const [key, value] of Object.entries(props)) {
-        if (value === null) delete nextProps[key]
-        else nextProps[key] = value
-      }
-      return { ...tree, props: nextProps }
-    }
-    return tree
-  }
-
-  const [idx, ...rest] = path
-  const newChildren = [...tree.children]
-
-  if (op === 'remove' && rest.length === 0) {
-    newChildren.splice(idx, 1)
-    return { ...tree, children: newChildren }
-  }
-
-  if (op === 'insert' && rest.length === 0 && node) {
-    newChildren.splice(idx, 0, node)
-    return { ...tree, children: newChildren }
-  }
-
-  if (idx < newChildren.length) {
-    newChildren[idx] = applyPatch(newChildren[idx], { op, path: rest, node, props })
-  } else if (op === 'insert' && node) {
-    newChildren.push(node)
-  }
-
-  return { ...tree, children: newChildren }
 }
 
 function BuiltinLoadingMark() {
@@ -189,12 +158,15 @@ export default function App() {
     }
   }, [])
 
-  const navigate = useCallback((path: string) => {
+  const navigateFrom = useCallback((path: string, source: NavigationSource) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: 'navigate', path }))
-      window.history.pushState({}, '', path)
+      const action = navigationAction(path, source)
+      wsRef.current.send(JSON.stringify(action.message))
+      if (action.history === 'push') window.history.pushState({}, '', path)
     }
   }, [])
+
+  const navigate = useCallback((path: string) => navigateFrom(path, 'user'), [navigateFrom])
 
   useEffect(() => {
     document.documentElement.dataset.themeMode = themeMode
@@ -227,10 +199,7 @@ export default function App() {
             scheduleTreeCommit(msg.tree)
           } else if (msg.type === 'patch') {
             if (vdomRef.current) {
-              let updated = vdomRef.current
-              for (const patch of msg.patches) {
-                updated = applyPatch(updated, patch)
-              }
+              const updated = applyPatches(vdomRef.current, msg.patches)
               vdomRef.current = updated
               scheduleTreeCommit({ ...updated })
             }
@@ -248,6 +217,10 @@ export default function App() {
           }
         } catch (err) {
           console.error('[BrickflowUI] Failed to parse server message', err)
+          if (err instanceof PatchApplicationError) {
+            setError(`Runtime protocol error: ${err.message}. Reconnecting...`)
+            ws.close()
+          }
         }
       }
 
@@ -266,7 +239,10 @@ export default function App() {
 
     connect()
 
-    const handlePopstate = () => navigate(window.location.pathname)
+    const handlePopstate = () => navigateFrom(
+      `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      'popstate',
+    )
     window.addEventListener('popstate', handlePopstate)
 
     return () => {
@@ -277,7 +253,7 @@ export default function App() {
       wsRef.current?.close()
       window.removeEventListener('popstate', handlePopstate)
     }
-  }, [navigate, scheduleTreeCommit])
+  }, [navigateFrom, scheduleTreeCommit])
 
   if (!vdom) {
     return <LoadingVisual status={status} themeMode={themeMode} />
