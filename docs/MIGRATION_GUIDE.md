@@ -12,6 +12,28 @@ After every upgrade:
 4. verify custom branding, logos, and loading assets
 5. run your app against the current [Examples](./EXAMPLES.md) and [API Reference](./API_REFERENCE.md)
 
+## Upgrading To 0.1.13
+
+Recheck these areas:
+
+- packaged frontend
+  - rebuild source checkouts with `npm ci && npm run build` from `frontend/`
+  - confirm the wheel or deployment contains `brickflowui/frontend/dist/index.html` and every referenced hashed asset
+- navigation
+  - exercise direct deep links, sidebar/top-nav clicks, and repeated browser Back/Forward operations
+- exports and chat
+  - verify CSV consumers accept the UTF-8 BOM and formula-neutralized cells
+  - verify CJK input methods confirm composition without submitting ChatInput prematurely
+- custom branding
+  - confirm title, favicon, loading configuration, and theme tokens still render as intended
+- progress indicators
+  - verify progress fills are visible and proportional to `value / max`
+  - friendly colors now resolve through theme tokens; explicit CSS colors remain supported
+- development automation
+  - add `npm test -- --run` and `npm run lint` to custom CI pipelines that previously ran only the frontend build
+
+The incomplete fallback renderer was removed intentionally. A missing production frontend now returns HTTP 503 with build instructions rather than pretending that the application is healthy.
+
 ## Upgrading To 0.1.12
 
 Recheck these areas:

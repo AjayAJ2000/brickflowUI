@@ -123,11 +123,22 @@ def Text(
     bold: bool = False,
     italic: bool = False,
     muted: bool = False,
+    style: Optional[Dict[str, Any]] = None,
+    class_name: Optional[str] = None,
 ) -> VNode:
     """A text/heading element."""
     return VNode(
         type="Text",
-        props={"value": value, "variant": variant, "color": color, "bold": bold, "italic": italic, "muted": muted},
+        props={
+            "value": value,
+            "variant": variant,
+            "color": color,
+            "bold": bold,
+            "italic": italic,
+            "muted": muted,
+            "style": style,
+            "className": class_name,
+        },
     )
 
 
@@ -334,8 +345,14 @@ def Table(
     )
 
 
-def Badge(label: str, color: BadgeColor = "blue") -> VNode:
-    return VNode(type="Badge", props={"label": label, "color": color})
+def Badge(
+    label: str,
+    color: BadgeColor = "blue",
+    style: Optional[Dict[str, Any]] = None,
+    class_name: Optional[str] = None,
+) -> VNode:
+    """Compact highlighted label for tags, states, or short metadata."""
+    return VNode(type="Badge", props={"label": label, "color": color, "style": style, "className": class_name})
 
 
 def Alert(

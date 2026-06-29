@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import * as LucideIcons from 'lucide-react'
 import type { VNodeData } from './types'
+import { chatBlockingEvents, shouldSubmitChatInput } from './runtime/chat'
+import { serializeCsv } from './runtime/csv'
+import { browserCsvDownloadEnvironment, triggerCsvDownload } from './runtime/download'
+import { progressColor } from './runtime/progress'
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -221,9 +225,11 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
     // ── Text ───────────────────────────────────────────────────────────────
     case 'Text': {
       const variant = (p.variant as string) || 'body'
-      const cls = ['bf-text-' + variant, p.muted ? 'bf-text-muted' : '', p.bold ? 'bf-text-bold' : '', p.italic ? 'bf-text-italic' : ''].filter(Boolean).join(' ')
+      const cls = ['bf-text-' + variant, p.muted ? 'bf-text-muted' : '', p.bold ? 'bf-text-bold' : '', p.italic ? 'bf-text-italic' : '', p.className as string || ''].filter(Boolean).join(' ')
       const Tag = ({ h1: 'h1', h2: 'h2', h3: 'h3', h4: 'h4', code: 'code', label: 'label', caption: 'small' } as Record<string, string>)[variant] || 'p'
-      return React.createElement(Tag, { key, className: cls, style: p.color ? { color: p.color as string } : undefined }, p.value as string)
+      const style = { ...(p.style as object || {}) } as React.CSSProperties
+      if (p.color) style.color = p.color as string
+      return React.createElement(Tag, { key, className: cls, style: Object.keys(style).length ? style : undefined }, p.value as string)
     }
 
     case 'Code':
@@ -372,7 +378,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return <TableComponent key={key} props={p} dispatch={ctx.dispatch} />
 
     case 'Badge':
-      return <span key={key} className={`bf-badge bf-badge-${(p.color as string) || 'blue'}`}>{p.label as string}</span>
+      return <span key={key} className={`bf-badge bf-badge-${(p.color as string) || 'blue'} ${p.className || ''}`.trim()} style={p.style as React.CSSProperties | undefined}>{p.label as string}</span>
 
     case 'Alert':
       return <AlertComponent key={key} props={p} />
@@ -386,7 +392,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
         <div key={key} className={resolveMotionClass(p, ['bf-progress-wrapper'])} style={resolveMotionStyle(p)}>
           {p.label && <div className="bf-progress-label"><span>{p.label as string}</span><span>{Math.round(pct)}%</span></div>}
           <div className="bf-progress-track">
-            <div className={`bf-progress-fill ${p.animated ? 'animated' : ''}`} style={{ width: `${pct}%`, background: `var(--db-${p.color || 'primary'})` }} />
+            <div className={`bf-progress-fill ${p.animated ? 'animated' : ''}`} style={{ width: `${pct}%`, background: progressColor(p.color as string | undefined) }} />
           </div>
         </div>
       )
@@ -469,7 +475,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       if (!p.visible) return null
       return (
         <div key={key} className={`bf-popup-shell bf-popup-${(p.placement as string) || 'center'}`}>
-          {Boolean(p.backdrop) ? <button type="button" className="bf-popup-backdrop" onClick={() => ev('close')} aria-label="Close popup" /> : null}
+          {p.backdrop ? <button type="button" className="bf-popup-backdrop" onClick={() => ev('close')} aria-label="Close popup" /> : null}
           <div className={resolveMotionClass(p, [`bf-popup`, `bf-popup-${(p.size as string) || 'sm'}`])} style={resolveMotionStyle(p)} onClick={e => e.stopPropagation()}>
             <div className="bf-popup-header">
               <span className="bf-popup-title">{p.title as string}</span>
@@ -733,7 +739,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return <ChatMessageComponent key={key} props={p} />
 
     case 'ChatInput':
-      return <ChatInputComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['submit', 'change']) }} dispatchChange={(value) => ev('change', value)} dispatchSubmit={(value) => ev('submit', value)} />
+      return <ChatInputComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, chatBlockingEvents()) }} dispatchChange={(value) => ev('change', value)} dispatchSubmit={(value) => ev('submit', value)} />
 
     case 'Toast':
       return <ToastComponent key={key} props={p} dispatchClose={() => ev('close')} />
@@ -916,7 +922,7 @@ function AlertComponent({ props: p }: { props: Record<string, any> }) {
         {p.title ? <div className="bf-alert-title">{p.title as string}</div> : null}
         <div>{p.message as string}</div>
       </div>
-      {Boolean(p.dismissible) ? (
+      {p.dismissible ? (
         <button type="button" className="bf-alert-close" onClick={() => setDismissed(true)} aria-label="Dismiss alert">
           <Icon name="X" size={14} />
         </button>
@@ -1350,7 +1356,7 @@ function SidebarComponent({ props: p, children, ctx }: { props: Record<string, a
             )
           })}
         </nav>
-        {Boolean(p.showThemeToggle) ? (
+        {p.showThemeToggle ? (
           <div className="bf-sidebar-footer">
             <ThemeToggleComponent props={{ label: 'Theme', lightLabel: 'Light', darkLabel: 'Dark' }} ctx={ctx} />
           </div>
@@ -1389,7 +1395,7 @@ function TopNavComponent({ props: p, children, ctx }: { props: Record<string, an
           })}
         </nav>
         <div className="bf-topnav-actions">
-          {Boolean(p.showThemeToggle) ? <ThemeToggleComponent props={{ label: 'Theme', lightLabel: 'Light', darkLabel: 'Dark' }} ctx={ctx} /> : null}
+          {p.showThemeToggle ? <ThemeToggleComponent props={{ label: 'Theme', lightLabel: 'Light', darkLabel: 'Dark' }} ctx={ctx} /> : null}
           {actions.length ? renderChildren(actions, ctx, 'topnav-actions') : null}
           <button type="button" className="bf-topnav-menu" onClick={() => setMobileOpen((open) => !open)} aria-label="Toggle navigation menu">
             <Icon name={mobileOpen ? 'X' : 'LayoutDashboard'} size={16} />
@@ -1767,7 +1773,10 @@ function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }: { prop
         }}
         onBlur={() => flush(value)}
         onKeyDown={(event) => {
-          if (event.key === 'Enter') submit()
+          if (shouldSubmitChatInput(event.key, event.nativeEvent.isComposing)) {
+            event.preventDefault()
+            submit()
+          }
         }}
       />
       <button type="button" className="bf-btn bf-btn-primary" disabled={Boolean(p.disabled) || Boolean(p.loading) || !value.trim()} onClick={submit}>
@@ -1838,7 +1847,7 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
   const [sortKey, setSortKey] = useState<string | null>(null)
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc')
 
-  let sorted = [...data]
+  const sorted = [...data]
   if (sortKey) {
     sorted.sort((a, b) => {
       const av = String(a[sortKey] ?? '')
@@ -1857,23 +1866,8 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
   }
 
   const exportCsv = () => {
-    const header = columns.map((col) => col.label).join(',')
-    const rows = sorted.map((row) =>
-      columns
-        .map((col) => {
-          const raw = String(row[col.key] ?? '')
-          return `"${raw.split('"').join('""')}"`
-        })
-        .join(',')
-    )
-    const csv = [header, ...rows].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'brickflowui-table-export.csv'
-    link.click()
-    URL.revokeObjectURL(url)
+    const csv = serializeCsv(columns, sorted)
+    triggerCsvDownload(csv, 'brickflowui-table-export.csv', browserCsvDownloadEnvironment())
   }
 
   if (p.loading) return (

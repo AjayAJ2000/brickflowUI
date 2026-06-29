@@ -15,7 +15,7 @@ REPO_ROOT = APP_DIR.parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-import brickflowui as db
+import brickflowui as db  # noqa: E402 - repository import follows local path bootstrap
 
 
 app = db.App(

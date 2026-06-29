@@ -35,12 +35,30 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test -- --run
+
+      - name: Run frontend lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Audit frontend dependencies
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
       - name: Run frontend build
         working-directory: frontend
         run: npm run build
 
       - name: Run tests
         run: python -m pytest -q
+
+      - name: Run Python lint
+        run: python -m ruff check brickflowui tests examples
+
+      - name: Run Python type checks
+        run: python -m mypy brickflowui
 
       - name: Regenerate component reference pages
         run: python scripts/generate_component_reference.py

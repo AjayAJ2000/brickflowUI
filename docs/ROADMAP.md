@@ -1,8 +1,8 @@
-# Roadmap
+﻿# Roadmap
 
 This roadmap focuses on making BrickflowUI feel dependable in enterprise dashboard, portal, and internal-tool scenarios while keeping the framework practical for Python-first builders.
 
-It is shaped by both BrickflowUI’s current direction and recurring pain seen in similar frameworks and internal-tool platforms.
+It is shaped by both BrickflowUI's current direction and recurring pain seen in similar frameworks and internal-tool platforms.
 
 ## What Similar Products Keep Getting Wrong
 
@@ -19,7 +19,7 @@ These are not edge cases. They are the problems teams run into when they try to 
 
 ## Immediate Direction
 
-The near-term goal is not to make BrickflowUI “feature busy.” It is to make the framework more reliable, more scalable, and more deployment-ready while continuing to broaden the product surface in additive ways.
+The near-term goal is not to make BrickflowUI "feature busy." It is to make the framework more reliable, more scalable, and more deployment-ready while continuing to broaden the product surface in additive ways.
 
 ## Next Update Tracks
 
@@ -53,6 +53,15 @@ Expected work:
 - better left-nav and top-nav composition patterns
 - denser admin/dashboard layout options
 - improved responsive behavior for data-heavy pages
+- premium visual primitives for design-led surfaces:
+  - `IconButton`
+  - `SegmentedControl`
+  - `Stack` / overlay helper
+  - `AspectFrame`
+  - glass surface tokens
+  - richer display typography control
+  - breakpoint-aware shell helpers for desktop-first composition
+  - stronger image framing and hero-media placement controls
 
 ### Track 3: Security, Identity, And Governance
 
@@ -86,32 +95,20 @@ Expected work:
 
 ## Proposed Release Shape
 
-### `0.1.10`
+### `0.1.13`
 
-Current stabilization release:
+Current stabilization baseline:
 
-- local-first input handling
-- deferred frontend tree updates
-- lighter docs navigation and stronger portal-style docs structure
-- repo standards and admin guidance
-
-### `0.1.11`
-
-Recommended focus:
-
-- table interaction preservation
-- better data refresh ergonomics
-- loading-state consistency for data-driven components
-- additional mobile polish for dense portal layouts
-
-### `0.1.12`
-
-Recommended focus:
-
-- richer enterprise shell patterns
-- observability hooks for event timing and loading behavior
-- stronger auth/RBAC examples
-- cleaner dashboard workflow primitives
+- session-scoped state and effect cleanup
+- token-safe render-context restoration
+- validated WebSocket origins and browser CSRF protection
+- hardened HTML configuration boundaries
+- explicit failure when the packaged frontend bundle is unavailable
+- correct browser Back and Forward navigation
+- validated immutable frontend patch application and reconnect recovery
+- formula-safe CSV export and IME-safe chat input
+- backend and frontend automated test gates
+- Python package, documentation, security, and release workflows
 
 ### `0.2.0`
 
@@ -121,6 +118,8 @@ Recommended focus:
 - formalize preferred composition patterns
 - tighten visual-state conventions across components
 - ship a migration guide for any intentional cleanup
+- complete functional Databricks contracts for `CatalogBrowser`, `WarehouseSelector`, and `JobTrigger`
+- add production lifecycle, load, and session observability validation
 
 ## The Product Standard
 

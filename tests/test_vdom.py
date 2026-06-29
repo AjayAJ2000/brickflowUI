@@ -1,4 +1,5 @@
-import pytest
+import json
+
 from brickflowui.vdom import VNode, diff
 
 def test_vnode_serialization():
@@ -82,3 +83,31 @@ def test_diff_removed_prop_sets_null():
     assert len(patches) == 1
     assert patches[0]["op"] == "update_props"
     assert patches[0]["props"] == {"title": None}
+
+
+def test_diff_serializes_vnodes_nested_in_changed_props():
+    handler_registry = {}
+    old = VNode(
+        type="Hero",
+        props={"actions": [VNode(type="Button", props={"label": "Export"})]},
+    )
+    new = VNode(
+        type="Hero",
+        props={
+            "actions": [
+                VNode(
+                    type="Button",
+                    props={"label": "Export"},
+                    event_handlers={"click": lambda: None},
+                )
+            ]
+        },
+    )
+
+    patches = diff(old, new, handler_registry)
+
+    assert patches[0]["op"] == "update_props"
+    assert patches[0]["props"]["actions"][0]["type"] == "Button"
+    assert "click" in patches[0]["props"]["actions"][0]["props"]
+    assert len(handler_registry) == 1
+    json.dumps(patches)
