@@ -44,6 +44,7 @@ A representative multi-page application must pass:
 - repeated user navigation and browser Back/Forward operations;
 - reconnect after a forced WebSocket closure;
 - table sorting, pagination, and CSV export;
+- standalone and table progress indicators with proportional width and a non-transparent computed color;
 - chat typing, IME composition, and submission;
 - light/dark theme switching;
 - desktop and narrow viewport smoke tests;
@@ -52,6 +53,8 @@ A representative multi-page application must pass:
 ## Security boundaries
 
 BrickflowUI escapes application titles and favicon attributes, embeds loading configuration as inert JSON data, prevents configured CSS from terminating its style element, validates scaffold targets, validates WebSocket origins, requires CSRF tokens for browser-like unsafe HTTP requests, and neutralizes spreadsheet formulas in CSV exports.
+
+The runtime accepts event handlers from only the current and immediately previous render generations. This narrow compatibility window preserves ordered browser events such as ChatInput's final change plus submit without retaining stale handlers indefinitely.
 
 Theme files and application configuration are trusted developer inputs. Authentication supports both user identity and shared application identity; deployment owners must configure the mode and provider appropriate for their environment.
 

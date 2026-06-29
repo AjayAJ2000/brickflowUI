@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { shouldSubmitChatInput } from './chat'
+import { chatBlockingEvents, shouldSubmitChatInput } from './chat'
 
 describe('shouldSubmitChatInput', () => {
   it('submits an ordinary Enter key', () => {
@@ -13,5 +13,9 @@ describe('shouldSubmitChatInput', () => {
 
   it('does not submit other keys', () => {
     expect(shouldSubmitChatInput('a', false)).toBe(false)
+  })
+
+  it('does not block submission while only draft synchronization is pending', () => {
+    expect(chatBlockingEvents()).toEqual(['submit'])
   })
 })

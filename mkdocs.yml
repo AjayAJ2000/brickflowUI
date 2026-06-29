@@ -173,9 +173,11 @@ nav:
       - Databricks Apps: DATABRICKS_APPS.md
       - Build Guide: BUILD.md
       - Publishing: PUBLISHING.md
+      - Release Checklist: RELEASE_CHECKLIST.md
   - Operate:
       - Performance And Scalability: PERFORMANCE.md
       - Stability Contract: STABILITY.md
+      - 0.1.13 Verification Report: verification/2026-06-29-stability-report.md
       - Auth And Security: AUTH_AND_SECURITY.md
       - Troubleshooting: TROUBLESHOOTING.md
       - FAQ: FAQ.md

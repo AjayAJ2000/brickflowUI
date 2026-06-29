@@ -348,6 +348,19 @@ def test_extract_event_payload_unwraps_single_value():
     assert _extract_event_payload({"a": 1, "b": 2}) == {"a": 1, "b": 2}
 
 
+def test_event_handler_resolution_accepts_immediately_previous_generation():
+    from brickflowui.server import _resolve_event_handler
+
+    def previous_handler(value):
+        return value
+
+    assert _resolve_event_handler(
+        "previous-id",
+        {"current-id": lambda value: value},
+        {"previous-id": previous_handler},
+    ) is previous_handler
+
+
 def test_multiselect_event_payload_updates_state_and_rerenders():
     app = App()
 

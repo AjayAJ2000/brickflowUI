@@ -36,15 +36,13 @@ These are the examples we actively want evaluators, buyers, and engineering team
 | Landing Site | [`examples/landing_site/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/landing_site/app.py) | Product-style landing page and launch-site composition |
 | Workspace Studio | [`examples/workspace_studio/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/workspace_studio/app.py) | Rich app structure with filters, tables, tabs, forms, modal flows, charts, and a dedicated themes page |
 
-## Lightweight and legacy examples
+## Lightweight examples
 
-These are still useful for sanity checks, experiments, or backwards-compatibility coverage, but they are not the primary product proof points we recommend leading with.
+These stay intentionally small and focused. Use them for installation checks and tutorials rather than as product proof points.
 
 | Example | Path | Why it still exists |
 |---|---|---|
 | Counter | [`examples/counter/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/counter/app.py) | Fastest install/runtime sanity check |
-| Demo App | [`examples/demo_app/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/demo_app/app.py) | Small generic demo for low-risk experimentation |
-| Showcase | [`examples/showcase/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/showcase/app.py) | Older visual reference while the newer flagship apps continue to replace it |
 | Weather Dashboard | [`examples/weather_dashboard/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/weather_dashboard/app.py) | Simple chart-and-filter example for lightweight tutorials |
 
 ## Data Pipeline Command Center
@@ -328,5 +326,4 @@ The most effective pattern is:
 - Choose `component_studio` if you want an example that behaves like documentation and showcases nearly every UI surface.
 - Choose `clinical_trial_command_center` if you want a highly regulated, analytics-heavy portal pattern.
 - Choose `secure_internal_tools` if you want security, identity governance, and role-aware page design patterns first.
-
 

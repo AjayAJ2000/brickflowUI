@@ -37,7 +37,7 @@ from .auth import (
     set_current_principal,
 )
 from .state import RenderContext, reset_render_context, set_render_context
-from .vdom import VNode, diff
+from .vdom import EventHandler, VNode, diff
 
 if TYPE_CHECKING:
     from .app import App
@@ -128,6 +128,17 @@ def _extract_event_payload(event_data: object) -> object:
         return next(iter(event_data.values()))
 
     return event_data
+
+
+def _resolve_event_handler(
+    event_id: object,
+    current: Dict[str, EventHandler],
+    previous: Dict[str, EventHandler],
+) -> Optional[EventHandler]:
+    """Accept events from the active or immediately previous render generation."""
+    if not isinstance(event_id, str):
+        return None
+    return current.get(event_id) or previous.get(event_id)
 
 
 def _is_safe_http_method(method: str) -> bool:
@@ -270,21 +281,24 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
         logger.info(f"[{session_id}] WebSocket connected")
 
         # Create a fresh render context for this session
+        rerender_event = asyncio.Event()
         ctx = RenderContext(
             session_id=session_id,
-            rerender_event=asyncio.Event(),
+            rerender_event=rerender_event,
         )
         dbrx_app._sessions[session_id] = ctx
         dbrx_app._session_paths[session_id] = ws.query_params.get("path") or "/"
         ctx.context["principal"] = principal
 
         # Per-session event handler registry (event_id → callable)
-        handler_registry: Dict[str, callable] = {}
+        handler_registry: Dict[str, EventHandler] = {}
+        previous_handler_registry: Dict[str, EventHandler] = {}
 
         # ── Helper: render + send full tree ───────────────────────────────
         async def send_full_tree():
-            nonlocal handler_registry
+            nonlocal handler_registry, previous_handler_registry
             handler_registry = {}  # refresh on each full render
+            previous_handler_registry = {}
             render_token = set_render_context(ctx)
             principal_token = set_current_principal(principal)
             try:
@@ -305,8 +319,8 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
 
         # ── Helper: re-render + send patch ────────────────────────────────
         async def send_patch(old_tree: Optional[VNode]):
-            nonlocal handler_registry
-            new_handler_registry: Dict[str, callable] = {}
+            nonlocal handler_registry, previous_handler_registry
+            new_handler_registry: Dict[str, EventHandler] = {}
             render_token = set_render_context(ctx)
             principal_token = set_current_principal(principal)
             try:
@@ -315,9 +329,10 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                 ctx.run_effects()
                 ctx.dirty = False
                 patches = diff(old_tree, new_tree, new_handler_registry)
-                handler_registry = new_handler_registry
                 if patches:
                     await ws.send_text(_patch_msg(patches, dbrx_app))
+                    previous_handler_registry = handler_registry
+                    handler_registry = new_handler_registry
                 return new_tree
             except Exception as exc:
                 logger.exception(f"[{session_id}] Re-render error")
@@ -335,7 +350,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                 completed_event_id: Optional[str] = None
                 # Wait for either an incoming WS message or a dirty flag
                 receive_task = asyncio.ensure_future(ws.receive_text())
-                rerender_task = asyncio.ensure_future(ctx.rerender_event.wait())
+                rerender_task = asyncio.ensure_future(rerender_event.wait())
                 receive_task.add_done_callback(_consume_task_exception)
                 rerender_task.add_done_callback(_consume_task_exception)
 
@@ -364,7 +379,11 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                     if msg_data.get("type") == "event":
                         event_id = msg_data.get("event_id")
                         event_data = msg_data.get("data", {})
-                        handler = handler_registry.get(event_id)
+                        handler = _resolve_event_handler(
+                            event_id,
+                            handler_registry,
+                            previous_handler_registry,
+                        )
                         if handler is not None:
                             try:
                                 payload = _extract_event_payload(event_data)
@@ -399,7 +418,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                         dbrx_app._navigate(session_id, path)
 
                 if rerender_task in done:
-                    ctx.rerender_event.clear()
+                    rerender_event.clear()
 
                 # If any state change occurred, re-render
                 if ctx.dirty:

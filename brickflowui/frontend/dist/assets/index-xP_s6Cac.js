@@ -19391,6 +19391,9 @@ const LucideIcons = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineP
 function shouldSubmitChatInput(key, isComposing) {
   return key === "Enter" && !isComposing;
 }
+function chatBlockingEvents() {
+  return ["submit"];
+}
 const SPREADSHEET_FORMULA_PREFIX = /^(?:[=+\-@\t\r]|[ \f\v]+[=+\-@\t\r])/;
 function encodeCell(value) {
   const raw = String(value ?? "");
@@ -19401,6 +19404,53 @@ function serializeCsv(columns, rows) {
   const header = columns.map((column) => encodeCell(column.label)).join(",");
   const body = rows.map((row) => columns.map((column) => encodeCell(row[column.key])).join(","));
   return `\uFEFF${[header, ...body].join("\r\n")}`;
+}
+function triggerCsvDownload(csv, filename, environment) {
+  const blob = environment.createBlob(csv);
+  const url = environment.createObjectUrl(blob);
+  const link = environment.createLink();
+  link.href = url;
+  link.download = filename;
+  environment.appendLink(link);
+  try {
+    link.click();
+  } finally {
+    environment.removeLink(link);
+    environment.defer(() => environment.revokeObjectUrl(url));
+  }
+}
+function browserCsvDownloadEnvironment() {
+  return {
+    createBlob: (csv) => new Blob([csv], { type: "text/csv;charset=utf-8;" }),
+    createObjectUrl: (blob) => URL.createObjectURL(blob),
+    createLink: () => document.createElement("a"),
+    appendLink: (link) => document.body.appendChild(link),
+    removeLink: (link) => link.remove(),
+    revokeObjectUrl: (url) => URL.revokeObjectURL(url),
+    defer: (callback) => window.setTimeout(callback, 0)
+  };
+}
+function progressColor(color) {
+  const candidate = String(color || "primary").trim();
+  const normalized = candidate.toLowerCase();
+  const themeColors = {
+    primary: "primary",
+    blue: "primary",
+    success: "success",
+    green: "success",
+    warning: "warning",
+    orange: "warning",
+    yellow: "warning",
+    error: "error",
+    red: "error",
+    info: "info"
+  };
+  const token = themeColors[normalized];
+  if (token) return `var(--db-${token})`;
+  if (/^(#|var\(|rgb\(|rgba\(|hsl\(|hsla\(|oklch\(|color\()/i.test(candidate)) {
+    return candidate;
+  }
+  return "var(--db-primary)";
 }
 const LUCIDE_ICON_MAP = {
   Home: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10",
@@ -19643,7 +19693,7 @@ function renderNode(node, ctx, key) {
             "%"
           ] })
         ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-progress-track", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `bf-progress-fill ${p.animated ? "animated" : ""}`, style: { width: `${pct}%`, background: `var(--db-${p.color || "primary"})` } }) })
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-progress-track", children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: `bf-progress-fill ${p.animated ? "animated" : ""}`, style: { width: `${pct}%`, background: progressColor(p.color) } }) })
       ] }, key);
     }
     case "Stat": {
@@ -19907,7 +19957,7 @@ function renderNode(node, ctx, key) {
     case "ChatMessage":
       return /* @__PURE__ */ jsxRuntimeExports.jsx(ChatMessageComponent, { props: p }, key);
     case "ChatInput":
-      return /* @__PURE__ */ jsxRuntimeExports.jsx(ChatInputComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, ["submit", "change"]) }, dispatchChange: (value) => ev("change", value), dispatchSubmit: (value) => ev("submit", value) }, key);
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(ChatInputComponent, { props: { ...p, loading: Boolean(p.loading) || isPending(p, ctx, chatBlockingEvents()) }, dispatchChange: (value) => ev("change", value), dispatchSubmit: (value) => ev("submit", value) }, key);
     case "Toast":
       return /* @__PURE__ */ jsxRuntimeExports.jsx(ToastComponent, { props: p, dispatchClose: () => ev("close") }, key);
     case "Image":
@@ -20838,13 +20888,7 @@ function TableComponent({ props: p, dispatch }) {
   };
   const exportCsv = () => {
     const csv = serializeCsv(columns, sorted);
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "brickflowui-table-export.csv";
-    link.click();
-    URL.revokeObjectURL(url);
+    triggerCsvDownload(csv, "brickflowui-table-export.csv", browserCsvDownloadEnvironment());
   };
   if (p.loading) return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { display: "flex", justifyContent: "center", padding: 40 }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-spinner bf-spinner-lg" }) });
   if (p.errorMessage) return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-table-empty", children: p.errorMessage });
@@ -20966,10 +21010,10 @@ function parseBootstrapData(serialized, fallback) {
     return fallback;
   }
 }
-function navigationAction(path, source) {
+function navigationAction(path, source, currentPath) {
   return {
     message: { type: "navigate", path },
-    history: source === "user" ? "push" : "none"
+    history: source === "user" && path !== currentPath ? "push" : "none"
   };
 }
 const bootstrapData = document.getElementById("__BRICKFLOW_BOOTSTRAP__")?.textContent || null;
@@ -21073,7 +21117,8 @@ function App() {
   }, []);
   const navigateFrom = reactExports.useCallback((path, source) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      const action = navigationAction(path, source);
+      const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      const action = navigationAction(path, source, currentPath);
       wsRef.current.send(JSON.stringify(action.message));
       if (action.history === "push") window.history.pushState({}, "", path);
     }
@@ -21179,4 +21224,4 @@ function App() {
 ReactDOM.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-iUQpcQK9.js.map
+//# sourceMappingURL=index-xP_s6Cac.js.map

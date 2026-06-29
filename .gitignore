@@ -1,5 +1,7 @@
 # Python caches and environments
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 pytest-cache-files-*/
 *.pyc
 __pycache__/
@@ -20,6 +22,8 @@ asset-*/
 build/
 /dist/
 site/
+site-*/
+release-*/
 *.egg-info/
 
 # Frontend local-only dependencies and diagnostics

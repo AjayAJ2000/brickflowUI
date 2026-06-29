@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import * as LucideIcons from 'lucide-react'
 import type { VNodeData } from './types'
-import { shouldSubmitChatInput } from './runtime/chat'
+import { chatBlockingEvents, shouldSubmitChatInput } from './runtime/chat'
 import { serializeCsv } from './runtime/csv'
+import { browserCsvDownloadEnvironment, triggerCsvDownload } from './runtime/download'
+import { progressColor } from './runtime/progress'
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -390,7 +392,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
         <div key={key} className={resolveMotionClass(p, ['bf-progress-wrapper'])} style={resolveMotionStyle(p)}>
           {p.label && <div className="bf-progress-label"><span>{p.label as string}</span><span>{Math.round(pct)}%</span></div>}
           <div className="bf-progress-track">
-            <div className={`bf-progress-fill ${p.animated ? 'animated' : ''}`} style={{ width: `${pct}%`, background: `var(--db-${p.color || 'primary'})` }} />
+            <div className={`bf-progress-fill ${p.animated ? 'animated' : ''}`} style={{ width: `${pct}%`, background: progressColor(p.color as string | undefined) }} />
           </div>
         </div>
       )
@@ -737,7 +739,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return <ChatMessageComponent key={key} props={p} />
 
     case 'ChatInput':
-      return <ChatInputComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['submit', 'change']) }} dispatchChange={(value) => ev('change', value)} dispatchSubmit={(value) => ev('submit', value)} />
+      return <ChatInputComponent key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, chatBlockingEvents()) }} dispatchChange={(value) => ev('change', value)} dispatchSubmit={(value) => ev('submit', value)} />
 
     case 'Toast':
       return <ToastComponent key={key} props={p} dispatchClose={() => ev('close')} />
@@ -1865,13 +1867,7 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
 
   const exportCsv = () => {
     const csv = serializeCsv(columns, sorted)
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = 'brickflowui-table-export.csv'
-    link.click()
-    URL.revokeObjectURL(url)
+    triggerCsvDownload(csv, 'brickflowui-table-export.csv', browserCsvDownloadEnvironment())
   }
 
   if (p.loading) return (

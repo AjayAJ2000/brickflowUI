@@ -160,7 +160,8 @@ export default function App() {
 
   const navigateFrom = useCallback((path: string, source: NavigationSource) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      const action = navigationAction(path, source)
+      const currentPath = `${window.location.pathname}${window.location.search}${window.location.hash}`
+      const action = navigationAction(path, source, currentPath)
       wsRef.current.send(JSON.stringify(action.message))
       if (action.history === 'push') window.history.pushState({}, '', path)
     }

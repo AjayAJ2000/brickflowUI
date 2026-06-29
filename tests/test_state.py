@@ -78,7 +78,6 @@ def test_use_memo(ctx):
 
 def test_use_effect_lifecycle(ctx):
     mounted = False
-    cleanup_called = False
     
     def on_mount():
         nonlocal mounted

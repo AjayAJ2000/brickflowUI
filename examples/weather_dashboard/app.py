@@ -1,6 +1,5 @@
 import brickflowui as db
 import random
-import time
 import asyncio
 
 app = db.App(title="WeatherFlow Dashboard")

@@ -288,13 +288,19 @@ Docs walkthrough:
 Run the core checks:
 
 ```bash
-python -m pytest -q
 cd frontend
+npm ci
+npm test -- --run
+npm run lint
+npm audit --audit-level=high
 npm run build
 cd ..
+python -m pytest -q -p no:cacheprovider
 python -m mkdocs build --strict
 python -m build
 ```
+
+See the [Stability Contract](docs/STABILITY.md), [Release Checklist](docs/RELEASE_CHECKLIST.md), and [Publishing Guide](docs/PUBLISHING.md) before cutting a release.
 
 ## Open source standards
 
@@ -331,4 +337,3 @@ docs/
 ## License
 
 MIT
-
