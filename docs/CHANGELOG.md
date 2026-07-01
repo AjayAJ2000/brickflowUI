@@ -2,6 +2,28 @@
 
 This page tracks the highest-signal changes for evaluators and adopters. It is not meant to replace commit history. It is meant to explain what changed, why it matters, and what to recheck when you upgrade.
 
+## 0.1.14
+
+Focus: reliable incremental rendering during routed page changes.
+
+Highlights:
+
+- child-list removals are now emitted from the highest index downward, so every
+  patch remains valid as the browser applies the sequence
+- switching from a page with many children to a smaller page no longer produces
+  `Patch index ... is outside the child list` protocol errors
+- strict frontend validation and reconnect recovery remain enabled for genuinely
+  malformed or out-of-bounds patches
+- regression coverage spans root and nested trees, all old/new child counts from
+  zero through twelve, repeated large/small navigation, and concurrent sessions
+
+Upgrade notes:
+
+- upgrade runtimes that serve multi-page applications to `0.1.14`
+- rebuild containers and Databricks App bundles so the Python runtime and
+  packaged metadata report the same version
+- no public component API changed in this patch release
+
 ## 0.1.13
 
 Focus: core-runtime stability, browser correctness, safer exports and scaffolding, and enforceable release gates.

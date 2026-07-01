@@ -1,6 +1,6 @@
 # Stability Contract
 
-BrickflowUI `0.1.13` is an alpha framework with a tested core-runtime baseline. “Stable” here means that the supported verification gates pass and there are no known reproducible core defects at release time. It is not a claim that undiscovered defects are impossible, nor is it a security or regulatory certification.
+BrickflowUI `0.1.14` is an alpha framework with a tested core-runtime baseline. “Stable” here means that the supported verification gates pass and there are no known reproducible core defects at release time. It is not a claim that undiscovered defects are impossible, nor is it a security or regulatory certification.
 
 ## Supported baseline
 

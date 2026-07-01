@@ -12,6 +12,21 @@ After every upgrade:
 4. verify custom branding, logos, and loading assets
 5. run your app against the current [Examples](./EXAMPLES.md) and [API Reference](./API_REFERENCE.md)
 
+## Upgrading To 0.1.14
+
+Version `0.1.14` is a protocol-compatible patch release. No component API
+changes are required.
+
+Recheck these areas:
+
+- switch repeatedly between routed pages whose content trees have very different
+  child counts
+- use browser Back and Forward after those page switches
+- confirm no `Runtime protocol error` banner appears and the WebSocket remains
+  connected
+- rebuild pinned containers and Databricks App deployments with
+  `brickflowui>=0.1.14`
+
 ## Upgrading To 0.1.13
 
 Recheck these areas:

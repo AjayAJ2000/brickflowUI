@@ -71,7 +71,7 @@ def playground():
                 subtitle="Use this app to test responsiveness, theme switching, media, and state-heavy inputs before shipping a bigger portal.",
                 image=str(LOGO) if LOGO.exists() else None,
                 tagline="Designed for fast iteration and regression checks.",
-                badges=[db.Badge("0.1.13", color="orange"), db.Badge("Playground", color="blue")],
+                badges=[db.Badge("0.1.14", color="orange"), db.Badge("Playground", color="blue")],
                 actions=[
                     db.Button("Stop loading" if loading_demo else "Simulate loading", on_click=toggle_loading_demo, loading=loading_demo),
                     db.ThemeToggle(),
@@ -172,4 +172,3 @@ def playground():
 
 if __name__ == "__main__":
     app.run()
-

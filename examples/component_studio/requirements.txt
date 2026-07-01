@@ -1,4 +1,3 @@
-﻿brickflowui[viz]>=0.1.13
-
+﻿brickflowui[viz]>=0.1.14
 
 
