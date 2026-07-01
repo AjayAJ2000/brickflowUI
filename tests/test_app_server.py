@@ -357,13 +357,64 @@ def test_websocket_navigation_emits_descending_surplus_child_removals():
         assert full["type"] == "full"
 
         websocket.send_json({"type": "navigate", "path": "/compact"})
-        patch = websocket.receive_json()
+        first_compact_patch = websocket.receive_json()
 
-    assert patch["type"] == "patch"
+        websocket.send_json({"type": "navigate", "path": "/large"})
+        large_patch = websocket.receive_json()
+
+        websocket.send_json({"type": "navigate", "path": "/compact"})
+        second_compact_patch = websocket.receive_json()
+
+    assert first_compact_patch["type"] == "patch"
     removals = [
-        item["path"] for item in patch["patches"] if item["op"] == "remove"
+        item["path"]
+        for item in first_compact_patch["patches"]
+        if item["op"] == "remove"
     ]
     assert removals == [[1, 0, 4], [1, 0, 3], [1, 0, 2], [1, 0, 1]]
+    assert [
+        item["path"] for item in large_patch["patches"] if item["op"] == "insert"
+    ] == [[1, 0, 1], [1, 0, 2], [1, 0, 3], [1, 0, 4]]
+    assert [
+        item["path"]
+        for item in second_compact_patch["patches"]
+        if item["op"] == "remove"
+    ] == removals
+
+
+def test_websocket_sessions_navigate_independently_with_valid_patch_order():
+    app = App()
+
+    @app.page("/large", title="Large")
+    def large():
+        return db.Column([db.Text(f"Large {index}") for index in range(5)])
+
+    @app.page("/compact", title="Compact")
+    def compact():
+        return db.Column([db.Text("Compact")])
+
+    client = TestClient(create_asgi_app(app))
+
+    with (
+        client.websocket_connect("/events?path=/large") as first,
+        client.websocket_connect("/events?path=/large") as second,
+    ):
+        assert first.receive_json()["type"] == "full"
+        assert second.receive_json()["type"] == "full"
+
+        first.send_json({"type": "navigate", "path": "/compact"})
+        first_patch = first.receive_json()
+
+        second.send_json({"type": "navigate", "path": "/compact"})
+        second_patch = second.receive_json()
+
+    expected = [[1, 0, 4], [1, 0, 3], [1, 0, 2], [1, 0, 1]]
+    assert [
+        item["path"] for item in first_patch["patches"] if item["op"] == "remove"
+    ] == expected
+    assert [
+        item["path"] for item in second_patch["patches"] if item["op"] == "remove"
+    ] == expected
 
 
 def test_extract_event_payload_unwraps_single_value():

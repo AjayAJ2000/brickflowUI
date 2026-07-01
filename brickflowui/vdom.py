@@ -167,11 +167,26 @@ def diff(
     if prop_diff:
         patches.append({"op": "update_props", "path": path, "props": prop_diff})
 
-    # Diff children
-    max_len = max(len(old.children), len(new.children))
-    for i in range(max_len):
-        old_child = old.children[i] if i < len(old.children) else None
-        new_child = new.children[i] if i < len(new.children) else None
-        patches.extend(diff(old_child, new_child, handler_registry, path + [i]))
+    # Diff children shared by both trees before changing the list shape.
+    shared_len = min(len(old.children), len(new.children))
+    for i in range(shared_len):
+        patches.extend(
+            diff(old.children[i], new.children[i], handler_registry, path + [i])
+        )
+
+    # Removals must run from the tail toward the shared prefix. Applying a
+    # lower-index removal first would shift later indexes and invalidate the
+    # remaining patch paths.
+    for i in range(len(old.children) - 1, shared_len - 1, -1):
+        patches.append({"op": "remove", "path": path + [i]})
+
+    # Inserts remain valid in ascending order because each insertion extends
+    # the list up to the next target index.
+    for i in range(shared_len, len(new.children)):
+        patches.append({
+            "op": "insert",
+            "path": path + [i],
+            "node": new.children[i].serialize(handler_registry),
+        })
 
     return patches

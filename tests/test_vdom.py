@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from brickflowui.vdom import VNode, diff
 
 
@@ -8,6 +10,48 @@ def _text_children(count: int, prefix: str = "item") -> list[VNode]:
         VNode(type="Text", props={"value": f"{prefix}-{index}"})
         for index in range(count)
     ]
+
+
+def _apply_serialized_patches(tree: dict, patches: list[dict]) -> dict:
+    result = json.loads(json.dumps(tree))
+
+    for patch in patches:
+        path = patch["path"]
+        if not path:
+            if patch["op"] == "replace":
+                result = patch["node"]
+                continue
+            if patch["op"] == "update_props":
+                for key, value in patch["props"].items():
+                    if value is None:
+                        result["props"].pop(key, None)
+                    else:
+                        result["props"][key] = value
+                continue
+            raise AssertionError(f"Unsupported root patch in test helper: {patch}")
+
+        parent = result
+        for index in path[:-1]:
+            parent = parent["children"][index]
+        index = path[-1]
+
+        if patch["op"] == "remove":
+            parent["children"].pop(index)
+        elif patch["op"] == "insert":
+            parent["children"].insert(index, patch["node"])
+        elif patch["op"] == "replace":
+            parent["children"][index] = patch["node"]
+        elif patch["op"] == "update_props":
+            props = parent["children"][index]["props"]
+            for key, value in patch["props"].items():
+                if value is None:
+                    props.pop(key, None)
+                else:
+                    props[key] = value
+        else:
+            raise AssertionError(f"Unsupported patch in test helper: {patch}")
+
+    return result
 
 
 def test_vnode_serialization():
@@ -154,6 +198,63 @@ def test_diff_inserts_surplus_children_from_lowest_index_first():
     assert [
         patch["path"] for patch in patches if patch["op"] == "insert"
     ] == [[1], [2], [3], [4]]
+
+
+@pytest.mark.parametrize(
+    ("old_count", "new_count"),
+    [(old_count, new_count) for old_count in range(13) for new_count in range(13)],
+)
+def test_diff_patches_apply_across_child_count_matrix(old_count, new_count):
+    old = VNode(type="Column", children=_text_children(old_count))
+    new = VNode(type="Column", children=_text_children(new_count))
+    old_serialized = old.serialize({})
+    new_serialized = new.serialize({})
+
+    patches = diff(old, new, {})
+
+    assert _apply_serialized_patches(old_serialized, patches) == new_serialized
+
+    nested_old = VNode(type="Column", children=[old])
+    nested_new = VNode(type="Column", children=[new])
+    nested_old_serialized = nested_old.serialize({})
+    nested_new_serialized = nested_new.serialize({})
+
+    nested_patches = diff(nested_old, nested_new, {})
+
+    assert (
+        _apply_serialized_patches(nested_old_serialized, nested_patches)
+        == nested_new_serialized
+    )
+
+
+def test_diff_applies_replacement_before_descending_adjacent_removals():
+    old = VNode(
+        type="Column",
+        children=[
+            VNode(type="Text", props={"value": "keep"}),
+            VNode(type="Row"),
+            VNode(type="Badge"),
+            VNode(type="Card"),
+        ],
+    )
+    new = VNode(
+        type="Column",
+        children=[
+            VNode(type="Text", props={"value": "keep"}),
+            VNode(type="Grid"),
+        ],
+    )
+    old_serialized = old.serialize({})
+    new_serialized = new.serialize({})
+
+    patches = diff(old, new, {})
+
+    assert [(patch["op"], patch["path"]) for patch in patches] == [
+        ("replace", [1]),
+        ("remove", [3]),
+        ("remove", [2]),
+    ]
+    assert _apply_serialized_patches(old_serialized, patches) == new_serialized
 
 
 def test_diff_removed_prop_sets_null():
