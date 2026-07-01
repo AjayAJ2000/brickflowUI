@@ -338,6 +338,34 @@ def test_shell_sidebar_hides_pages_user_cannot_access():
     assert "Overview" in labels
     assert "Admin" not in labels
 
+
+def test_websocket_navigation_emits_descending_surplus_child_removals():
+    app = App()
+
+    @app.page("/large", title="Large")
+    def large():
+        return db.Column([db.Text(f"Large {index}") for index in range(5)])
+
+    @app.page("/compact", title="Compact")
+    def compact():
+        return db.Column([db.Text("Compact")])
+
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events?path=/large") as websocket:
+        full = websocket.receive_json()
+        assert full["type"] == "full"
+
+        websocket.send_json({"type": "navigate", "path": "/compact"})
+        patch = websocket.receive_json()
+
+    assert patch["type"] == "patch"
+    removals = [
+        item["path"] for item in patch["patches"] if item["op"] == "remove"
+    ]
+    assert removals == [[1, 0, 4], [1, 0, 3], [1, 0, 2], [1, 0, 1]]
+
+
 def test_extract_event_payload_unwraps_single_value():
     from brickflowui.server import _extract_event_payload
 

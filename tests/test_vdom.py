@@ -2,6 +2,14 @@ import json
 
 from brickflowui.vdom import VNode, diff
 
+
+def _text_children(count: int, prefix: str = "item") -> list[VNode]:
+    return [
+        VNode(type="Text", props={"value": f"{prefix}-{index}"})
+        for index in range(count)
+    ]
+
+
 def test_vnode_serialization():
     handler_registry = {}
     node = VNode(
@@ -72,6 +80,81 @@ def test_diff_children_removal():
     assert len(patches) == 1
     assert patches[0]["op"] == "remove"
     assert patches[0]["path"] == [1]
+
+
+def test_diff_removes_surplus_children_from_highest_index_first():
+    patches = diff(
+        VNode(type="Column", children=_text_children(5)),
+        VNode(type="Column", children=_text_children(1)),
+        {},
+    )
+
+    assert [
+        patch["path"] for patch in patches if patch["op"] == "remove"
+    ] == [[4], [3], [2], [1]]
+
+
+def test_diff_removes_all_children_from_highest_index_first():
+    patches = diff(
+        VNode(type="Column", children=_text_children(5)),
+        VNode(type="Column"),
+        {},
+    )
+
+    assert [
+        patch["path"] for patch in patches if patch["op"] == "remove"
+    ] == [[4], [3], [2], [1], [0]]
+
+
+def test_diff_removes_nested_surplus_children_from_highest_index_first():
+    patches = diff(
+        VNode(
+            type="Column",
+            children=[VNode(type="Row", children=_text_children(5))],
+        ),
+        VNode(
+            type="Column",
+            children=[VNode(type="Row", children=_text_children(1))],
+        ),
+        {},
+    )
+
+    assert [
+        patch["path"] for patch in patches if patch["op"] == "remove"
+    ] == [[0, 4], [0, 3], [0, 2], [0, 1]]
+
+
+def test_diff_updates_shared_children_before_descending_removals():
+    patches = diff(
+        VNode(type="Column", children=_text_children(5, "old")),
+        VNode(
+            type="Column",
+            children=[VNode(type="Text", props={"value": "updated"})],
+        ),
+        {},
+    )
+
+    assert patches[0] == {
+        "op": "update_props",
+        "path": [0],
+        "props": {"value": "updated"},
+    }
+    assert [
+        patch["path"] for patch in patches if patch["op"] == "remove"
+    ] == [[4], [3], [2], [1]]
+
+
+def test_diff_inserts_surplus_children_from_lowest_index_first():
+    patches = diff(
+        VNode(type="Column", children=_text_children(1)),
+        VNode(type="Column", children=_text_children(5)),
+        {},
+    )
+
+    assert [
+        patch["path"] for patch in patches if patch["op"] == "insert"
+    ] == [[1], [2], [3], [4]]
+
 
 def test_diff_removed_prop_sets_null():
     handler_registry = {}
