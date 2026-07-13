@@ -281,7 +281,7 @@ Put these three files in your Databricks App project:
 `requirements.txt`:
 
 ```text
-brickflowui>=0.1.13
+brickflowui>=0.1.14
 ```
 
 For the 0.1.13 visualization showcase, use:
@@ -326,4 +326,3 @@ The most effective pattern is:
 - Choose `component_studio` if you want an example that behaves like documentation and showcases nearly every UI surface.
 - Choose `clinical_trial_command_center` if you want a highly regulated, analytics-heavy portal pattern.
 - Choose `secure_internal_tools` if you want security, identity governance, and role-aware page design patterns first.
-

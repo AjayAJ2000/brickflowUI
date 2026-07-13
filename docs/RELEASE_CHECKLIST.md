@@ -66,7 +66,7 @@ Clean old artifacts, then build and inspect:
 ```bash
 python -m build
 python -m twine check dist/*
-python -m zipfile -l dist/brickflowui-0.1.13-py3-none-any.whl
+python -m zipfile -l dist/brickflowui-0.1.14-py3-none-any.whl
 ```
 
 The wheel must contain exactly one current `index.html`, its referenced hashed JavaScript/CSS assets, and the Python runtime modules.
@@ -77,11 +77,11 @@ Install the wheel in a fresh environment and verify import, version, and a minim
 
 1. Push the release branch and open a PR to `main`.
 2. Require CI and review before merge.
-3. Create and publish tag/release `v0.1.13` from the merged commit.
+3. Create and publish tag/release `v0.1.14` from the merged commit.
 4. Let `.github/workflows/publish.yml` publish through PyPI trusted publishing.
-5. Verify `https://pypi.org/pypi/brickflowui/0.1.13/json`.
-6. Install with `python -m pip install --no-cache-dir brickflowui==0.1.13` in a fresh environment.
-7. Confirm `brickflowui.__version__ == "0.1.13"` and bundled frontend assets are present.
+5. Verify `https://pypi.org/pypi/brickflowui/0.1.14/json`.
+6. Install with `python -m pip install --no-cache-dir brickflowui==0.1.14` in a fresh environment.
+7. Confirm `brickflowui.__version__ == "0.1.14"` and bundled frontend assets are present.
 
 ## 7. Record evidence
 

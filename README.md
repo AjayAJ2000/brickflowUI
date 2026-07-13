@@ -227,7 +227,7 @@ That gives you a React-style interaction loop while keeping the authoring model 
 Minimum `requirements.txt`:
 
 ```text
-brickflowui>=0.1.13
+brickflowui>=0.1.14
 ```
 
 Install from GitHub:

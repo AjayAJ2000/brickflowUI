@@ -39,6 +39,40 @@ describe('applyPatch', () => {
     expect(updated.children.map(child => child.props.value)).toEqual(['first-updated'])
   })
 
+  it('applies descending removals generated for a shrinking page tree', () => {
+    const source: VNodeData = {
+      type: 'Column',
+      props: {},
+      children: ['0', '1', '2', '3', '4'].map(leaf),
+      key: null,
+    }
+
+    const updated = applyPatches(source, [
+      { op: 'remove', path: [4] },
+      { op: 'remove', path: [3] },
+      { op: 'remove', path: [2] },
+      { op: 'remove', path: [1] },
+    ])
+
+    expect(updated.children.map(child => child.props.value)).toEqual(['0'])
+  })
+
+  it('rejects ascending removals after an earlier removal shifts the child list', () => {
+    const source: VNodeData = {
+      type: 'Column',
+      props: {},
+      children: ['0', '1', '2', '3', '4'].map(leaf),
+      key: null,
+    }
+
+    expect(() => applyPatches(source, [
+      { op: 'remove', path: [1] },
+      { op: 'remove', path: [2] },
+      { op: 'remove', path: [3] },
+      { op: 'remove', path: [4] },
+    ])).toThrow('Patch index 3 is outside the child list')
+  })
+
   it('updates a nested node through its complete parent path', () => {
     const source: VNodeData = {
       type: 'Column',
