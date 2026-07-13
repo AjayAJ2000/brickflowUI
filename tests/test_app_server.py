@@ -189,6 +189,26 @@ def test_missing_frontend_bundle_returns_diagnostic(monkeypatch):
     assert "new WebSocket" not in response.text
 
 
+def test_spa_shell_is_prepared_once_per_asgi_app(monkeypatch):
+    read_count = {"value": 0}
+    original_read_text = Path.read_text
+
+    def counted_read_text(self, *args, **kwargs):
+        if self == server._FRONTEND_DIST / "index.html":
+            read_count["value"] += 1
+        return original_read_text(self, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", counted_read_text)
+    app = App()
+    app.mount(lambda: VNode(type="div"))
+    client = TestClient(create_asgi_app(app))
+
+    assert client.get("/").status_code == 200
+    assert client.get("/nested/path").status_code == 200
+
+    assert read_count["value"] == 1
+
+
 def test_custom_api_route():
     app = App()
     
@@ -737,3 +757,37 @@ def test_websocket_sends_event_complete_for_non_dirty_handlers():
 
     assert touched["count"] == 1
     assert completion == {"type": "event_complete", "event_id": event_id}
+
+
+def test_event_handler_signature_is_cached_for_repeated_events(monkeypatch):
+    app = App()
+    touched = {"count": 0}
+    signature_count = {"value": 0}
+    original_signature = server.inspect.signature
+
+    def counted_signature(handler):
+        signature_count["value"] += 1
+        return original_signature(handler)
+
+    def ping():
+        touched["count"] += 1
+
+    @app.page("/")
+    def home():
+        return db.Button("Ping", on_click=ping)
+
+    client = TestClient(create_asgi_app(app))
+    monkeypatch.setattr(server.inspect, "signature", counted_signature)
+
+    with client.websocket_connect("/events") as websocket:
+        full = websocket.receive_json()
+        event_id = full["tree"]["props"]["click"]
+
+        websocket.send_json({"type": "event", "event_id": event_id, "data": {}})
+        assert websocket.receive_json() == {"type": "event_complete", "event_id": event_id}
+
+        websocket.send_json({"type": "event", "event_id": event_id, "data": {}})
+        assert websocket.receive_json() == {"type": "event_complete", "event_id": event_id}
+
+    assert touched["count"] == 2
+    assert signature_count["value"] == 1
