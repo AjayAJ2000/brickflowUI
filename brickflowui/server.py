@@ -18,7 +18,7 @@ import re
 import secrets
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Callable, Dict, Optional
 from urllib.parse import urlparse
 
 import uvicorn
@@ -141,6 +141,35 @@ def _resolve_event_handler(
     return current.get(event_id) or previous.get(event_id)
 
 
+def _event_handler_parameter_count(
+    handler: Callable[..., object],
+    cache: Dict[int, int],
+) -> int:
+    """Return cached handler arity for the latency-sensitive event path."""
+    cache_key = id(handler)
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    parameter_count = len(inspect.signature(handler).parameters)
+    cache[cache_key] = parameter_count
+    return parameter_count
+
+
+def _call_event_handler(
+    handler: Callable[..., object],
+    payload: object,
+    call_shape_cache: Dict[int, int],
+) -> object:
+    """Invoke a handler without repeating signature introspection per event."""
+    parameter_count = _event_handler_parameter_count(handler, call_shape_cache)
+    if parameter_count == 0:
+        return handler()
+    if isinstance(payload, dict) and parameter_count > 1:
+        return handler(**payload)
+    return handler(payload)
+
+
 def _is_safe_http_method(method: str) -> bool:
     return method.upper() in {"GET", "HEAD", "OPTIONS", "TRACE"}
 
@@ -159,6 +188,38 @@ def _validate_csrf(request: Request) -> bool:
     return bool(cookie_token and header_token and secrets.compare_digest(cookie_token, header_token))
 
 
+def _head_injections(dbrx_app: "App") -> str:
+    """Build static shell head injections once for this ASGI app instance."""
+    theme_css = _safe_style_text(dbrx_app.theme.to_css_variables())
+    style_block = f"<style id=\"bf-theme-vars\">{theme_css}</style>"
+    favicon_block = (
+        f'<link rel="icon" href="{html.escape(str(dbrx_app.favicon), quote=True)}" />'
+        if dbrx_app.favicon
+        else ""
+    )
+    bootstrap = _safe_json_data(dbrx_app.loading_bootstrap())
+    bootstrap_block = f'<script id="__BRICKFLOW_BOOTSTRAP__" type="application/json">{bootstrap}</script>'
+    injections = [style_block, favicon_block, bootstrap_block]
+    return "\n".join(block for block in injections if block)
+
+
+def _prepare_spa_shell(dbrx_app: "App") -> tuple[str, int]:
+    """Prepare the SPA shell once instead of reading and patching it per request."""
+    head_injections = _head_injections(dbrx_app)
+    index_path = _FRONTEND_DIST / "index.html"
+    if not index_path.exists():
+        return _missing_frontend_shell(head_injections, dbrx_app.title), 503
+
+    shell_html = index_path.read_text(encoding="utf-8")
+    escaped_title = html.escape(str(dbrx_app.title))
+    shell_html = shell_html.replace("<title>BrickflowUI App</title>", f"<title>{escaped_title}</title>")
+    if "</head>" in shell_html:
+        shell_html = shell_html.replace("</head>", f"{head_injections}\n</head>")
+    else:
+        shell_html = f"{head_injections}\n{shell_html}"
+    return shell_html, 200
+
+
 # ---------------------------------------------------------------------------
 # ASGI app factory
 # ---------------------------------------------------------------------------
@@ -166,6 +227,7 @@ def _validate_csrf(request: Request) -> bool:
 
 def create_asgi_app(dbrx_app: "App") -> FastAPI:
     """Create and return the FastAPI ASGI application."""
+    spa_shell_html, spa_shell_status = _prepare_spa_shell(dbrx_app)
     docs_url = "/docs" if dbrx_app.enable_dev_docs else None
     openapi_url = "/openapi.json" if dbrx_app.enable_dev_docs else None
     fastapi_app = FastAPI(
@@ -293,6 +355,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
         # Per-session event handler registry (event_id → callable)
         handler_registry: Dict[str, EventHandler] = {}
         previous_handler_registry: Dict[str, EventHandler] = {}
+        handler_call_shape_cache: Dict[int, int] = {}
 
         # ── Helper: render + send full tree ───────────────────────────────
         async def send_full_tree():
@@ -396,13 +459,11 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                                         dbrx_app._session_paths.get(session_id, "/"),
                                     )
                                 principal_token = set_current_principal(principal)
-                                sig = inspect.signature(handler)
-                                if not sig.parameters:
-                                    result = handler()
-                                elif isinstance(payload, dict) and len(sig.parameters) > 1:
-                                    result = handler(**payload)
-                                else:
-                                    result = handler(payload)
+                                result = _call_event_handler(
+                                    handler,
+                                    payload,
+                                    handler_call_shape_cache,
+                                )
 
                                 if inspect.isawaitable(result):
                                     await result
@@ -443,33 +504,7 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
         if full_path == "api" or full_path.startswith("api/"):
             raise HTTPException(status_code=404, detail="Not found")
 
-        theme_css = _safe_style_text(dbrx_app.theme.to_css_variables())
-        style_block = f"<style id=\"bf-theme-vars\">{theme_css}</style>"
-        favicon_block = (
-            f'<link rel="icon" href="{html.escape(str(dbrx_app.favicon), quote=True)}" />'
-            if dbrx_app.favicon
-            else ""
-        )
-        bootstrap = _safe_json_data(dbrx_app.loading_bootstrap())
-        bootstrap_block = f'<script id="__BRICKFLOW_BOOTSTRAP__" type="application/json">{bootstrap}</script>'
-        injections = [style_block, favicon_block, bootstrap_block]
-        head_injections = "\n".join(block for block in injections if block)
-        
-        index_path = _FRONTEND_DIST / "index.html"
-        if index_path.exists():
-            shell_html = index_path.read_text(encoding="utf-8")
-            escaped_title = html.escape(str(dbrx_app.title))
-            shell_html = shell_html.replace("<title>BrickflowUI App</title>", f"<title>{escaped_title}</title>")
-            if "</head>" in shell_html:
-                shell_html = shell_html.replace("</head>", f"{head_injections}\n</head>")
-            else:
-                shell_html = f"{head_injections}\n{shell_html}"
-            return HTMLResponse(shell_html)
-            
-        return HTMLResponse(
-            _missing_frontend_shell(head_injections, dbrx_app.title),
-            status_code=503,
-        )
+        return HTMLResponse(spa_shell_html, status_code=spa_shell_status)
 
     return fastapi_app
 
