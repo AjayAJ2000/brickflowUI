@@ -24,6 +24,14 @@ app = typer.Typer(
 )
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
+_WINDOWS_RESERVED_NAMES = {
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    *(f"COM{i}" for i in range(1, 10)),
+    *(f"LPT{i}" for i in range(1, 10)),
+}
 
 
 def _env_copy_hint(app_name: str) -> str:
@@ -49,6 +57,34 @@ def _cleanup_scaffold(path: Path) -> None:
     shutil.rmtree(path, onerror=_on_error)
 
 
+def _validated_project_name(name: str) -> str:
+    """Validate that a scaffold target is one direct child directory."""
+    candidate = name.strip()
+    path = Path(candidate)
+    device_name = candidate.rstrip(" .").split(".", 1)[0].upper()
+    cwd = Path.cwd().resolve()
+
+    invalid = (
+        not candidate
+        or candidate != name
+        or candidate in {".", ".."}
+        or path.is_absolute()
+        or "/" in candidate
+        or "\\" in candidate
+        or path.name != candidate
+        or device_name in _WINDOWS_RESERVED_NAMES
+        or (cwd / candidate).resolve().parent != cwd
+    )
+    if invalid:
+        typer.echo(
+            "[ERROR] Project name must be a single safe directory name.",
+            err=True,
+        )
+        raise typer.Exit(2)
+
+    return candidate
+
+
 @app.command()
 def new(
     name: str = typer.Argument(..., help="Name of the new Databricks App"),
@@ -58,6 +94,7 @@ def new(
 
     Creates a folder with app.py, app.yaml, requirements.txt, and .env.example.
     """
+    name = _validated_project_name(name)
     target = Path.cwd() / name
     if target.exists():
         typer.echo(f"[ERROR] Directory '{name}' already exists.", err=True)
