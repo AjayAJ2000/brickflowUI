@@ -370,6 +370,23 @@ def test_forwarded_access_token_is_private_and_available_in_user_context():
     assert payload["tree"]["props"]["value"] == "token-present"
     assert "secret-user-token" not in serialized
 
+
+def test_header_provider_accepts_native_databricks_forwarded_identity():
+    principal = HeaderAuthProvider()._from_mapping(
+        {
+            "x-forwarded-user": "user-123",
+            "x-forwarded-preferred-username": "Alice Analyst",
+            "x-forwarded-email": "alice@example.com",
+            "x-forwarded-access-token": "secret-user-token",
+        }
+    )
+
+    assert principal is not None
+    assert principal.subject == "user-123"
+    assert principal.display_name == "Alice Analyst"
+    assert principal.email == "alice@example.com"
+    assert principal.access_token == "secret-user-token"
+
 def test_websocket_page_renders_access_denied_without_user():
     app = App(auth_mode="user", auth_provider=HeaderAuthProvider())
 

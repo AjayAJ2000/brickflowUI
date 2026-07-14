@@ -82,10 +82,13 @@ class HeaderAuthProvider:
         self.user_name_header = f"{prefix}user-name"
         self.user_email_header = f"{prefix}user-email"
         self.user_roles_header = f"{prefix}user-roles"
+        self.forwarded_user_header = "x-forwarded-user"
+        self.forwarded_user_name_header = "x-forwarded-preferred-username"
+        self.forwarded_user_email_header = "x-forwarded-email"
         self.user_access_token_header = "x-forwarded-access-token"
 
     def _from_mapping(self, values: Mapping[str, str]) -> Optional[Principal]:
-        subject = values.get(self.user_id_header)
+        subject = values.get(self.user_id_header) or values.get(self.forwarded_user_header)
         if not subject:
             return None
 
@@ -94,8 +97,12 @@ class HeaderAuthProvider:
         return Principal(
             subject=subject,
             principal_type="user",
-            display_name=values.get(self.user_name_header) or subject,
-            email=values.get(self.user_email_header),
+            display_name=(
+                values.get(self.user_name_header)
+                or values.get(self.forwarded_user_name_header)
+                or subject
+            ),
+            email=values.get(self.user_email_header) or values.get(self.forwarded_user_email_header),
             roles=roles,
             authenticated=True,
             access_token=values.get(self.user_access_token_header),
