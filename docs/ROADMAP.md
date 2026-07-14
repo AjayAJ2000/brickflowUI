@@ -95,32 +95,16 @@ Expected work:
 
 ## Proposed Release Shape
 
-### `0.1.10`
+### `0.1.13`
 
-Current stabilization release:
+Current stability baseline:
 
-- local-first input handling
-- deferred frontend tree updates
-- lighter docs navigation and stronger portal-style docs structure
-- repo standards and admin guidance
-
-### `0.1.11`
-
-Recommended focus:
-
-- table interaction preservation
-- better data refresh ergonomics
-- loading-state consistency for data-driven components
-- additional mobile polish for dense portal layouts
-
-### `0.1.12`
-
-Recommended focus:
-
-- richer enterprise shell patterns
-- observability hooks for event timing and loading behavior
-- stronger auth/RBAC examples
-- cleaner dashboard workflow primitives
+- session cleanup, origin checks, trusted-host support, security headers, and safer API fallback behavior
+- nested render-context restoration and deterministic VDOM child-removal ordering
+- explicit missing-frontend diagnostics and HTML-safe shell/bootstrap embedding
+- validated CLI scaffold targets
+- browser-history, patch-protocol, CSV export, and IME regression coverage
+- frontend tests, lint, type-check, build, Python tests, docs drift, and package build as CI gates
 
 ### `0.2.0`
 
@@ -130,6 +114,8 @@ Recommended focus:
 - formalize preferred composition patterns
 - tighten visual-state conventions across components
 - ship a migration guide for any intentional cleanup
+- validate app/user authorization and Databricks components in a real Apps workspace
+- add sustained-load, multi-process, and long-session lifecycle verification
 
 ## The Product Standard
 
