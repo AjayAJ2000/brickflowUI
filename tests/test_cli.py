@@ -1,7 +1,10 @@
 import shutil
+import subprocess
+import sys
 import uuid
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from brickflowui.cli.main import app
@@ -18,6 +21,20 @@ def test_cli_help_only_shows_supported_commands():
     assert "dev" in result.output
     assert "info" not in result.output
     assert "--template" not in result.output
+
+
+def test_module_cli_help_has_no_runpy_warning():
+    repo_root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [sys.executable, "-m", "brickflowui.cli.main", "--help"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "RuntimeWarning" not in result.stderr
 
 
 def test_new_command_scaffolds_default_app(monkeypatch):
@@ -61,5 +78,23 @@ def test_new_command_reports_permission_errors_cleanly(monkeypatch):
         assert result.exit_code == 1
         assert "permission error" in result.output.lower()
         assert not (scratch_dir / app_name / "app.py").exists()
+    finally:
+        shutil.rmtree(scratch_dir, ignore_errors=True)
+
+
+@pytest.mark.parametrize("name", ["../escape", "child/name", r"child\name", ".", "CON"])
+def test_new_command_rejects_unsafe_project_names(monkeypatch, name):
+    repo_root = Path(__file__).resolve().parents[1]
+    scratch_dir = repo_root / f"_tmp_cli_{uuid.uuid4().hex[:8]}"
+
+    try:
+        scratch_dir.mkdir()
+        monkeypatch.setattr(Path, "cwd", lambda: scratch_dir)
+
+        result = runner.invoke(app, ["new", name])
+
+        assert result.exit_code == 2
+        assert "single safe directory name" in result.output
+        assert list(scratch_dir.iterdir()) == []
     finally:
         shutil.rmtree(scratch_dir, ignore_errors=True)
