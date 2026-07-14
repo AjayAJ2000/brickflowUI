@@ -95,7 +95,7 @@ Expected work:
 
 ## Proposed Release Shape
 
-### `0.1.13`
+### `0.1.15`
 
 Current stabilization baseline:
 
@@ -109,6 +109,9 @@ Current stabilization baseline:
 - formula-safe CSV export and IME-safe chat input
 - backend and frontend automated test gates
 - Python package, documentation, security, and release workflows
+- identity-safe per-user and shared-app Databricks service adapters
+- functional `CatalogBrowser`, `WarehouseSelector`, and `JobTrigger` contracts
+- bounded local assets and correlation-only browser runtime errors
 
 ### `0.2.0`
 

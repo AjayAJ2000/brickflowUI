@@ -2,6 +2,40 @@
 
 This page tracks the highest-signal changes for evaluators and adopters. It is not meant to replace commit history. It is meant to explain what changed, why it matters, and what to recheck when you upgrade.
 
+## 0.1.15
+
+Focus: identity-safe Databricks integrations, complete server-driven Databricks
+components, and stronger runtime/release boundaries.
+
+Highlights:
+
+- per-user Databricks SQL and SDK clients are operation-scoped from forwarded
+  identity headers, while shared app-identity SQL access is health-checked and
+  serialized for safe reuse
+- `CatalogBrowser`, `WarehouseSelector`, and `JobTrigger` now have complete
+  renderer, loading, empty, disabled, error, selection, and trigger contracts
+- forwarded Databricks user identity is recognized without exposing access
+  tokens in logs, repr output, equality, component props, or browser payloads
+- local asset registration is root-bounded, size-limited, revalidated, and LRU
+  evicted; browser runtime errors expose only a support correlation ID
+- incremental patch handling supports nested prop updates, preserves one render
+  generation of queued events, caches handler call shapes, and reconnects on
+  invalid browser patches
+- frontend tests, lint, type checks, dependency audit, committed-bundle drift,
+  Python tests, Ruff, MyPy, strict docs, build, and Twine checks are enforced as
+  release gates
+- frontend dependencies and the packaged production bundle were refreshed with
+  no known npm vulnerabilities at release preparation time
+
+Upgrade notes:
+
+- rebuild containers and Databricks App bundles with `brickflowui>=0.1.15`
+- deployments using per-user identity must forward the supported authorization
+  and user headers and grant the corresponding Databricks scopes
+- validate both per-user and shared-app modes in your own Databricks Apps
+  workspace; this release does not claim an external workspace certification
+- no existing public component constructor was intentionally removed
+
 ## 0.1.14
 
 Focus: reliable incremental rendering during routed page changes.

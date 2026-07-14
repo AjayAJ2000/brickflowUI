@@ -39,7 +39,7 @@ python -m mkdocs build --strict
 ```bash
 python -m build
 python -m twine check dist/*
-python -m zipfile -l dist/brickflowui-0.1.14-py3-none-any.whl
+python -m zipfile -l dist/brickflowui-0.1.15-py3-none-any.whl
 ```
 
 4. Publish through GitHub trusted publishing. Manual Twine upload is an emergency fallback only when a project-scoped PyPI token is available:
@@ -76,17 +76,17 @@ For a manual workflow run, select the exact release branch or tag. Do not publis
 Users should be able to run:
 
 ```bash
-python -m pip install --no-cache-dir brickflowui==0.1.14
+python -m pip install --no-cache-dir brickflowui==0.1.15
 ```
 
 Then:
 
 ```python
 import brickflowui as db
-assert db.__version__ == "0.1.14"
+assert db.__version__ == "0.1.15"
 ```
 
-Finally verify the immutable version endpoint: `https://pypi.org/pypi/brickflowui/0.1.14/json`.
+Finally verify the immutable version endpoint: `https://pypi.org/pypi/brickflowui/0.1.15/json`.
 
 ## Packaging notes
 

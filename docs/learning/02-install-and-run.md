@@ -72,7 +72,7 @@ requirements.txt
 Example `requirements.txt`:
 
 ```text
-brickflowui>=0.1.14
+brickflowui>=0.1.15
 ```
 
 Example `app.yaml`:
@@ -119,5 +119,4 @@ Run it locally. Then change the title and confirm the browser updates after rest
 ## Checkpoint
 
 You should be able to install BrickflowUI, run a local app, and explain why [`brickflowui/frontend/dist`](https://github.com/AjayAJ2000/brickflowUI/tree/main/brickflowui/frontend/dist) is part of the package.
-
 

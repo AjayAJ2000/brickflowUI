@@ -12,6 +12,24 @@ After every upgrade:
 4. verify custom branding, logos, and loading assets
 5. run your app against the current [Examples](./EXAMPLES.md) and [API Reference](./API_REFERENCE.md)
 
+## Upgrading To 0.1.15
+
+Version `0.1.15` is additive for existing component APIs and introduces complete
+server-driven contracts for the Databricks catalog, warehouse, and job controls.
+
+Recheck these areas:
+
+- exercise both per-user and shared-app identity modes in the target Databricks
+  Apps workspace, including denied and expired-credential paths
+- verify forwarded authorization and user headers are supplied only by the
+  trusted deployment boundary
+- retest catalog selection, warehouse selection, job triggering, loading,
+  empty, disabled, and error states
+- rebuild pinned containers and application bundles with
+  `brickflowui>=0.1.15`
+- run the full frontend, Python, docs, package, installed-wheel, and browser
+  acceptance matrix from the [Release Checklist](./RELEASE_CHECKLIST.md)
+
 ## Upgrading To 0.1.14
 
 Version `0.1.14` is a protocol-compatible patch release. No component API

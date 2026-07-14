@@ -281,7 +281,7 @@ Put these three files in your Databricks App project:
 `requirements.txt`:
 
 ```text
-brickflowui>=0.1.14
+brickflowui>=0.1.15
 ```
 
 For the 0.1.13 visualization showcase, use:
