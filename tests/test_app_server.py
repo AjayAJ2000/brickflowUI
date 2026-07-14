@@ -137,6 +137,37 @@ def test_shell_bootstrap_and_local_asset_route():
     assert b"<svg" in asset_response.content
 
 
+def test_local_asset_registry_enforces_roots_limit_and_revalidation():
+    safe_root = Path("docs/assets").resolve()
+    first = safe_root / "auth-guard-flow.png"
+    second = safe_root / "auth-guard-flow.svg"
+    third = safe_root / "bfui-darkbg.svg"
+    outside = Path("README.md").resolve()
+
+    app = App(asset_roots=[safe_root], asset_registry_limit=2)
+
+    first_url = app.asset_url(first)
+    second_url = app.asset_url(second)
+    third_url = app.asset_url(third)
+    first_id = str(first_url).split("/")[2]
+    second_id = str(second_url).split("/")[2]
+    third_id = str(third_url).split("/")[2]
+
+    assert str(first_url).startswith("/__brickflow_asset__/")
+    assert app.asset_url(outside) == outside
+    assert app.get_registered_asset(first_id) is None
+    assert app.get_registered_asset(second_id) == second.resolve()
+    assert app.get_registered_asset(third_id) == third.resolve()
+
+    app.asset_roots = (outside.parent / "examples",)
+    assert app.get_registered_asset(third_id) is None
+
+
+def test_asset_registry_rejects_non_positive_limits():
+    with pytest.raises(ValueError, match="greater than 0"):
+        App(asset_registry_limit=0)
+
+
 def test_shell_bootstrap_includes_theme_mode_and_subtitle():
     app = App(
         title="Acme Analytics",
@@ -353,6 +384,26 @@ def test_websocket_page_renders_access_denied_without_user():
 
     assert payload["type"] == "full"
     assert payload["tree"]["type"] == "Column"
+
+
+def test_websocket_render_error_is_correlated_and_redacted(caplog):
+    app = App()
+
+    @app.page("/")
+    def home():
+        raise RuntimeError("database-password must never reach the browser")
+
+    client = TestClient(create_asgi_app(app))
+    with caplog.at_level("ERROR", logger="brickflowui.server"):
+        with client.websocket_connect("/events") as websocket:
+            payload = websocket.receive_json()
+
+    assert payload["type"] == "error"
+    assert payload["error_id"]
+    assert "database-password" not in payload["message"]
+    assert "database-password" not in json.dumps(payload)
+    assert "database-password" in caplog.text
+    assert payload["error_id"] in caplog.text
 
 
 def test_shell_sidebar_hides_pages_user_cannot_access():
