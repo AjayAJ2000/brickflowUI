@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import * as LucideIcons from 'lucide-react'
 import type { VNodeData } from './types'
+import { shouldSubmitChatInput } from './runtime/chat'
+import { serializeCsv } from './runtime/csv'
+import {
+  CatalogBrowserView,
+  JobTriggerView,
+  WarehouseSelectorView,
+} from './runtime/databricksComponents'
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -155,6 +162,38 @@ function renderLoadingSkeleton(lines = 3) {
       ))}
     </div>
   )
+}
+
+function PlotComponent({ figure }: { figure: unknown }) {
+  const elementRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!elementRef.current) return
+    const value = (figure && typeof figure === 'object')
+      ? figure as Record<string, unknown>
+      : {}
+    const data = Array.isArray(value.data) ? value.data : []
+    const layout = (value.layout && typeof value.layout === 'object')
+      ? value.layout as Record<string, unknown>
+      : {}
+    const config = (value.config && typeof value.config === 'object')
+      ? value.config as Record<string, unknown>
+      : { responsive: true }
+    const element = elementRef.current
+    let active = true
+    let purge: (() => void) | undefined
+    void import('plotly.js-dist-min').then(({ default: Plotly }) => {
+      if (!active) return
+      void Plotly.react(element, data, layout, config)
+      purge = () => Plotly.purge(element)
+    })
+    return () => {
+      active = false
+      purge?.()
+    }
+  }, [figure])
+
+  return <div ref={elementRef} className="bf-chart-container" />
 }
 
 function chartShell(key: string, props: Record<string, any>, content: React.ReactNode) {
@@ -486,6 +525,9 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return <FormComponent key={key} props={p} children={children} ctx={ctx} nodeKey={key} />
 
     // ── Charts ─────────────────────────────────────────────────────────────
+    case 'Plot':
+      return <PlotComponent key={key} figure={p.figure} />
+
     case 'AreaChart': {
       const yKeys = (p.yKeys as string[]) || []
       const data = (p.data as object[]) || []
@@ -774,6 +816,17 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
     case 'SparklineStat':
       return <SparklineStatComponent key={key} props={p} />
+
+    case 'CatalogBrowser':
+      return <CatalogBrowserView key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['select']) }} onSelect={(value) => ev('select', value)} />
+
+    case 'WarehouseSelector':
+      return <WarehouseSelectorView key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['select']) }} onSelect={(value) => ev('select', value)} />
+
+    case 'JobTrigger': {
+      const eventName = p.trigger ? 'trigger' : 'complete'
+      return <JobTriggerView key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, [eventName]) }} onTrigger={(value) => ev(eventName, value)} />
+    }
 
     default:
       return (
@@ -1769,7 +1822,10 @@ function ChatInputComponent({ props: p, dispatchChange, dispatchSubmit }: { prop
         }}
         onBlur={() => flush(value)}
         onKeyDown={(event) => {
-          if (event.key === 'Enter') submit()
+          if (shouldSubmitChatInput(event.key, event.nativeEvent.isComposing)) {
+            event.preventDefault()
+            submit()
+          }
         }}
       />
       <button type="button" className="bf-btn bf-btn-primary" disabled={Boolean(p.disabled) || Boolean(p.loading) || !value.trim()} onClick={submit}>
@@ -1859,16 +1915,10 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
   }
 
   const exportCsv = () => {
-    const header = columns.map((col) => col.label).join(',')
-    const rows = sorted.map((row) =>
-      columns
-        .map((col) => {
-          const raw = String(row[col.key] ?? '')
-          return `"${raw.split('"').join('""')}"`
-        })
-        .join(',')
+    const csv = serializeCsv(
+      columns.map(column => ({ label: column.label, key: String(column.key) })),
+      sorted,
     )
-    const csv = [header, ...rows].join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
