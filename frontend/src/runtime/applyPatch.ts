@@ -7,63 +7,75 @@ export class PatchApplicationError extends Error {
   }
 }
 
-function requireNode(patch: Patch): VNodeData {
-  if (!patch.node) throw new PatchApplicationError(`${patch.op} patch requires a node`)
-  return patch.node
+function validatePath(path: number[]): void {
+  if (!Array.isArray(path) || path.some(index => !Number.isInteger(index) || index < 0)) {
+    throw new PatchApplicationError('Patch path must contain non-negative integer indexes')
+  }
 }
 
-function requireIndex(index: number): void {
-  if (!Number.isInteger(index) || index < 0) {
-    throw new PatchApplicationError(`Invalid patch index: ${index}`)
+function updateProps(tree: VNodeData, props: Record<string, unknown>): VNodeData {
+  const nextProps = { ...tree.props }
+  for (const [key, value] of Object.entries(props)) {
+    if (value === null) delete nextProps[key]
+    else nextProps[key] = value
   }
+  return { ...tree, props: nextProps }
 }
 
 export function applyPatch(tree: VNodeData, patch: Patch): VNodeData {
-  const { op, path, props } = patch
+  validatePath(patch.path)
+  const { op, path, node, props } = patch
 
   if (path.length === 0) {
-    if (op === 'replace') return requireNode(patch)
-    if (op === 'update_props' && props) {
-      const nextProps = { ...tree.props }
-      for (const [key, value] of Object.entries(props)) {
-        if (value === null) delete nextProps[key]
-        else nextProps[key] = value
-      }
-      return { ...tree, props: nextProps }
+    if (op === 'replace') {
+      if (!node) throw new PatchApplicationError('Root replace patch requires a node')
+      return node
     }
-    throw new PatchApplicationError(`Invalid ${op} operation at the root path`)
+    if (op === 'update_props') {
+      if (!props) throw new PatchApplicationError('Update-props patch requires props')
+      return updateProps(tree, props)
+    }
+    throw new PatchApplicationError(`Operation ${op} is invalid at the root path`)
   }
 
   const [index, ...rest] = path
-  requireIndex(index)
-  const nextChildren = [...tree.children]
+  const children = [...tree.children]
 
   if (rest.length === 0) {
     if (op === 'insert') {
-      if (index > nextChildren.length) {
+      if (!node) throw new PatchApplicationError('Insert patch requires a node')
+      if (index > children.length) {
         throw new PatchApplicationError(`Insert index ${index} is outside the child list`)
       }
-      nextChildren.splice(index, 0, requireNode(patch))
-      return { ...tree, children: nextChildren }
+      children.splice(index, 0, node)
+      return { ...tree, children }
     }
-    if (index >= nextChildren.length) {
+
+    if (index >= children.length) {
       throw new PatchApplicationError(`Patch index ${index} is outside the child list`)
     }
+
     if (op === 'remove') {
-      nextChildren.splice(index, 1)
-      return { ...tree, children: nextChildren }
+      children.splice(index, 1)
+      return { ...tree, children }
     }
     if (op === 'replace') {
-      nextChildren[index] = requireNode(patch)
-      return { ...tree, children: nextChildren }
+      if (!node) throw new PatchApplicationError('Replace patch requires a node')
+      children[index] = node
+      return { ...tree, children }
+    }
+    if (op === 'update_props') {
+      if (!props) throw new PatchApplicationError('Update-props patch requires props')
+      children[index] = updateProps(children[index], props)
+      return { ...tree, children }
     }
   }
 
-  if (index >= nextChildren.length) {
-    throw new PatchApplicationError(`Parent index ${index} is outside the child list`)
+  if (index >= children.length) {
+    throw new PatchApplicationError(`Patch parent index ${index} does not exist`)
   }
-  nextChildren[index] = applyPatch(nextChildren[index], { ...patch, path: rest })
-  return { ...tree, children: nextChildren }
+  children[index] = applyPatch(children[index], { ...patch, path: rest })
+  return { ...tree, children }
 }
 
 export function applyPatches(tree: VNodeData, patches: Patch[]): VNodeData {

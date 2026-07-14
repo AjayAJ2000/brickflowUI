@@ -8,7 +8,7 @@ const SPREADSHEET_FORMULA_PREFIX = /^(?:[=+\-@\t\r]|[ \f\v]+[=+\-@\t\r])/
 function encodeCell(value: unknown): string {
   const raw = String(value ?? '')
   const safe = SPREADSHEET_FORMULA_PREFIX.test(raw) ? `'${raw}` : raw
-  return `"${safe.replaceAll('"', '""')}"`
+  return `"${safe.split('"').join('""')}"`
 }
 
 export function serializeCsv(

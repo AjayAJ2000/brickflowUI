@@ -1,4 +1,6 @@
 import shutil
+import subprocess
+import sys
 import uuid
 from pathlib import Path
 
@@ -19,6 +21,20 @@ def test_cli_help_only_shows_supported_commands():
     assert "dev" in result.output
     assert "info" not in result.output
     assert "--template" not in result.output
+
+
+def test_module_cli_help_has_no_runpy_warning():
+    repo_root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [sys.executable, "-m", "brickflowui.cli.main", "--help"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert "RuntimeWarning" not in result.stderr
 
 
 def test_new_command_scaffolds_default_app(monkeypatch):
@@ -81,6 +97,7 @@ def test_new_command_rejects_unsafe_project_names(monkeypatch, name):
 
         assert result.exit_code == 2
         assert "single safe directory name" in result.output
+        assert list(scratch_dir.iterdir()) == []
     finally:
         shutil.rmtree(scratch_dir, ignore_errors=True)
         shutil.rmtree(escaped_dir, ignore_errors=True)

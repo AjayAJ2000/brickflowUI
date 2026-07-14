@@ -28,6 +28,7 @@ Run from `frontend/`:
 npm ci
 npm test -- --run
 npm run lint
+npm run typecheck
 npm run build
 npm audit --audit-level=high
 ```
@@ -60,7 +61,7 @@ Theme files and application configuration are trusted developer inputs. Authenti
 
 ## Known capability boundaries
 
-`CatalogBrowser`, `WarehouseSelector`, and `JobTrigger` are present in the Python component API but do not yet have complete frontend and backend data contracts. They must not be described as production-ready until the dedicated Databricks integration plan and browser tests pass.
+`CatalogBrowser`, `WarehouseSelector`, and `JobTrigger` have server-driven renderer, loading, empty, disabled, error, and event contracts. Databricks operations remain explicit Python calls so credentials and SDK objects never enter the browser. Both per-user and shared-app identity are supported, but app/user authorization and the components still require validation in a real Databricks Apps workspace.
 
 Formal load limits, configurable idle-session policy, deployment observability, and an actual Databricks Apps environment test belong to the production-lifecycle validation phase. The WebSocket handler cleans session state in its `finally` path, but this does not substitute for measured concurrency and failure testing.
 

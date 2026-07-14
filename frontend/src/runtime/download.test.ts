@@ -39,6 +39,6 @@ describe('triggerCsvDownload', () => {
     expect(link.download).toBe('accounts.csv')
     expect(events).toEqual(['blob', 'url', 'link', 'append', 'click', 'remove', 'defer'])
     deferred?.()
-    expect(events.at(-1)).toBe('revoke')
+    expect(events[events.length - 1]).toBe('revoke')
   })
 })

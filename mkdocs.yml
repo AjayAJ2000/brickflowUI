@@ -175,6 +175,7 @@ nav:
       - Publishing: PUBLISHING.md
       - Release Checklist: RELEASE_CHECKLIST.md
   - Operate:
+      - Stability Contract: STABILITY.md
       - Performance And Scalability: PERFORMANCE.md
       - Stability Contract: STABILITY.md
       - 0.1.14 Navigation Patch Report: verification/2026-07-01-navigation-patch-report.md

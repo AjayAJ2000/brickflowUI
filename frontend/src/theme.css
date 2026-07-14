@@ -1067,6 +1067,22 @@ body {
 .bf-empty-state-message { max-width: 520px; color: var(--db-text-muted); font-size: 14px; }
 .bf-empty-state-actions { display: flex; gap: var(--space-2); flex-wrap: wrap; justify-content: center; }
 
+/* Databricks service components */
+.bf-databricks-message { padding: var(--space-3); border-radius: var(--radius-md); color: var(--db-text-muted); }
+.bf-databricks-alert { background: var(--db-error-bg); color: var(--db-error); }
+.bf-catalog-browser { display: grid; gap: var(--space-4); }
+.bf-catalog-group { display: grid; gap: var(--space-2); }
+.bf-catalog-group h3 { margin: 0; font-size: 15px; }
+.bf-schema-group { display: grid; gap: var(--space-2); }
+.bf-schema-name { color: var(--db-text-muted); font-size: 13px; font-weight: 600; }
+.bf-catalog-tables { display: grid; gap: var(--space-2); }
+.bf-catalog-table { display: flex; justify-content: space-between; gap: var(--space-3); padding: var(--space-3); border: 1px solid var(--db-border); border-radius: var(--radius-md); background: var(--db-surface); color: var(--db-text); text-align: left; cursor: pointer; }
+.bf-catalog-table:hover:not(:disabled), .bf-catalog-table.is-selected { border-color: var(--db-primary); background: var(--db-primary-muted); }
+.bf-catalog-table:disabled { cursor: not-allowed; opacity: .6; }
+.bf-catalog-table small { color: var(--db-text-muted); }
+.bf-job-trigger { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); }
+.bf-job-run-id { color: var(--db-text-muted); font-size: 13px; }
+
 .bf-date-range {
   display: grid;
   grid-template-columns: 1fr auto 1fr;

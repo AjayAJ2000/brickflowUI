@@ -1314,17 +1314,31 @@ def Form(
 def CatalogBrowser(
     on_select: Optional[Callable[[Dict[str, str]], None]] = None,
     selected: Optional[Dict[str, str]] = None,
+    catalogs: Optional[List[Dict[str, Any]]] = None,
+    loading: bool = False,
+    error: Optional[str] = None,
+    empty_message: str = "No catalogs available",
+    disabled: bool = False,
 ) -> VNode:
     """
-    Three-level catalog/schema/table browser backed by Unity Catalog REST API.
-    on_select called with {"catalog": "...", "schema": "...", "table": "..."}
+    Server-driven catalog/schema/table browser.
+
+    Pass records returned by ``brickflowui.databricks.catalog_tree``. Selection
+    callbacks receive a normalized record containing catalog, schema, and table.
     """
     handlers: Dict[str, EventHandler] = {}
     if on_select:
         handlers["select"] = on_select
     return VNode(
         type="CatalogBrowser",
-        props={"selected": selected or {}},
+        props={
+            "catalogs": catalogs or [],
+            "selected": selected or {},
+            "loading": loading,
+            "error": error,
+            "emptyMessage": empty_message,
+            "disabled": disabled,
+        },
         event_handlers=handlers,
     )
 
@@ -1333,14 +1347,27 @@ def WarehouseSelector(
     on_select: Optional[Callable[[str], None]] = None,
     selected_id: Optional[str] = None,
     label: str = "SQL Warehouse",
+    warehouses: Optional[List[Dict[str, Any]]] = None,
+    loading: bool = False,
+    error: Optional[str] = None,
+    empty_message: str = "No warehouses available",
+    disabled: bool = False,
 ) -> VNode:
-    """Dropdown listing available SQL warehouses the current principal can use."""
+    """Select from server-provided warehouses visible to the current principal."""
     handlers: Dict[str, EventHandler] = {}
     if on_select:
         handlers["select"] = on_select
     return VNode(
         type="WarehouseSelector",
-        props={"selectedId": selected_id, "label": label},
+        props={
+            "warehouses": warehouses or [],
+            "selectedId": selected_id,
+            "label": label,
+            "loading": loading,
+            "error": error,
+            "emptyMessage": empty_message,
+            "disabled": disabled,
+        },
         event_handlers=handlers,
     )
 
@@ -1349,13 +1376,29 @@ def JobTrigger(
     job_id: str,
     label: str = "Run Job",
     on_complete: Optional[Callable[[Dict[str, Any]], None]] = None,
+    on_trigger: Optional[Callable[[Dict[str, Any]], None]] = None,
+    status: Optional[str] = None,
+    run_id: Optional[str] = None,
+    loading: bool = False,
+    error: Optional[str] = None,
+    disabled: bool = False,
 ) -> VNode:
-    """Button that triggers a Databricks Job run and shows status."""
+    """Server-driven Databricks job action with explicit run state."""
     handlers: Dict[str, EventHandler] = {}
+    if on_trigger:
+        handlers["trigger"] = on_trigger
     if on_complete:
         handlers["complete"] = on_complete
     return VNode(
         type="JobTrigger",
-        props={"jobId": job_id, "label": label},
+        props={
+            "jobId": job_id,
+            "label": label,
+            "status": status,
+            "runId": run_id,
+            "loading": loading,
+            "error": error,
+            "disabled": disabled,
+        },
         event_handlers=handlers,
     )

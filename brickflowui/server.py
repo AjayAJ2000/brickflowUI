@@ -50,21 +50,6 @@ CSRF_HEADER_NAME = "x-brickflow-csrf"
 _FRONTEND_DIST = Path(__file__).parent / "frontend" / "dist"
 
 
-def _safe_json_data(value: object) -> str:
-    """Serialize JSON for an HTML data block without allowing element termination."""
-    return (
-        json.dumps(value)
-        .replace("&", "\\u0026")
-        .replace("<", "\\u003c")
-        .replace(">", "\\u003e")
-    )
-
-
-def _safe_style_text(value: str) -> str:
-    """Prevent a configured CSS value from terminating its containing style element."""
-    return re.sub(r"</style", r"<\\/style", value, flags=re.IGNORECASE)
-
-
 # ---------------------------------------------------------------------------
 # Serialisation helpers
 # ---------------------------------------------------------------------------
@@ -84,12 +69,42 @@ def _patch_msg(patches: list, dbrx_app: "App") -> str:
     return json.dumps({"type": "patch", "patches": dbrx_app.transform_serialized_tree(patches)})
 
 
-def _error_msg(message: str) -> str:
-    return json.dumps({"type": "error", "message": message})
+def _error_msg(message: str, error_id: Optional[str] = None) -> str:
+    payload = {"type": "error", "message": message}
+    if error_id:
+        payload["error_id"] = error_id
+    return json.dumps(payload)
+
+
+def _runtime_error_msg(session_id: str, context: str) -> str:
+    """Log a private exception trace and return a safe correlated browser message."""
+    error_id = uuid.uuid4().hex
+    logger.exception("[%s] %s error_id=%s", session_id, context, error_id)
+    return _error_msg(
+        f"Something went wrong. Reference error ID {error_id} when contacting support.",
+        error_id,
+    )
 
 
 def _event_complete_msg(event_id: str) -> str:
     return json.dumps({"type": "event_complete", "event_id": event_id})
+
+
+def _safe_json_data(value: object) -> str:
+    """Encode JSON so it cannot terminate its containing HTML data element."""
+    return (
+        json.dumps(value)
+        .replace("<", "\\u003c")
+        .replace(">", "\\u003e")
+        .replace("&", "\\u0026")
+        .replace("\u2028", "\\u2028")
+        .replace("\u2029", "\\u2029")
+    )
+
+
+def _safe_style_text(value: str) -> str:
+    """Prevent developer-supplied theme CSS from closing the style element."""
+    return re.sub(r"</(?=style)", r"<\\/", value, flags=re.IGNORECASE)
 
 
 def _consume_task_exception(task: asyncio.Task) -> None:
@@ -372,9 +387,8 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                 msg = _full_tree_msg(vnode, handler_registry, dbrx_app)
                 await ws.send_text(msg)
                 return vnode
-            except Exception as exc:
-                logger.exception(f"[{session_id}] Render error")
-                await ws.send_text(_error_msg(str(exc)))
+            except Exception:
+                await ws.send_text(_runtime_error_msg(session_id, "Render error"))
                 return None
             finally:
                 reset_render_context(render_token)
@@ -397,9 +411,8 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
                     previous_handler_registry = handler_registry
                     handler_registry = new_handler_registry
                 return new_tree
-            except Exception as exc:
-                logger.exception(f"[{session_id}] Re-render error")
-                await ws.send_text(_error_msg(str(exc)))
+            except Exception:
+                await ws.send_text(_runtime_error_msg(session_id, "Re-render error"))
                 return old_tree
             finally:
                 reset_render_context(render_token)
@@ -467,9 +480,13 @@ def create_asgi_app(dbrx_app: "App") -> FastAPI:
 
                                 if inspect.isawaitable(result):
                                     await result
-                            except Exception as exc:
-                                logger.exception(f"[{session_id}] Handler error for {event_id}")
-                                await ws.send_text(_error_msg(str(exc)))
+                            except Exception:
+                                await ws.send_text(
+                                    _runtime_error_msg(
+                                        session_id,
+                                        f"Handler error for {event_id}",
+                                    )
+                                )
                             finally:
                                 reset_current_principal(principal_token)
                                 completed_event_id = str(event_id)
@@ -553,6 +570,27 @@ def _mount_custom_routes(fastapi_app: FastAPI, dbrx_app: "App"):
 # ---------------------------------------------------------------------------
 # Fallback HTML shell (used when frontend/dist doesn't exist yet)
 # ---------------------------------------------------------------------------
+
+
+def _missing_frontend_diagnostic(title: str) -> str:
+    """Return an explicit non-functional diagnostic for an incomplete install."""
+    safe_title = html.escape(title, quote=False)
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{safe_title} - frontend unavailable</title>
+</head>
+<body>
+  <main>
+    <h1>BrickflowUI frontend bundle is missing</h1>
+    <p>The packaged React assets required to run this application were not found.</p>
+    <p>Install a complete BrickflowUI wheel, or run <code>npm ci &amp;&amp; npm run build</code>
+       from the <code>frontend</code> directory before starting the source checkout.</p>
+  </main>
+</body>
+</html>"""
 
 
 def _minimal_html_shell(

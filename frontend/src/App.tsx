@@ -200,9 +200,18 @@ export default function App() {
             scheduleTreeCommit(msg.tree)
           } else if (msg.type === 'patch') {
             if (vdomRef.current) {
-              const updated = applyPatches(vdomRef.current, msg.patches)
-              vdomRef.current = updated
-              scheduleTreeCommit({ ...updated })
+              try {
+                const updated = applyPatches(vdomRef.current, msg.patches)
+                vdomRef.current = updated
+                scheduleTreeCommit({ ...updated })
+              } catch (patchError) {
+                const message = patchError instanceof PatchApplicationError
+                  ? patchError.message
+                  : 'Unknown patch application failure'
+                console.error('[BrickflowUI] Invalid server patch', patchError)
+                setError(`Invalid server patch: ${message}. Reconnecting for a full render.`)
+                ws.close()
+              }
             }
           } else if (msg.type === 'event_complete') {
             setPendingEvents((prev) => {

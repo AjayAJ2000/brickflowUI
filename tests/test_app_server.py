@@ -1,3 +1,7 @@
+import dataclasses
+import json
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
 import brickflowui as db
@@ -6,7 +10,6 @@ from brickflowui.app import App
 from brickflowui.auth import HeaderAuthProvider, current_user
 from brickflowui.server import _missing_frontend_shell, create_asgi_app
 from brickflowui.vdom import VNode
-from pathlib import Path
 
 
 def _find_node_by_type(node: dict, node_type: str) -> dict | None:
@@ -79,6 +82,34 @@ def test_server_spa_shell():
     assert "BrickflowUI App" in response.text
 
 
+def test_shell_escapes_title_favicon_and_bootstrap_html():
+    app = App(
+        title='</title><img src=x>',
+        favicon='" onload="alert(1)',
+        loading={"message": "</script><img src=x>"},
+    )
+    app.mount(lambda: VNode(type="div"))
+
+    response = TestClient(create_asgi_app(app)).get("/")
+
+    assert response.status_code == 200
+    assert "</title><img" not in response.text
+    assert 'onload="alert(1)' not in response.text
+    assert "</script><img" not in response.text
+
+
+def test_missing_frontend_bundle_returns_diagnostic(monkeypatch):
+    monkeypatch.setattr(server, "_FRONTEND_DIST", Path("missing-frontend-dist"))
+    app = App()
+    app.mount(lambda: VNode(type="div"))
+
+    response = TestClient(create_asgi_app(app)).get("/")
+
+    assert response.status_code == 503
+    assert "frontend bundle is missing" in response.text.lower()
+    assert "new WebSocket" not in response.text
+
+
 def test_shell_bootstrap_and_local_asset_route():
     asset = Path("docs/assets/brickflowui-mark.svg").resolve()
 
@@ -96,7 +127,7 @@ def test_shell_bootstrap_and_local_asset_route():
 
     response = client.get("/")
     assert response.status_code == 200
-    assert "__BRICKFLOW_BOOTSTRAP__" in response.text
+    assert 'id="__BRICKFLOW_BOOTSTRAP__" type="application/json"' in response.text
     assert "Booting secure workspace" in response.text
     assert "/__brickflow_asset__/" in response.text
 
@@ -104,6 +135,37 @@ def test_shell_bootstrap_and_local_asset_route():
     asset_response = client.get(asset_url)
     assert asset_response.status_code == 200
     assert b"<svg" in asset_response.content
+
+
+def test_local_asset_registry_enforces_roots_limit_and_revalidation():
+    safe_root = Path("docs/assets").resolve()
+    first = safe_root / "auth-guard-flow.png"
+    second = safe_root / "auth-guard-flow.svg"
+    third = safe_root / "bfui-darkbg.svg"
+    outside = Path("README.md").resolve()
+
+    app = App(asset_roots=[safe_root], asset_registry_limit=2)
+
+    first_url = app.asset_url(first)
+    second_url = app.asset_url(second)
+    third_url = app.asset_url(third)
+    first_id = str(first_url).split("/")[2]
+    second_id = str(second_url).split("/")[2]
+    third_id = str(third_url).split("/")[2]
+
+    assert str(first_url).startswith("/__brickflow_asset__/")
+    assert app.asset_url(outside) == outside
+    assert app.get_registered_asset(first_id) is None
+    assert app.get_registered_asset(second_id) == second.resolve()
+    assert app.get_registered_asset(third_id) == third.resolve()
+
+    app.asset_roots = (outside.parent / "examples",)
+    assert app.get_registered_asset(third_id) is None
+
+
+def test_asset_registry_rejects_non_positive_limits():
+    with pytest.raises(ValueError, match="greater than 0"):
+        App(asset_registry_limit=0)
 
 
 def test_shell_bootstrap_includes_theme_mode_and_subtitle():
@@ -175,18 +237,6 @@ def test_shell_contains_theme_and_bootstrap_values_as_data():
     assert "</style><img src=theme>" not in response.text
     assert "</script><img src=bootstrap>" not in response.text
     assert 'type="application/json"' in response.text
-
-
-def test_missing_frontend_bundle_returns_diagnostic(monkeypatch):
-    monkeypatch.setattr(server, "_FRONTEND_DIST", Path("missing-frontend-dist"))
-    app = App()
-    app.mount(lambda: VNode(type="div"))
-
-    response = TestClient(create_asgi_app(app)).get("/")
-
-    assert response.status_code == 503
-    assert "frontend bundle is missing" in response.text.lower()
-    assert "new WebSocket" not in response.text
 
 
 def test_spa_shell_is_prepared_once_per_asgi_app(monkeypatch):
@@ -320,6 +370,62 @@ def test_websocket_page_uses_authenticated_user_context():
     assert payload["type"] == "full"
     assert payload["tree"]["props"]["value"] == "alice"
 
+
+def test_forwarded_access_token_is_private_and_available_in_user_context():
+    provider = HeaderAuthProvider()
+    principal = provider._from_mapping(
+        {
+            "x-brickflow-user-id": "alice",
+            "x-forwarded-access-token": "secret-user-token",
+        }
+    )
+
+    assert principal is not None
+    assert principal.access_token == "secret-user-token"
+    assert "secret-user-token" not in repr(principal)
+    assert principal == dataclasses.replace(principal, access_token="different-token")
+
+    app = App(auth_mode="user", auth_provider=provider)
+
+    @app.page("/", access="user")
+    def home():
+        user = current_user()
+        return VNode(
+            type="Text",
+            props={"value": "token-present" if user and user.access_token else "token-missing"},
+        )
+
+    client = TestClient(create_asgi_app(app))
+    with client.websocket_connect(
+        "/events",
+        headers={
+            "x-brickflow-user-id": "alice",
+            "x-forwarded-access-token": "secret-user-token",
+        },
+    ) as websocket:
+        payload = websocket.receive_json()
+
+    serialized = json.dumps(payload)
+    assert payload["tree"]["props"]["value"] == "token-present"
+    assert "secret-user-token" not in serialized
+
+
+def test_header_provider_accepts_native_databricks_forwarded_identity():
+    principal = HeaderAuthProvider()._from_mapping(
+        {
+            "x-forwarded-user": "user-123",
+            "x-forwarded-preferred-username": "Alice Analyst",
+            "x-forwarded-email": "alice@example.com",
+            "x-forwarded-access-token": "secret-user-token",
+        }
+    )
+
+    assert principal is not None
+    assert principal.subject == "user-123"
+    assert principal.display_name == "Alice Analyst"
+    assert principal.email == "alice@example.com"
+    assert principal.access_token == "secret-user-token"
+
 def test_websocket_page_renders_access_denied_without_user():
     app = App(auth_mode="user", auth_provider=HeaderAuthProvider())
 
@@ -334,6 +440,26 @@ def test_websocket_page_renders_access_denied_without_user():
 
     assert payload["type"] == "full"
     assert payload["tree"]["type"] == "Column"
+
+
+def test_websocket_render_error_is_correlated_and_redacted(caplog):
+    app = App()
+
+    @app.page("/")
+    def home():
+        raise RuntimeError("database-password must never reach the browser")
+
+    client = TestClient(create_asgi_app(app))
+    with caplog.at_level("ERROR", logger="brickflowui.server"):
+        with client.websocket_connect("/events") as websocket:
+            payload = websocket.receive_json()
+
+    assert payload["type"] == "error"
+    assert payload["error_id"]
+    assert "database-password" not in payload["message"]
+    assert "database-password" not in json.dumps(payload)
+    assert "database-password" in caplog.text
+    assert payload["error_id"] in caplog.text
 
 
 def test_shell_sidebar_hides_pages_user_cannot_access():
@@ -791,3 +917,42 @@ def test_event_handler_signature_is_cached_for_repeated_events(monkeypatch):
 
     assert touched["count"] == 2
     assert signature_count["value"] == 1
+
+
+def test_previous_render_event_handler_remains_valid_for_one_generation():
+    app = App()
+
+    @app.page("/")
+    def home():
+        count, set_count = db.use_state(0)
+        status, set_status = db.use_state("idle")
+        return db.Column(
+            [
+                db.Text(f"{status}:{count}"),
+                db.Button("Advance", on_click=lambda: set_count(count + 1)),
+                db.Button("Use queued event", on_click=lambda: set_status("accepted")),
+            ]
+        )
+
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events") as websocket:
+        full = websocket.receive_json()
+        old_advance_id = full["tree"]["children"][1]["props"]["click"]
+        old_queued_id = full["tree"]["children"][2]["props"]["click"]
+
+        websocket.send_json({"type": "event", "event_id": old_advance_id, "data": {}})
+        first_patch = websocket.receive_json()
+        websocket.receive_json()  # event_complete
+        current_advance_id = next(
+            patch["props"]["click"]
+            for patch in first_patch["patches"]
+            if patch["path"] == [1]
+        )
+
+        websocket.send_json({"type": "event", "event_id": old_queued_id, "data": {}})
+        websocket.send_json({"type": "event", "event_id": current_advance_id, "data": {}})
+        second_patch = websocket.receive_json()
+
+    text_patch = next(patch for patch in second_patch["patches"] if patch["path"] == [0])
+    assert text_patch["props"]["value"] == "accepted:1"

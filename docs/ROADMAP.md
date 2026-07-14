@@ -118,8 +118,8 @@ Recommended focus:
 - formalize preferred composition patterns
 - tighten visual-state conventions across components
 - ship a migration guide for any intentional cleanup
-- complete functional Databricks contracts for `CatalogBrowser`, `WarehouseSelector`, and `JobTrigger`
-- add production lifecycle, load, and session observability validation
+- validate app/user authorization and Databricks components in a real Apps workspace
+- add sustained-load, multi-process, and long-session lifecycle verification
 
 ## The Product Standard
 

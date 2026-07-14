@@ -8,7 +8,7 @@ describe('serializeCsv', () => {
   it.each(['=1+1', '+cmd', '-2+3', '@SUM(A1)', '\t=1', '\r=1', '  =1'])(
     'neutralizes spreadsheet formula input %j',
     value => {
-      const escaped = `'${value}`.replaceAll('"', '""')
+      const escaped = `'${value}`.split('"').join('""')
       expect(serializeCsv(columns, [{ value }])).toContain(`"${escaped}"`)
     },
   )

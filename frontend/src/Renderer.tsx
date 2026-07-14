@@ -6,6 +6,11 @@ import { serializeCsv } from './runtime/csv'
 import { browserCsvDownloadEnvironment, triggerCsvDownload } from './runtime/download'
 import { progressColor } from './runtime/progress'
 import {
+  CatalogBrowserView,
+  JobTriggerView,
+  WarehouseSelectorView,
+} from './runtime/databricksComponents'
+import {
   AreaChart, Area,
   BarChart, Bar,
   LineChart, Line,
@@ -159,6 +164,38 @@ function renderLoadingSkeleton(lines = 3) {
       ))}
     </div>
   )
+}
+
+function PlotComponent({ figure }: { figure: unknown }) {
+  const elementRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (!elementRef.current) return
+    const value = (figure && typeof figure === 'object')
+      ? figure as Record<string, unknown>
+      : {}
+    const data = Array.isArray(value.data) ? value.data : []
+    const layout = (value.layout && typeof value.layout === 'object')
+      ? value.layout as Record<string, unknown>
+      : {}
+    const config = (value.config && typeof value.config === 'object')
+      ? value.config as Record<string, unknown>
+      : { responsive: true }
+    const element = elementRef.current
+    let active = true
+    let purge: (() => void) | undefined
+    void import('plotly.js-dist-min').then(({ default: Plotly }) => {
+      if (!active) return
+      void Plotly.react(element, data, layout, config)
+      purge = () => Plotly.purge(element)
+    })
+    return () => {
+      active = false
+      purge?.()
+    }
+  }, [figure])
+
+  return <div ref={elementRef} className="bf-chart-container" />
 }
 
 function chartShell(key: string, props: Record<string, any>, content: React.ReactNode) {
@@ -490,6 +527,9 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
       return <FormComponent key={key} props={p} children={children} ctx={ctx} nodeKey={key} />
 
     // ── Charts ─────────────────────────────────────────────────────────────
+    case 'Plot':
+      return <PlotComponent key={key} figure={p.figure} />
+
     case 'AreaChart': {
       const yKeys = (p.yKeys as string[]) || []
       const data = (p.data as object[]) || []
@@ -778,6 +818,17 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
 
     case 'SparklineStat':
       return <SparklineStatComponent key={key} props={p} />
+
+    case 'CatalogBrowser':
+      return <CatalogBrowserView key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['select']) }} onSelect={(value) => ev('select', value)} />
+
+    case 'WarehouseSelector':
+      return <WarehouseSelectorView key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, ['select']) }} onSelect={(value) => ev('select', value)} />
+
+    case 'JobTrigger': {
+      const eventName = p.trigger ? 'trigger' : 'complete'
+      return <JobTriggerView key={key} props={{ ...p, loading: Boolean(p.loading) || isPending(p, ctx, [eventName]) }} onTrigger={(value) => ev(eventName, value)} />
+    }
 
     default:
       return (
@@ -1866,7 +1917,10 @@ function TableComponent({ props: p, dispatch }: { props: Record<string, any>; di
   }
 
   const exportCsv = () => {
-    const csv = serializeCsv(columns, sorted)
+    const csv = serializeCsv(
+      columns.map(column => ({ label: column.label, key: String(column.key) })),
+      sorted,
+    )
     triggerCsvDownload(csv, 'brickflowui-table-export.csv', browserCsvDownloadEnvironment())
   }
 

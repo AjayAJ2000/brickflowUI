@@ -37,17 +37,13 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Run frontend tests
+      - name: Run frontend tests, lint, type check, and dependency audit
         working-directory: frontend
-        run: npm test -- --run
-
-      - name: Run frontend lint
-        working-directory: frontend
-        run: npm run lint
-
-      - name: Audit frontend dependencies
-        working-directory: frontend
-        run: npm audit --audit-level=high
+        run: |
+          npm test -- --run
+          npm run lint
+          npm run typecheck
+          npm audit --audit-level=high
 
       - name: Build frontend
         working-directory: frontend
