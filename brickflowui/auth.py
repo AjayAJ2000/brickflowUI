@@ -31,6 +31,7 @@ class Principal:
     roles: tuple[str, ...] = ()
     authenticated: bool = False
     attributes: Mapping[str, Any] = field(default_factory=dict)
+    access_token: Optional[str] = field(default=None, repr=False, compare=False)
 
     def has_role(self, role: str) -> bool:
         return role in self.roles
@@ -81,6 +82,7 @@ class HeaderAuthProvider:
         self.user_name_header = f"{prefix}user-name"
         self.user_email_header = f"{prefix}user-email"
         self.user_roles_header = f"{prefix}user-roles"
+        self.user_access_token_header = "x-forwarded-access-token"
 
     def _from_mapping(self, values: Mapping[str, str]) -> Optional[Principal]:
         subject = values.get(self.user_id_header)
@@ -96,6 +98,7 @@ class HeaderAuthProvider:
             email=values.get(self.user_email_header),
             roles=roles,
             authenticated=True,
+            access_token=values.get(self.user_access_token_header),
         )
 
     def authenticate_request(self, request: Request) -> Optional[Principal]:
