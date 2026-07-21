@@ -38,7 +38,7 @@ The suggested learning path is: `counter` → `component_studio` → a workflow 
 
 **Capabilities proven.** Mock and Databricks SQL sources, filters, operational KPIs, dependency graphs, reliability charts, triage, simulated job actions, safe fallback behavior, and an assistant view.
 
-**Local command.** `python examples/data_pipeline_command_center/app.py`
+**Local command.** `python -m examples.data_pipeline_command_center.app`
 
 **Deployment files.** [`app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/data_pipeline_command_center/app.py), [`app.yaml`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/data_pipeline_command_center/app.yaml), and [`requirements.txt`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/data_pipeline_command_center/requirements.txt).
 

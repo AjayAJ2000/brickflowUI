@@ -833,6 +833,35 @@ def test_flagship_websocket_switches_every_operational_view() -> None:
         assert expected_markers[view_key] in json.dumps(response)
 
 
+def test_flagship_executive_brief_opens_without_a_runtime_error() -> None:
+    app = _load_example_app("data_pipeline_command_center")
+    client = TestClient(create_asgi_app(app))
+
+    with client.websocket_connect("/events?path=/") as websocket:
+        full = websocket.receive_json()
+        brief_button = next(
+            button
+            for button in _find_payload_nodes(full["tree"], "Button")
+            if "Executive brief" in json.dumps(button)
+        )
+        websocket.send_json(
+            {
+                "type": "event",
+                "event_id": brief_button["props"]["click"],
+                "data": {"value": None},
+            }
+        )
+        patch = websocket.receive_json()
+        completion = websocket.receive_json()
+
+    assert patch["type"] == "patch", patch
+    assert '"visible": true' in json.dumps(patch)
+    assert completion == {
+        "type": "event_complete",
+        "event_id": brief_button["props"]["click"],
+    }
+
+
 @pytest.mark.parametrize("example_name", PUBLIC_RUNTIME_SMOKE_EXAMPLES)
 def test_public_example_serves_shell_and_full_websocket_tree(example_name: str) -> None:
     app = _load_example_app(example_name)

@@ -199,6 +199,16 @@ def test_security_audits_installed_project_dependencies():
     )
 
 
+def test_source_checkout_docs_launch_flagship_as_a_module():
+    """Keep local examples on checkout code instead of a stale site package."""
+    examples_doc = (REPO_ROOT / "docs" / "EXAMPLES.md").read_text(encoding="utf-8")
+    build_doc = (REPO_ROOT / "docs" / "BUILD.md").read_text(encoding="utf-8")
+    module_command = "python -m examples.data_pipeline_command_center.app"
+
+    assert module_command in examples_doc
+    assert module_command in build_doc
+
+
 def test_package_uses_canonical_async_framework_classifiers():
     with (REPO_ROOT / "pyproject.toml").open("rb") as pyproject_file:
         project = tomllib.load(pyproject_file)["project"]

@@ -82,9 +82,7 @@ Interactive components use the same event model as the rest of BrickflowUI:
 Run:
 
 ```bash
-cd examples/data_pipeline_command_center
-python app.py
+python -m examples.data_pipeline_command_center.app
 ```
 
 This example shows pipeline graphs, multiple controls, assistant UI, composed charts, heatmaps, kanban triage, and operational tables in one Databricks-ready app.
-
