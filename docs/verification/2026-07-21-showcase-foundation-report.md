@@ -5,7 +5,7 @@
 ```text
 Status: LOCAL AUTOMATED AND BROWSER GATES PASS — LIVE DATABRICKS VALIDATION REQUIRED
 Foundation commit: 397e02a829c9197688f8bae83b44e141764d1a57
-Implementation commit tested: 9e443bd160e2115c7d03cd38e28beccd5be93378
+Implementation commits tested: 9e443bd160e2115c7d03cd38e28beccd5be93378, a18722f15f0e98028bb176a6a3dbac4b36394698
 Branch: codex/production-data-apps-02
 Automated result: mandated local commands pass in the repaired working tree
 Browser result: six examples and the flagship responsive/accessibility flow pass
@@ -40,22 +40,22 @@ The friendly Windows edition probe was denied by local WMI permissions; `platfor
 
 | Command | Result and exact evidence |
 | --- | --- |
-| `python -m pytest -q -p no:cacheprovider` | Passed: **343 passed** in 13.93s on the final commit-candidate run. |
+| `python -m pytest -q -p no:cacheprovider` | Passed: **343 passed** in 6.99s on the final commit-candidate run. |
 | `python scripts/smoke_examples.py` | Passed: all **6 manifest examples** passed smoke checks. |
 | `python scripts/generate_component_reference.py` | Passed with exit 0. |
 | `git diff --exit-code -- docs/components/reference` | Passed: no generated reference drift. Git emitted Windows CRLF-to-LF checkout warnings only. |
-| `python -m mkdocs build --strict -d .site_validation_showcase` | Passed in 5.88s. Existing pages outside `nav` were reported as informational notices. |
+| `python -m mkdocs build --strict -d .site_validation_showcase` | Passed in 3.98s. Existing pages outside `nav` were reported as informational notices. |
 | `python -m build` | Passed: built `brickflowui-0.1.15.tar.gz` and `brickflowui-0.1.15-py3-none-any.whl`. |
 | `python -m twine check dist/*` | Passed: **2/2 artifacts**. |
-| `npm --prefix frontend test -- --run` | Passed on the latest frontend run: **42 tests across 11 files**. |
+| `npm --prefix frontend test -- --run` | Passed on the latest frontend run: **43 tests across 11 files**. |
 | `npm --prefix frontend run lint` | Passed with zero ESLint errors. |
 | `npm --prefix frontend run typecheck` | Passed with zero TypeScript errors. |
 | `npm --prefix frontend audit --audit-level=high` | Passed: **0 vulnerabilities**. |
 | `npm --prefix frontend run build` | Passed with Vite 7.3.6: **2,196 modules transformed**. |
-| `git diff --exit-code -- brickflowui/frontend/dist` | Pre-commit check passed with no unstaged dist drift. After implementation commit `9e443bd160e2115c7d03cd38e28beccd5be93378`, a fresh Vite build again transformed 2,196 modules and this command exited 0 against the commit. |
+| `git diff --exit-code -- brickflowui/frontend/dist` | Pre-commit check passed with no unstaged dist drift. After follow-up implementation commit `a18722f15f0e98028bb176a6a3dbac4b36394698`, a fresh Vite build again transformed 2,196 modules and this command exited 0 against the commit. |
 | `git diff --check` | Passed: no whitespace errors in unstaged changes. |
 
-The final frontend entry bundle produced by the latest build is `index-B7bcrHds.js` (796.53 kB, 161.29 kB gzip); the CSS entry is `index-B7sm3Upf.css` (62.27 kB, 10.69 kB gzip). The Plotly chunk remains 7,213.37 kB uncompressed and is not a new regression in this milestone.
+The final frontend entry bundle produced by the latest build is `index-BFhsc6B7.js` (797.38 kB, 161.58 kB gzip); the CSS entry is `index-B7sm3Upf.css` (62.27 kB, 10.69 kB gzip). The Plotly chunk remains 7,213.37 kB uncompressed and is not a new regression in this milestone.
 
 ### Execution constraints and observed failures
 
@@ -72,13 +72,15 @@ Failures encountered during verification were retained as evidence rather than h
 | Example | Routes and interaction evidence | Refresh, reconnect, theme, and console evidence |
 | --- | --- | --- |
 | Quickstart Counter | `/` loaded; `+` changed `Count 0` to `Count 1`. | Reload/reconnect returned the documented initial `Count 0`; zero console errors. |
-| Component Studio | `/` loaded; Visuals navigation changed the rendered section. The badge now reads `Supported surface`; no `0.1.14`, `astellas`, or `inspired` copy remained. | Direct refresh returned Overview; zero console errors. |
+| Component Studio | `/` loaded; Visuals navigation changed the rendered section. The badge now reads `Supported surface`; no `0.1.14`, `astellas`, or `inspired` copy remained. | Reload/reconnect from Visuals established a new page/WebSocket session and restored the documented Overview state; zero console errors. |
 | Data Pipeline Command Center | `/` loaded; all five state-driven views rendered distinct markers: Operational pulse, Pipeline flow, Reliability signals, Triage queue, and Pipeline assistant. | After switching to Reliability, direct reload/reconnect returned the documented default Overview and `Operational pulse`; zero runtime or console errors. |
-| Clinical Trial Command Center | `/`, `/overview`, `/safety`, and `/dataops` loaded through an authenticated static-principal browser harness. Site selection changed to Toyama; the safety marker was `Safety review`; Light changed to Dark. | Direct refresh worked; zero console errors. Normal HTTP requests with manifest headers returned 200 for every route. This does not establish anonymous or live Databricks identity behavior. |
-| Authentication Portal | Viewer, analyst, and admin sign-in forms worked; analyst workspace direct refresh worked; analyst received the admin-denied state; admin reached Admin Console; sign-out and app-ops app identity worked. Browser title/body now use `BrickflowUI Access Portal`; no forbidden borrowed branding remained. | Theme toggle worked; zero console errors. |
+| Clinical Trial Command Center | `/`, `/overview`, `/safety`, and `/dataops` loaded through an authenticated static-principal browser harness. Site selection changed to Toyama; the safety marker was `Safety review`; Light changed to Dark. | Direct-route reload/reconnect re-established the page and static-principal WebSocket content; zero console errors. Normal HTTP requests with manifest headers returned 200 for every route. This does not establish anonymous or live Databricks identity behavior. |
+| Authentication Portal | Viewer, analyst, and admin sign-in forms worked; analyst received the admin-denied state; admin reached Admin Console; sign-out and app-ops app identity worked. Browser title/body now use `BrickflowUI Access Portal`; no forbidden borrowed branding remained. | Direct reload/reconnect of the analyst workspace retained the signed-in workspace and re-established WebSocket content. Theme toggle worked; zero console errors. |
 | Chatbot Workspace | `/` loaded; submitting `What needs attention?` rendered the user message and assistant context. | Reload/reconnect worked; zero console errors. |
 
 The in-app browser cannot inject the clinical example's manifest headers. The browser harness therefore used the same app/provider contract with a static authenticated principal, while separate normal HTTP route checks used the declared headers. Neither check is represented as live Databricks authentication.
+
+Here, reconnect evidence means that a deliberate browser reload/direct-route navigation established a new page and WebSocket session. The run did not simulate a server outage and does not claim automatic recovery from one.
 
 ## Flagship responsive and accessibility evidence
 
@@ -100,7 +102,7 @@ The in-app browser cannot inject the clinical example's manifest headers. The br
 | --- | --- | --- |
 | SF-01 | Grid intrinsic sizing caused document overflow at 390px and 768px. | Every responsive track now uses `minmax(0, 1fr)` and grid children/cards can shrink with `min-width: 0`; CSS regression added; all four live widths now match. |
 | SF-02 | Right-justified, non-wrapping flagship navigation placed early actions off-screen at 390px. | Inner navigation explicitly wraps from the left with a shrinkable desktop row; Python serialization regression added; live mobile controls are reachable and desktop remains one row. |
-| SF-03 | Modal lacked dialog semantics, focus entry/trap, Escape close, and focus restoration. | Dedicated Modal component adds semantics, labelled close, keyboard containment, Escape dispatch, and stable trigger restoration across server patches; five DOM regressions and the final live flow pass. |
+| SF-03 | Modal lacked dialog semantics, focus entry/trap, Escape close, and focus restoration. | Dedicated Modal component adds semantics, labelled close, keyboard containment, Escape dispatch, logical-VDOM-path trigger restoration across callback regeneration, and hidden/inert/non-rendered control filtering; six DOM regressions and the final live flow pass. |
 | SF-04 | No `prefers-reduced-motion` override existed. | Added global reduced-motion durations/iteration/scroll override and a CSS regression. |
 | SF-05 | Component Studio advertised stale version `0.1.14`. | Replaced it with version-neutral `Supported surface` copy and added a no-embedded-SemVer guard. |
 | SF-06 | Authentication Portal borrowed Astellas branding and imitation copy. | Replaced all retained-example occurrences with generic BrickflowUI security UI language and added a tracked-file raw-byte scan for `astellas` and `inspired`. |
