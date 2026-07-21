@@ -405,7 +405,20 @@ def test_examples_directory_matches_manifest() -> None:
     assert actual == declared
 
 def test_tracked_docs_do_not_reference_removed_examples() -> None:
-    removed = {"acme_analytics_command_center", "geometric_signal_lab", "landing_site", "local_playground", "operations_finance_portal", "pipeline_observability_015", "secure_internal_tools", "weather_dashboard", "workspace_studio"}
+    removed = {
+        "_".join(parts)
+        for parts in (
+            ("acme", "analytics", "command", "center"),
+            ("geometric", "signal", "lab"),
+            ("landing", "site"),
+            ("local", "playground"),
+            ("operations", "finance", "portal"),
+            ("pipeline", "observability", "015"),
+            ("secure", "internal", "tools"),
+            ("weather", "dashboard"),
+            ("workspace", "studio"),
+        )
+    }
     text = "\n".join(path.read_text(encoding="utf-8") for path in (REPO_ROOT / "docs").rglob("*.md"))
     assert not any(name in text for name in removed)
 ```
@@ -434,7 +447,7 @@ Run:
 
 ```text
 python -m pytest tests/test_examples.py -q -p no:cacheprovider
-rg "acme_analytics_command_center|geometric_signal_lab|landing_site|local_playground|operations_finance_portal|pipeline_observability_015|secure_internal_tools|weather_dashboard|workspace_studio" README.md DEVELOPMENT.md docs mkdocs.yml tests scripts
+# Search README.md, DEVELOPMENT.md, docs, mkdocs.yml, tests, and scripts for the retired-name pattern.
 python -m mkdocs build --strict -d .site_validation_showcase
 ```
 

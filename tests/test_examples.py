@@ -17,22 +17,21 @@ from scripts.example_manifest import load_example_manifest
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES_ROOT = REPO_ROOT / "examples"
 
-FLAGSHIP_EXAMPLES = {
-    "acme_analytics_command_center",
+MAINTAINED_EXAMPLES = {
+    "auth_portal",
+    "chatbot_workspace",
     "component_studio",
     "clinical_trial_command_center",
     "data_pipeline_command_center",
-    "geometric_signal_lab",
-    "secure_internal_tools",
-    "workspace_studio",
+    "counter",
 }
 
-RUNTIME_SMOKE_EXAMPLES = (
-    "operations_finance_portal",
-    "weather_dashboard",
+PUBLIC_RUNTIME_SMOKE_EXAMPLES = (
+    "counter",
     "component_studio",
+    "data_pipeline_command_center",
     "auth_portal",
-    "pipeline_observability_015",
+    "chatbot_workspace",
 )
 
 MEDIA_PROP_KEYS = frozenset({"src", "poster", "logo", "favicon", "avatar", "image"})
@@ -111,6 +110,36 @@ def test_maintained_example_manifest_is_complete() -> None:
         assert (root / "app.py").is_file()
         assert (root / "requirements.txt").is_file()
         assert (root / "app.yaml").is_file()
+
+
+def test_examples_directory_matches_manifest() -> None:
+    declared = {spec.name for spec in load_example_manifest(REPO_ROOT)}
+    actual = {path.name for path in EXAMPLES_ROOT.iterdir() if path.is_dir()}
+
+    assert actual == declared
+
+
+def test_tracked_docs_do_not_reference_removed_examples() -> None:
+    removed = {
+        "_".join(parts)
+        for parts in (
+            ("acme", "analytics", "command", "center"),
+            ("geometric", "signal", "lab"),
+            ("landing", "site"),
+            ("local", "playground"),
+            ("operations", "finance", "portal"),
+            ("pipeline", "observability", "015"),
+            ("secure", "internal", "tools"),
+            ("weather", "dashboard"),
+            ("workspace", "studio"),
+        )
+    }
+    text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (REPO_ROOT / "docs").rglob("*.md")
+    )
+
+    assert not any(name in text for name in removed)
 
 
 def test_maintained_examples_are_self_contained() -> None:
@@ -321,10 +350,10 @@ def test_every_example_app_compiles() -> None:
         compile(source, str(app_path), "exec")
 
 
-def test_flagship_examples_exist() -> None:
+def test_maintained_examples_exist() -> None:
     available_examples = {path.name for path in EXAMPLES_ROOT.iterdir() if path.is_dir()}
 
-    assert FLAGSHIP_EXAMPLES.issubset(available_examples)
+    assert MAINTAINED_EXAMPLES.issubset(available_examples)
 
 
 def test_retained_example_routes_render_with_self_contained_media() -> None:
@@ -729,8 +758,8 @@ def test_flagship_websocket_switches_every_operational_view() -> None:
         assert expected_markers[view_key] in json.dumps(response)
 
 
-@pytest.mark.parametrize("example_name", RUNTIME_SMOKE_EXAMPLES)
-def test_maintained_example_serves_shell_and_full_websocket_tree(example_name: str) -> None:
+@pytest.mark.parametrize("example_name", PUBLIC_RUNTIME_SMOKE_EXAMPLES)
+def test_public_example_serves_shell_and_full_websocket_tree(example_name: str) -> None:
     app = _load_example_app(example_name)
     client = TestClient(create_asgi_app(app))
 

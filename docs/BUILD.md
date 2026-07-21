@@ -34,14 +34,14 @@ python app.py
 
 Source: [`examples/auth_portal/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/auth_portal/app.py)
 
-Operations + finance portal:
+Data Pipeline Command Center:
 
 ```bash
-cd examples/operations_finance_portal
+cd examples/data_pipeline_command_center
 python app.py
 ```
 
-Source: [`examples/operations_finance_portal/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/operations_finance_portal/app.py)
+Deployment files: [`app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/data_pipeline_command_center/app.py), [`app.yaml`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/data_pipeline_command_center/app.yaml), and [`requirements.txt`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/data_pipeline_command_center/requirements.txt).
 
 By default the server uses `http://127.0.0.1:8050`. To use another port:
 

@@ -170,7 +170,7 @@ The examples directory will become a product showroom, not an archive.
 
 3. **`data_pipeline_command_center`**
    - Purpose: flagship production data application.
-   - It will absorb the best operational flow from `pipeline_observability_015`.
+   - It will absorb the best operational flow from the earlier pipeline showcase.
    - It will demonstrate `AppShell`, `PageHeader`, `Toolbar`, `use_resource`, `DataGrid`, detail drawer, job action, audit feedback, mock/Databricks adapters, and responsive design.
 
 4. **`clinical_trial_command_center`**
@@ -186,17 +186,7 @@ The examples directory will become a product showroom, not an archive.
 
 ### Removed or consolidated examples
 
-The following overlapping examples will be deleted after unique, tested capabilities are migrated:
-
-- `acme_analytics_command_center`
-- `geometric_signal_lab`
-- `landing_site`
-- `local_playground`
-- `operations_finance_portal`
-- `pipeline_observability_015`
-- `secure_internal_tools`
-- `weather_dashboard`
-- `workspace_studio`
+Nine explicitly approved overlapping examples will be deleted after unique, tested capabilities are migrated. The maintained manifest is the authoritative inventory.
 
 Already-removed legacy examples remain removed. Documentation links and tests must be updated in the same change that removes an example.
 

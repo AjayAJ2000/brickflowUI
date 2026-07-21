@@ -239,11 +239,10 @@ Run targeted tests for:
 
 Launch and test at least:
 
-- operations_finance_portal
-- weather_dashboard
 - component_studio
-- auth_portal or secure_internal_tools
-- one pipeline-oriented example
+- counter
+- auth_portal
+- data_pipeline_command_center
 
 For each multi-page app, navigate every visible page twice, then exercise browser Back/Forward. Check that page content changes, no Runtime protocol error banner appears, the socket remains connected, and the console contains no uncaught error.
 

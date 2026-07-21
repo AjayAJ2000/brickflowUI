@@ -487,7 +487,7 @@ Expected: no unresolved high/critical vulnerability in a shipped runtime depende
 
 - [ ] **Step 4: Start a representative multi-page app**
 
-Run: `python examples/acme_analytics_command_center/app.py`
+Run: `python examples/data_pipeline_command_center/app.py`
 
 Expected: server reaches its listening state without traceback.
 
