@@ -14,6 +14,12 @@ _WINDOWS_RESERVED_NAMES = {
     "NUL",
     *(f"COM{number}" for number in range(1, 10)),
     *(f"LPT{number}" for number in range(1, 10)),
+    "COM\u00b9",
+    "COM\u00b2",
+    "COM\u00b3",
+    "LPT\u00b9",
+    "LPT\u00b2",
+    "LPT\u00b3",
 }
 _WINDOWS_INVALID_FILENAME_CHARS = frozenset('<>:"/\\|?*')
 
