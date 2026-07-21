@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+import os
 from pathlib import Path
 import runpy
 import subprocess
+import uuid
 
 import pytest
 from fastapi.testclient import TestClient
@@ -82,6 +84,56 @@ def test_smoke_runner_uses_the_maintained_manifest() -> None:
     assert [item.name for item in configured_checks(REPO_ROOT)] == [
         spec.name for spec in load_example_manifest(REPO_ROOT)
     ]
+
+
+def test_smoke_tree_validator_rejects_unrecognizable_vdom_root() -> None:
+    from scripts.smoke_examples import validate_full_tree
+
+    with pytest.raises(RuntimeError, match="non-empty VDOM root"):
+        validate_full_tree({"type": "full", "tree": {"unexpected": True}}, "/")
+
+
+def test_smoke_tree_validator_accepts_vdom_root() -> None:
+    from scripts.smoke_examples import validate_full_tree
+
+    validate_full_tree({"type": "full", "tree": {"type": "div", "children": []}}, "/")
+
+
+def test_cleanup_rejects_reparse_target() -> None:
+    test_root = REPO_ROOT / ".tmp" / f"cleanup-reparse-{uuid.uuid4().hex}"
+    target = test_root / "target"
+    target.mkdir(parents=True)
+    reparse_target = test_root / "reparse-target"
+    try:
+        os.symlink(target, reparse_target, target_is_directory=True)
+    except OSError as exc:
+        target.rmdir()
+        test_root.rmdir()
+        pytest.skip(f"Symlink creation is not supported: {exc}")
+    try:
+        result = subprocess.run(
+            [
+                "powershell",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "scripts/cleanup_local_artifacts.ps1",
+                "-ValidateTarget",
+                str(reparse_target),
+            ],
+            cwd=REPO_ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        assert result.returncode != 0
+        assert "Refusing cleanup through reparse point" in result.stderr
+    finally:
+        reparse_target.unlink(missing_ok=True)
+        target.rmdir()
+        test_root.rmdir()
 
 
 @pytest.mark.parametrize(

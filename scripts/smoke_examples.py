@@ -17,7 +17,7 @@ REPO_ROOT: Final = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from scripts.example_manifest import ExampleSpec, load_example_manifest
+from scripts.example_manifest import ExampleSpec, load_example_manifest  # noqa: E402
 
 
 STARTUP_TIMEOUT_SECONDS: Final = 35
@@ -92,8 +92,16 @@ def _assert_full_tree(base_url: str, route: str, spec: ExampleSpec) -> None:
         close_timeout=REQUEST_TIMEOUT_SECONDS,
     ) as websocket:
         payload = json.loads(websocket.recv(timeout=REQUEST_TIMEOUT_SECONDS))
+    validate_full_tree(payload, route)
+
+
+def validate_full_tree(payload: object, route: str) -> None:
+    if not isinstance(payload, dict) or payload.get("type") != "full":
+        raise RuntimeError(f"{route} did not return a full message with a non-empty VDOM root")
     tree = payload.get("tree")
-    if payload.get("type") != "full" or not isinstance(tree, dict) or not tree:
+    if not isinstance(tree, dict) or not isinstance(tree.get("type"), str) or not tree["type"]:
+        raise RuntimeError(f"{route} did not return a full message with a non-empty VDOM root")
+    if "children" in tree and not isinstance(tree["children"], list):
         raise RuntimeError(f"{route} did not return a full message with a non-empty VDOM root")
 
 

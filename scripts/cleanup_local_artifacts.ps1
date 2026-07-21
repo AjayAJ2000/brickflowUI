@@ -1,6 +1,7 @@
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [switch]$IncludeBuildArtifacts
+    [switch]$IncludeBuildArtifacts,
+    [string]$ValidateTarget
 )
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
@@ -12,7 +13,7 @@ $forbiddenTargets = @(
     (Join-Path $repoRoot "brickflowui/frontend/dist")
 ) | ForEach-Object { [System.IO.Path]::GetFullPath($_) }
 
-function Remove-RepoTarget([string]$Path) {
+function Assert-SafeRepoTarget([string]$Path) {
     $resolved = [System.IO.Path]::GetFullPath($Path)
     if ($resolved -eq $repoRoot -or -not $resolved.StartsWith($repoPrefix, [System.StringComparison]::OrdinalIgnoreCase)) {
         throw "Refusing cleanup outside repository: $resolved"
@@ -22,11 +23,32 @@ function Remove-RepoTarget([string]$Path) {
             throw "Refusing protected cleanup target: $resolved"
         }
     }
+    $relativePath = $resolved.Substring($repoPrefix.Length)
+    $currentPath = $repoRoot
+    foreach ($component in $relativePath.Split([System.IO.Path]::DirectorySeparatorChar, [System.StringSplitOptions]::RemoveEmptyEntries)) {
+        $currentPath = Join-Path $currentPath $component
+        if (Test-Path -LiteralPath $currentPath) {
+            $item = Get-Item -LiteralPath $currentPath -Force
+            if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+                throw "Refusing cleanup through reparse point: $currentPath"
+            }
+        }
+    }
+    return $resolved
+}
+
+function Remove-RepoTarget([string]$Path) {
+    $resolved = Assert-SafeRepoTarget $Path
     if (Test-Path -LiteralPath $resolved) {
         if ($PSCmdlet.ShouldProcess($resolved, "Remove generated artifact")) {
             Remove-Item -LiteralPath $resolved -Recurse -Force
         }
     }
+}
+
+if ($PSBoundParameters.ContainsKey("ValidateTarget")) {
+    [void](Assert-SafeRepoTarget $ValidateTarget)
+    return
 }
 
 $targets = @(
