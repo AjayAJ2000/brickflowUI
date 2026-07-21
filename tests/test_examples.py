@@ -51,6 +51,14 @@ def test_maintained_example_manifest_is_complete() -> None:
         assert (root / "app.yaml").is_file()
 
 
+def test_manifest_auth_headers_are_immutable() -> None:
+    specs = load_example_manifest(REPO_ROOT)
+    clinical_trial = next(spec for spec in specs if spec.name == "clinical_trial_command_center")
+
+    with pytest.raises(TypeError):
+        clinical_trial.auth_headers["x-brickflow-user-id"] = "changed@example.com"
+
+
 @pytest.mark.parametrize(
     ("payload", "message"),
     [
@@ -97,6 +105,35 @@ def test_manifest_rejects_invalid_configuration(
     manifest_path.write_text(json.dumps(payload), encoding="utf-8")
 
     with pytest.raises(ValueError, match=message):
+        load_example_manifest(tmp_path)
+
+
+@pytest.mark.parametrize(
+    "name",
+    ("counter ", "counter.", "NUL", "nul", "CON", "PRN", "AUX", "COM1", "LPT9"),
+)
+def test_manifest_rejects_windows_aliasing_names(tmp_path: Path, name: str) -> None:
+    manifest_path = tmp_path / "examples" / "manifest.json"
+    manifest_path.parent.mkdir()
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "examples": [
+                    {
+                        "name": name,
+                        "title": "Counter",
+                        "kind": "quickstart",
+                        "routes": ["/"],
+                        "auth_headers": {},
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Example name must be a relative directory name"):
         load_example_manifest(tmp_path)
 
 

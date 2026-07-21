@@ -1,8 +1,20 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
+
+
+_WINDOWS_RESERVED_NAMES = {
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    *(f"COM{number}" for number in range(1, 10)),
+    *(f"LPT{number}" for number in range(1, 10)),
+}
 
 
 @dataclass(frozen=True)
@@ -11,7 +23,7 @@ class ExampleSpec:
     title: str
     kind: str
     routes: tuple[str, ...]
-    auth_headers: dict[str, str]
+    auth_headers: Mapping[str, str]
 
 
 def load_example_manifest(repo_root: Path) -> tuple[ExampleSpec, ...]:
@@ -62,7 +74,7 @@ def _parse_spec(row: object) -> ExampleSpec:
         title=title,
         kind=kind,
         routes=tuple(routes),
-        auth_headers=dict(auth_headers),
+        auth_headers=MappingProxyType(dict(auth_headers)),
     )
 
 
@@ -72,4 +84,6 @@ def _is_relative_directory_name(name: str) -> bool:
         and Path(name).name == name
         and "/" not in name
         and "\\" not in name
+        and not name.endswith((" ", "."))
+        and name.split(".", 1)[0].upper() not in _WINDOWS_RESERVED_NAMES
     )
