@@ -35,6 +35,51 @@ RUNTIME_SMOKE_EXAMPLES = (
     "pipeline_observability_015",
 )
 
+MEDIA_PROP_KEYS = frozenset({"src", "poster", "logo", "favicon", "avatar", "image"})
+REMOTE_MEDIA_PREFIXES = ("http://", "https://", "data:", "blob:")
+
+
+def _load_example_app(example_name: str):
+    app_path = EXAMPLES_ROOT / example_name / "app.py"
+    namespace = runpy.run_path(
+        str(app_path),
+        run_name=f"brickflowui_example_{example_name}",
+    )
+    return namespace["app"]
+
+
+def _iter_media_props(payload: object):
+    if isinstance(payload, dict):
+        for key, value in payload.items():
+            if key in MEDIA_PROP_KEYS:
+                yield key, value
+            yield from _iter_media_props(value)
+    elif isinstance(payload, list):
+        for value in payload:
+            yield from _iter_media_props(value)
+
+
+def _assert_media_value_stays_in_example(app, root: Path, value: object) -> None:
+    if not isinstance(value, (str, Path)):
+        return
+
+    raw = str(value)
+    if raw.lower().startswith(REMOTE_MEDIA_PREFIXES):
+        return
+
+    if raw.startswith("/__brickflow_asset__/"):
+        asset_id = raw.split("/", 3)[2]
+        asset_path = app.get_registered_asset(asset_id)
+        assert asset_path is not None, f"Unregistered app asset URL: {raw}"
+        assert asset_path.is_file(), f"Missing app asset: {asset_path}"
+        resolved_root = root.resolve()
+        assert asset_path == resolved_root or resolved_root in asset_path.parents
+        return
+
+    asset_path = Path(raw).expanduser().resolve()
+    resolved_root = root.resolve()
+    assert asset_path == resolved_root or resolved_root in asset_path.parents
+
 
 def test_maintained_example_manifest_is_complete() -> None:
     specs = load_example_manifest(REPO_ROOT)
@@ -269,14 +314,31 @@ def test_flagship_examples_exist() -> None:
     assert FLAGSHIP_EXAMPLES.issubset(available_examples)
 
 
+def test_retained_example_routes_render_with_self_contained_media() -> None:
+    for spec in load_example_manifest(REPO_ROOT):
+        root = EXAMPLES_ROOT / spec.name
+        app = _load_example_app(spec.name)
+        client = TestClient(create_asgi_app(app))
+
+        for route in spec.routes:
+            response = client.get(route, headers=dict(spec.auth_headers))
+            assert response.status_code == 200, f"{spec.name} did not serve {route}"
+
+            with client.websocket_connect(
+                f"/events?path={route}", headers=dict(spec.auth_headers)
+            ) as websocket:
+                payload = websocket.receive_json()
+
+            assert payload["type"] == "full"
+            tree = payload["tree"]
+            json.dumps(tree)
+            for _, value in _iter_media_props(tree):
+                _assert_media_value_stays_in_example(app, root, value)
+
+
 @pytest.mark.parametrize("example_name", RUNTIME_SMOKE_EXAMPLES)
 def test_maintained_example_serves_shell_and_full_websocket_tree(example_name: str) -> None:
-    app_path = EXAMPLES_ROOT / example_name / "app.py"
-    namespace = runpy.run_path(
-        str(app_path),
-        run_name=f"brickflowui_example_{example_name}",
-    )
-    app = namespace["app"]
+    app = _load_example_app(example_name)
     client = TestClient(create_asgi_app(app))
 
     response = client.get("/")
