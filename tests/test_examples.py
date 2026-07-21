@@ -36,6 +36,29 @@ PUBLIC_RUNTIME_SMOKE_EXAMPLES = (
 
 MEDIA_PROP_KEYS = frozenset({"src", "poster", "logo", "favicon", "avatar", "image"})
 REMOTE_MEDIA_PREFIXES = ("http://", "https://", "data:", "blob:")
+TRACKED_TEXT_SUFFIXES = frozenset(
+    {
+        ".cfg",
+        ".css",
+        ".html",
+        ".ini",
+        ".js",
+        ".json",
+        ".jsx",
+        ".md",
+        ".ps1",
+        ".py",
+        ".sh",
+        ".svg",
+        ".toml",
+        ".ts",
+        ".tsx",
+        ".txt",
+        ".xml",
+        ".yaml",
+        ".yml",
+    }
+)
 
 
 def _load_example_app(example_name: str):
@@ -119,7 +142,7 @@ def test_examples_directory_matches_manifest() -> None:
     assert actual == declared
 
 
-def test_tracked_docs_do_not_reference_removed_examples() -> None:
+def test_tracked_text_does_not_reference_removed_examples() -> None:
     removed = {
         "_".join(parts)
         for parts in (
@@ -134,12 +157,26 @@ def test_tracked_docs_do_not_reference_removed_examples() -> None:
             ("workspace", "studio"),
         )
     }
-    text = "\n".join(
-        path.read_text(encoding="utf-8")
-        for path in (REPO_ROOT / "docs").rglob("*.md")
-    )
+    tracked = subprocess.run(
+        ["git", "ls-files", "-z"],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout.decode("utf-8", errors="surrogateescape")
+    references = {
+        relative_path: sorted(name for name in removed if name in text)
+        for relative_path in tracked.split("\0")
+        if relative_path
+        and Path(relative_path).suffix.lower() in TRACKED_TEXT_SUFFIXES
+        and (
+            text := (REPO_ROOT / relative_path).read_text(
+                encoding="utf-8", errors="replace"
+            )
+        )
+        and any(name in text for name in removed)
+    }
 
-    assert not any(name in text for name in removed)
+    assert not references
 
 
 def test_maintained_examples_are_self_contained() -> None:
