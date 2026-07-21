@@ -14,17 +14,13 @@ This example demonstrates:
 from __future__ import annotations
 
 from pathlib import Path
-import sys
 
 from fastapi import Request, WebSocket
 from fastapi.responses import JSONResponse
 
 APP_DIR = Path(__file__).parent
-REPO_ROOT = APP_DIR.parent.parent
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
 
-import brickflowui as db  # noqa: E402 - repository import follows local path bootstrap
+import brickflowui as db
 
 
 class DemoCookieAuthProvider:

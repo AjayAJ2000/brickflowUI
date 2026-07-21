@@ -5,11 +5,12 @@ from pathlib import Path
 import brickflowui as db
 
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-LOCAL_LOGO = REPO_ROOT / "docs" / "assets" / "brickflowui-mark.svg"
+EXAMPLE_ROOT = Path(__file__).parent
+LOCAL_LOGO = EXAMPLE_ROOT / "assets" / "brickflowui-mark.svg"
 
 app = db.App(
     title="BrickflowUI Component Studio",
+    asset_roots=[EXAMPLE_ROOT],
     logo=str(LOCAL_LOGO) if LOCAL_LOGO.exists() else None,
     favicon=str(LOCAL_LOGO) if LOCAL_LOGO.exists() else None,
     loading={
@@ -377,4 +378,3 @@ def studio():
 
 if __name__ == "__main__":
     app.run()
-

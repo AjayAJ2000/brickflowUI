@@ -55,6 +55,18 @@ def test_maintained_example_manifest_is_complete() -> None:
         assert (root / "app.yaml").is_file()
 
 
+def test_maintained_examples_are_self_contained() -> None:
+    for spec in load_example_manifest(REPO_ROOT):
+        root = EXAMPLES_ROOT / spec.name
+        source = (root / "app.py").read_text(encoding="utf-8-sig")
+
+        assert "sys.path" not in source
+        assert "../../" not in source.replace("\\\\", "/")
+        assert "brickflowui" in (root / "requirements.txt").read_text(encoding="utf-8").lower()
+        manifest = (root / "app.yaml").read_text(encoding="utf-8")
+        assert "python" in manifest and "app.py" in manifest
+
+
 def test_manifest_auth_headers_are_immutable() -> None:
     specs = load_example_manifest(REPO_ROOT)
     clinical_trial = next(spec for spec in specs if spec.name == "clinical_trial_command_center")
