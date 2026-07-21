@@ -59,6 +59,19 @@ def _iter_media_props(payload: object):
             yield from _iter_media_props(value)
 
 
+def _find_payload_nodes(payload: object, node_type: str) -> list[dict]:
+    found: list[dict] = []
+    if isinstance(payload, dict):
+        if payload.get("type") == node_type:
+            found.append(payload)
+        for value in payload.values():
+            found.extend(_find_payload_nodes(value, node_type))
+    elif isinstance(payload, list):
+        for value in payload:
+            found.extend(_find_payload_nodes(value, node_type))
+    return found
+
+
 def _assert_media_value_stays_in_example(app, root: Path, value: object) -> None:
     if not isinstance(value, (str, Path)):
         return
@@ -353,6 +366,288 @@ def test_flagship_exposes_complete_operational_views() -> None:
     assert {
         card["id"] for column in columns for card in column["cards"]
     } == {row["pipeline"] for row in rows}
+
+
+def test_flagship_source_result_reports_sql_success_and_safe_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    namespace = runpy.run_path(
+        str(EXAMPLES_ROOT / "data_pipeline_command_center" / "app.py")
+    )
+    load_pipeline_source = namespace["load_pipeline_source"]
+    sql_module = pytest.importorskip("brickflowui.databricks.sql")
+    sql_rows = [{**namespace["PIPELINE_RECORDS"][0], "pipeline": "sql_customer"}]
+    monkeypatch.setenv("DEMO_PIPELINE_METRICS_TABLE", "main.ops.pipeline_metrics")
+    monkeypatch.setattr(sql_module, "query_to_records", lambda _: sql_rows)
+
+    rows, source = load_pipeline_source("sql")
+
+    assert rows == sql_rows
+    assert source == {
+        "requested": "sql",
+        "active": "sql",
+        "fallback": False,
+        "error": None,
+    }
+
+    def unavailable(_: str) -> list[dict]:
+        raise RuntimeError("warehouse secret must not escape")
+
+    monkeypatch.setattr(sql_module, "query_to_records", unavailable)
+    rows, source = load_pipeline_source("sql")
+
+    assert rows == namespace["PIPELINE_RECORDS"]
+    assert source == {
+        "requested": "sql",
+        "active": "mock",
+        "fallback": True,
+        "error": "SQL source unavailable",
+    }
+    assert "warehouse secret" not in json.dumps(source)
+    assert "warehouse secret must not escape" in caplog.text
+
+
+def test_flagship_charts_only_render_the_filtered_scope() -> None:
+    namespace = runpy.run_path(
+        str(EXAMPLES_ROOT / "data_pipeline_command_center" / "app.py")
+    )
+    selected = [namespace["PIPELINE_RECORDS"][3]]
+    overview = namespace["overview_page"](
+        selected, "YTD", False, lambda _: None
+    ).serialize({})
+    reliability = namespace["reliability_page"](
+        selected, "No signal selected", lambda _: None
+    ).serialize({})
+
+    overview_chart = _find_payload_nodes(overview, "ComposedChart")[0]
+    reliability_chart = _find_payload_nodes(reliability, "ComposedChart")[0]
+    heatmap = _find_payload_nodes(reliability, "Heatmap")[0]
+    assert overview_chart["props"]["data"] == [
+        {
+            "scope": "ML Features",
+            "rows_m": 96,
+            "cost_usd": 219,
+            "sla_pct": 96.8,
+        }
+    ]
+    assert reliability_chart["props"]["data"] == overview_chart["props"]["data"]
+    assert heatmap["props"]["data"] == [
+        {
+            "pipeline": "ML Features",
+            "layer": "silver",
+            "failures": 4,
+        }
+    ]
+
+    empty_overview = namespace["overview_page"](
+        [], "YTD", False, lambda _: None
+    ).serialize({})
+    empty_reliability = namespace["reliability_page"](
+        [], "No signal selected", lambda _: None
+    ).serialize({})
+    assert not _find_payload_nodes(empty_overview, "ComposedChart")
+    assert not _find_payload_nodes(empty_reliability, "ComposedChart")
+    assert not _find_payload_nodes(empty_reliability, "ScatterChart")
+    assert not _find_payload_nodes(empty_reliability, "Heatmap")
+
+
+def test_flagship_emits_status_values_supported_by_the_renderer() -> None:
+    namespace = runpy.run_path(
+        str(EXAMPLES_ROOT / "data_pipeline_command_center" / "app.py")
+    )
+    at_risk = [
+        row for row in namespace["PIPELINE_RECORDS"] if row["status"] == "At Risk"
+    ]
+    nodes, _ = namespace["pipeline_flow"](at_risk)
+    columns = namespace["triage_columns"](at_risk)
+
+    assert nodes[0]["status"] == "at risk"
+    assert columns[2]["id"] == "at-risk"
+    assert columns[2]["cards"][0]["status"] == "at risk"
+
+
+def test_flagship_header_children_do_not_force_desktop_stacking() -> None:
+    namespace = runpy.run_path(
+        str(EXAMPLES_ROOT / "data_pipeline_command_center" / "app.py")
+    )
+    header = namespace["top_nav"](
+        "overview", lambda _: None, lambda _: None
+    ).serialize({})
+    outer_row = header["children"][0]
+    brand, navigation = outer_row["children"]
+
+    assert outer_row["props"]["wrap"] is True
+    assert brand["props"]["style"] == {
+        "width": "auto",
+        "flex": "0 0 auto",
+    }
+    assert navigation["props"]["style"] == {
+        "width": "auto",
+        "flex": "1 1 auto",
+        "minWidth": "0",
+        "overflowX": "auto",
+        "justifyContent": "flex-end",
+    }
+
+
+def test_flagship_websocket_reports_actual_sql_source_transitions(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    namespace = runpy.run_path(
+        str(EXAMPLES_ROOT / "data_pipeline_command_center" / "app.py")
+    )
+    sql_module = pytest.importorskip("brickflowui.databricks.sql")
+    monkeypatch.setenv("DEMO_PIPELINE_METRICS_TABLE", "main.ops.pipeline_metrics")
+    app = namespace["app"]
+    client = TestClient(create_asgi_app(app))
+
+    def select_sql() -> dict:
+        with client.websocket_connect("/events?path=/") as websocket:
+            full = websocket.receive_json()
+            source_select = next(
+                node
+                for node in _find_payload_nodes(full, "Select")
+                if node["props"]["name"] == "source_mode"
+            )
+            websocket.send_json(
+                {
+                    "type": "event",
+                    "event_id": source_select["props"]["change"],
+                    "data": {"value": "sql"},
+                }
+            )
+            return websocket.receive_json()
+
+    monkeypatch.setattr(
+        sql_module,
+        "query_to_records",
+        lambda _: [{**namespace["PIPELINE_RECORDS"][0], "pipeline": "from_sql"}],
+    )
+    success = select_sql()
+    assert success["type"] == "patch"
+    assert "SQL source active" in json.dumps(success)
+    assert "Active: SQL" in json.dumps(success)
+
+    def unavailable(_: str) -> list[dict]:
+        raise RuntimeError("private warehouse detail")
+
+    monkeypatch.setattr(sql_module, "query_to_records", unavailable)
+    fallback = select_sql()
+    serialized_fallback = json.dumps(fallback)
+    assert fallback["type"] == "patch"
+    assert "SQL fallback active" in serialized_fallback
+    assert "SQL source unavailable" in serialized_fallback
+    assert "Active: MOCK" in serialized_fallback
+    assert "private warehouse detail" not in serialized_fallback
+
+
+def test_flagship_websocket_covers_operational_state_transitions() -> None:
+    namespace = runpy.run_path(
+        str(EXAMPLES_ROOT / "data_pipeline_command_center" / "app.py")
+    )
+    client = TestClient(create_asgi_app(namespace["app"]))
+
+    def send_event(websocket, node: dict, event_name: str, value: object) -> dict:
+        websocket.send_json(
+            {
+                "type": "event",
+                "event_id": node["props"][event_name],
+                "data": {"value": value},
+            }
+        )
+        response = websocket.receive_json()
+        assert response["type"] == "patch", response
+        return response
+
+    def view_button(payload: object, view_key: str) -> dict:
+        return next(
+            node
+            for node in _find_payload_nodes(payload, "Button")
+            if node["props"].get("viewKey") == view_key
+        )
+
+    with client.websocket_connect("/events?path=/") as websocket:
+        full = websocket.receive_json()
+        search = next(
+            node
+            for node in _find_payload_nodes(full, "Input")
+            if node["props"]["name"] == "search"
+        )
+        empty = send_event(websocket, search, "change", "no-such-pipeline")
+        serialized_empty = json.dumps(empty)
+        assert "Empty filtered result" in serialized_empty
+        assert "No pipelines match the current filters" in serialized_empty
+
+    with client.websocket_connect("/events?path=/") as websocket:
+        full = websocket.receive_json()
+        pipelines = send_event(
+            websocket, view_button(full, "pipelines"), "click", None
+        )
+        assert websocket.receive_json()["type"] == "event_complete"
+        graph = _find_payload_nodes(pipelines, "PipelineGraph")[0]
+        selection = send_event(
+            websocket,
+            graph,
+            "nodeClick",
+            {"id": "ml_features", "label": "ML Features", "status": "at risk"},
+        )
+        assert "ML Features selected for operational review" in json.dumps(selection)
+
+    with client.websocket_connect("/events?path=/") as websocket:
+        full = websocket.receive_json()
+        triage = send_event(websocket, view_button(full, "triage"), "click", None)
+        assert websocket.receive_json()["type"] == "event_complete"
+        board = _find_payload_nodes(triage, "KanbanBoard")[0]
+        selection = send_event(
+            websocket,
+            board,
+            "cardClick",
+            {"id": "ml_features", "title": "ML Features", "column": "at-risk"},
+        )
+        assert "ML Features opened from the triage queue" in json.dumps(selection)
+
+    with client.websocket_connect("/events?path=/") as websocket:
+        full = websocket.receive_json()
+        pipelines = send_event(
+            websocket, view_button(full, "pipelines"), "click", None
+        )
+        assert websocket.receive_json()["type"] == "event_complete"
+        run_button = next(
+            node
+            for node in _find_payload_nodes(pipelines, "Button")
+            if node["props"]["label"] == "Run simulated refresh"
+        )
+        complete_button = next(
+            node
+            for node in _find_payload_nodes(pipelines, "Button")
+            if node["props"]["label"] == "Complete simulated run"
+        )
+        pending = send_event(websocket, run_button, "click", None)
+        assert "Simulated action pending" in json.dumps(pending)
+        assert websocket.receive_json()["type"] == "event_complete"
+        success = send_event(websocket, complete_button, "click", None)
+        assert "Simulated action acknowledged" in json.dumps(success)
+
+    with client.websocket_connect("/events?path=/") as websocket:
+        full = websocket.receive_json()
+        assistant = send_event(
+            websocket, view_button(full, "assistant"), "click", None
+        )
+        assert websocket.receive_json()["type"] == "event_complete"
+        chat_input = _find_payload_nodes(assistant, "ChatInput")[0]
+        complete_button = next(
+            node
+            for node in _find_payload_nodes(assistant, "Button")
+            if node["props"]["label"] == "Complete simulated response"
+        )
+        pending = send_event(
+            websocket, chat_input, "submit", "Which pipeline is at risk?"
+        )
+        assert "simulated response is pending" in json.dumps(pending)
+        assert websocket.receive_json()["type"] == "event_complete"
+        complete = send_event(websocket, complete_button, "click", None)
+        assert "Simulated analysis: ML Features" in json.dumps(complete)
 
 
 def test_flagship_websocket_switches_every_operational_view() -> None:

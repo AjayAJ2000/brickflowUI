@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import os
+import logging
 
 import brickflowui as db
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 BRICKFLOW_THEME = {
@@ -69,27 +73,6 @@ PIPELINE_RECORDS = [
     {"pipeline": "product_analytics", "pipeline_label": "Product Analytics", "domain": "gold", "owner": "Product Data", "status": "Healthy", "freshness_min": 17, "sla_target_min": 40, "rows_processed_m": 164, "cost_usd": 172, "success_rate": 99.3, "latency_min": 22, "incidents": 1},
 ]
 
-THROUGHPUT_TREND = [
-    {"week": "W01", "rows_m": 1310, "cost_usd": 1012, "sla_pct": 97.8},
-    {"week": "W02", "rows_m": 1384, "cost_usd": 1038, "sla_pct": 98.2},
-    {"week": "W03", "rows_m": 1451, "cost_usd": 1076, "sla_pct": 97.5},
-    {"week": "W04", "rows_m": 1495, "cost_usd": 1092, "sla_pct": 98.6},
-    {"week": "W05", "rows_m": 1548, "cost_usd": 1110, "sla_pct": 98.8},
-    {"week": "W06", "rows_m": 1602, "cost_usd": 1128, "sla_pct": 99.1},
-]
-
-FAILURE_HEATMAP = [
-    {"window": "00–06", "layer": "bronze", "failures": 0},
-    {"window": "00–06", "layer": "silver", "failures": 1},
-    {"window": "00–06", "layer": "gold", "failures": 0},
-    {"window": "06–12", "layer": "bronze", "failures": 0},
-    {"window": "06–12", "layer": "silver", "failures": 3},
-    {"window": "06–12", "layer": "gold", "failures": 1},
-    {"window": "12–18", "layer": "bronze", "failures": 1},
-    {"window": "12–18", "layer": "silver", "failures": 2},
-    {"window": "12–18", "layer": "gold", "failures": 0},
-]
-
 SQL_EXAMPLE = """-- Normalized metrics boundary used by this application
 SELECT pipeline, pipeline_label, domain, owner, status,
        freshness_min, sla_target_min, rows_processed_m,
@@ -98,14 +81,24 @@ FROM your_catalog.your_schema.pipeline_metrics
 """
 
 
-def load_pipeline_records(source_mode: str) -> list[dict]:
-    """Load normalized records, falling back to safe mock data for the showcase."""
+def load_pipeline_source(source_mode: str) -> tuple[list[dict], dict]:
+    """Load normalized records with safe, browser-ready source metadata."""
     if source_mode != "sql":
-        return PIPELINE_RECORDS
+        return PIPELINE_RECORDS, {
+            "requested": "mock",
+            "active": "mock",
+            "fallback": False,
+            "error": None,
+        }
 
     table_name = os.getenv("DEMO_PIPELINE_METRICS_TABLE", "").strip()
     if not table_name:
-        return PIPELINE_RECORDS
+        return PIPELINE_RECORDS, {
+            "requested": "sql",
+            "active": "mock",
+            "fallback": True,
+            "error": "SQL table is not configured",
+        }
 
     try:
         from brickflowui.databricks import sql
@@ -116,9 +109,30 @@ def load_pipeline_records(source_mode: str) -> list[dict]:
                cost_usd, success_rate, latency_min, incidents
         FROM {table_name}
         """
-        return sql.query_to_records(query)
+        return sql.query_to_records(query), {
+            "requested": "sql",
+            "active": "sql",
+            "fallback": False,
+            "error": None,
+        }
     except Exception:
-        return PIPELINE_RECORDS
+        LOGGER.exception("Databricks SQL pipeline source failed; using mock fallback")
+        return PIPELINE_RECORDS, {
+            "requested": "sql",
+            "active": "mock",
+            "fallback": True,
+            "error": "SQL source unavailable",
+        }
+
+
+def load_pipeline_records(source_mode: str) -> list[dict]:
+    """Compatibility adapter returning normalized records without metadata."""
+    records, _ = load_pipeline_source(source_mode)
+    return records
+
+
+def _renderer_status(status: str) -> str:
+    return status.strip().lower()
 
 
 def pipeline_flow(records: list[dict]) -> tuple[list[dict], list[dict]]:
@@ -133,7 +147,7 @@ def pipeline_flow(records: list[dict]) -> tuple[list[dict], list[dict]]:
             "id": row["pipeline"],
             "label": row["pipeline_label"],
             "layer": row["domain"],
-            "status": row["status"].lower().replace(" ", "-"),
+            "status": _renderer_status(row["status"]),
         }
         for row in ordered_records
     ]
@@ -166,13 +180,36 @@ def triage_columns(records: list[dict]) -> list[dict]:
                     "id": row["pipeline"],
                     "title": row["pipeline_label"],
                     "subtitle": f"{row['freshness_min']}m freshness · {row['success_rate']:.1f}% success",
-                    "status": row["status"].lower().replace(" ", "-"),
+                    "status": _renderer_status(row["status"]),
                 }
                 for row in records
                 if row["status"] in statuses
             ],
         }
         for group_id, label, statuses in groups
+    ]
+
+
+def operational_chart_data(records: list[dict]) -> list[dict]:
+    return [
+        {
+            "scope": row["pipeline_label"],
+            "rows_m": row["rows_processed_m"],
+            "cost_usd": row["cost_usd"],
+            "sla_pct": row["success_rate"],
+        }
+        for row in records
+    ]
+
+
+def reliability_heatmap_data(records: list[dict]) -> list[dict]:
+    return [
+        {
+            "pipeline": row["pipeline_label"],
+            "layer": row["domain"],
+            "failures": row["incidents"],
+        }
+        for row in records
     ]
 
 
@@ -202,24 +239,23 @@ def _empty_state(records: list[dict]):
     )
 
 
-def _source_notice(source_mode: str):
-    table_name = os.getenv("DEMO_PIPELINE_METRICS_TABLE", "").strip()
-    if source_mode == "mock":
+def _source_notice(source: dict):
+    if source["active"] == "mock" and not source["fallback"]:
         return db.Alert(
             "Local mock records are active. Actions and acknowledgements in this showcase are simulated.",
             type="info",
             title="Mock source active",
         )
-    if not table_name:
+    if source["fallback"]:
         return db.Alert(
-            "Databricks SQL was selected, but DEMO_PIPELINE_METRICS_TABLE is not set. Showing mock records as a safe fallback.",
+            f"{source['error']}. Showing normalized mock records as a safe fallback.",
             type="warning",
             title="SQL fallback active",
         )
     return db.Alert(
-        "Databricks SQL is selected. If table access is denied or the query fails, the app keeps private error details on the server and shows mock records.",
-        type="info",
-        title="SQL source requested",
+        "Databricks SQL returned normalized pipeline records for the current operating scope.",
+        type="success",
+        title="SQL source active",
     )
 
 
@@ -310,17 +346,33 @@ def overview_page(records: list[dict], period: str, show_data_model, set_show_da
         _page_heading("Operational pulse", "A dense read on throughput, freshness, and pipelines requiring intervention.", f"{period} snapshot"),
     ]
     if empty:
-        children.append(empty)
-    children.extend(
-        [
+        children.extend(
+            [
+                empty,
+                db.Card(
+                    [
+                        db.SectionHeader(
+                            "Pipeline register",
+                            "No records are available in the current filtered scope.",
+                        ),
+                        table,
+                    ]
+                ),
+            ]
+        )
+    else:
+        children.append(
             db.Grid(
                 [
-                    db.Card([db.ComposedChart(THROUGHPUT_TREND, x_key="week", bar_keys=["rows_m"], line_keys=["sla_pct"], area_keys=["cost_usd"], title="Volume, SLA, and compute trend", colors=CHART_COLORS, height=300)]),
+                    db.Card([db.ComposedChart(operational_chart_data(records), x_key="scope", bar_keys=["rows_m"], line_keys=["sla_pct"], area_keys=["cost_usd"], title="Filtered volume, SLA, and compute", colors=CHART_COLORS, height=300)]),
                     db.Card([db.SectionHeader("Pipeline register", "The operational source of truth for the current filters."), table]),
                 ],
                 cols=2,
                 gap=4,
-            ),
+            )
+        )
+    children.extend(
+        [
             db.Card(
                 [
                     db.Row(
@@ -373,24 +425,25 @@ def pipelines_page(records: list[dict], selected_node: str, set_selected_node, j
 def reliability_page(records: list[dict], selected_signal: str, set_selected_signal):
     empty = _empty_state(records)
     children = [
-        _page_heading("Reliability signals", "Correlate cost, duration, failures, and success-rate movement before choosing an intervention.", "6-week window"),
+        _page_heading("Reliability signals", "Correlate cost, duration, failures, and success-rate movement before choosing an intervention.", "Filtered scope"),
     ]
     if empty:
         children.append(empty)
-    children.extend(
-        [
-            db.Alert(selected_signal, type="info", title="Selected reliability signal"),
-            db.Grid(
-                [
-                    db.Card([db.ComposedChart(THROUGHPUT_TREND, x_key="week", bar_keys=["rows_m"], line_keys=["sla_pct"], area_keys=["cost_usd"], title="Throughput, SLA, and cost", colors=CHART_COLORS, height=300)]),
-                    db.Card([db.ScatterChart(records, x_key="cost_usd", y_key="latency_min", title="Run cost vs latency", color=CHART_COLORS[0], empty_message="No reliability points match the filters.", on_click=lambda point: set_selected_signal(f"{point.get('pipeline_label', 'Pipeline')} selected: ${point.get('cost_usd', 0)} cost and {point.get('latency_min', 0)}m latency."))]),
-                ],
-                cols=2,
-                gap=4,
-            ),
-            db.Card([db.Heatmap(FAILURE_HEATMAP, x_key="window", y_key="layer", value_key="failures", title="Failure concentration by layer", color=CHART_COLORS[0], on_click=lambda cell: set_selected_signal(f"{cell.get('layer', 'Layer')} recorded {cell.get('failures', 0)} failures in {cell.get('window', 'the selected window')}."))]),
-        ]
-    )
+    else:
+        children.extend(
+            [
+                db.Alert(selected_signal, type="info", title="Selected reliability signal"),
+                db.Grid(
+                    [
+                        db.Card([db.ComposedChart(operational_chart_data(records), x_key="scope", bar_keys=["rows_m"], line_keys=["sla_pct"], area_keys=["cost_usd"], title="Filtered throughput, SLA, and cost", colors=CHART_COLORS, height=300)]),
+                        db.Card([db.ScatterChart(records, x_key="cost_usd", y_key="latency_min", title="Run cost vs latency", color=CHART_COLORS[0], empty_message="No reliability points match the filters.", on_click=lambda point: set_selected_signal(f"{point.get('pipeline_label', 'Pipeline')} selected: ${point.get('cost_usd', 0)} cost and {point.get('latency_min', 0)}m latency."))]),
+                    ],
+                    cols=2,
+                    gap=4,
+                ),
+                db.Card([db.Heatmap(reliability_heatmap_data(records), x_key="pipeline", y_key="layer", value_key="failures", title="Incidents by pipeline and layer", color=CHART_COLORS[0], on_click=lambda cell: set_selected_signal(f"{cell.get('pipeline', 'Pipeline')} recorded {cell.get('failures', 0)} incidents in {cell.get('layer', 'the selected layer')}."))]),
+            ]
+        )
     return db.Column(children, gap=4)
 
 
@@ -457,8 +510,8 @@ def top_nav(active_view: str, set_active_view, set_show_brief):
         [
             db.Row(
                 [
-                    db.Column([db.Text("BrickflowUI", variant="h3"), db.Text("Pipeline Command Center", variant="caption", muted=True)], gap=0, style={"flexShrink": "0"}),
-                    db.Row(buttons, gap=1, align="center", style={"minWidth": "0", "overflowX": "auto"}),
+                    db.Column([db.Text("BrickflowUI", variant="h3"), db.Text("Pipeline Command Center", variant="caption", muted=True)], gap=0, style={"width": "auto", "flex": "0 0 auto"}),
+                    db.Row(buttons, gap=1, align="center", style={"width": "auto", "flex": "1 1 auto", "minWidth": "0", "overflowX": "auto", "justifyContent": "flex-end"}),
                 ],
                 justify="between",
                 align="center",
@@ -511,7 +564,8 @@ def command_center():
     assistant_status, set_assistant_status = db.use_state("empty")
     assistant_answer, set_assistant_answer = db.use_state("")
 
-    all_records = db.use_memo(lambda: load_pipeline_records(source_mode), [source_mode])
+    source_result = db.use_memo(lambda: load_pipeline_source(source_mode), [source_mode])
+    all_records, source = source_result
     normalized_search = search.strip().lower()
     records = [
         row
@@ -550,9 +604,9 @@ def command_center():
             top_nav(active_view, set_active_view, set_show_brief),
             db.Column(
                 [
-                    db.Row([db.Column([db.Text("Production pipeline operations", variant="h2"), db.Text("Freshness, reliability, cost, lineage, and triage from one normalized data boundary.", muted=True)], gap=1), db.Badge(f"Source: {source_mode.upper()}", color="gray")], justify="between", align="center", wrap=True),
+                    db.Row([db.Column([db.Text("Production pipeline operations", variant="h2"), db.Text("Freshness, reliability, cost, lineage, and triage from one normalized data boundary.", muted=True)], gap=1), db.Badge(f"Requested: {source['requested'].upper()} · Active: {source['active'].upper()}", color="gray")], justify="between", align="center", wrap=True),
                     _summary_strip(records, period),
-                    _source_notice(source_mode),
+                    _source_notice(source),
                     views[active_view](),
                     _filters(source_mode, set_source_mode, domain, set_domain, pipeline, set_pipeline, period, set_period, search, set_search, min_sla, set_min_sla, critical_only, set_critical_only),
                 ],

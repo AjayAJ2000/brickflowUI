@@ -102,3 +102,84 @@ no matches
 - `examples/data_pipeline_command_center/app.py`
 - `examples/data_pipeline_command_center/requirements.txt`
 - `tests/test_examples.py`
+
+## Independent review follow-up
+
+Commit `c8e50e5` received five actionable findings. The follow-up resolves all five at the scoped example boundary.
+
+### Source truth and safe fallback
+
+- Added `load_pipeline_source(source_mode) -> tuple[list[dict], dict]` while preserving `load_pipeline_records(source_mode) -> list[dict]`.
+- Source metadata now reports requested source, actual active source, fallback state, and a safe public error code.
+- Confirmed SQL results render `SQL source active` and `Active: SQL`.
+- Missing configuration or query exceptions render `SQL fallback active`, `Active: MOCK`, and a safe error message. Raw exception details remain server-side.
+- Query exceptions are logged with their private traceback while browser metadata contains only `SQL source unavailable`.
+- Added direct success/exception tests and WebSocket source-selector transition tests.
+
+RED evidence:
+
+```text
+python -m pytest tests/test_examples.py::test_flagship_source_result_reports_sql_success_and_safe_fallback -q -p no:cacheprovider
+FAILED ... KeyError: 'load_pipeline_source'
+```
+
+After the helper was added, the WebSocket test initially failed because the UI still rendered `SQL source requested`; wiring the UI to actual loader metadata made both contracts green.
+
+A final logging assertion also failed red with an empty captured log before `LOGGER.exception(...)` was added to the fallback boundary.
+
+### Honest filtered visualizations
+
+- Removed the static six-week trend and failure heatmap from filtered views.
+- Added `operational_chart_data(records)` and `reliability_heatmap_data(records)`, both derived only from the current filtered records.
+- Overview and Reliability suppress their charts when no records match and render explicit empty-state copy instead.
+
+RED evidence:
+
+```text
+python -m pytest tests/test_examples.py::test_flagship_charts_only_render_the_filtered_scope -q -p no:cacheprovider
+FAILED: expected one ML Features point, received six static weekly points
+```
+
+### Renderer-compatible status and desktop header
+
+- Pipeline graph and Kanban cards now emit `at risk`, which is recognized by `statusTone`; the stable lane ID remains `at-risk`.
+- Header brand and navigation children override the layout renderer's default `width: 100%` with intrinsic/flexible widths. The outer row remains wrapping for narrow viewports and the navigation remains horizontally contained.
+
+RED evidence:
+
+```text
+python -m pytest tests/test_examples.py::test_flagship_emits_status_values_supported_by_the_renderer -q -p no:cacheprovider
+FAILED: assert 'at-risk' == 'at risk'
+
+python -m pytest tests/test_examples.py::test_flagship_header_children_do_not_force_desktop_stacking -q -p no:cacheprovider
+FAILED: brand style only contained flexShrink and did not override width
+```
+
+### Complete WebSocket lifecycle coverage
+
+`test_flagship_websocket_covers_operational_state_transitions` now exercises:
+
+- empty search filters and explicit empty-state feedback;
+- `PipelineGraph` node callbacks;
+- `KanbanBoard` card callbacks;
+- simulated refresh pending-to-success transitions;
+- assistant submit/pending/complete transitions.
+
+### Follow-up verification
+
+```text
+python -m pytest tests/test_examples.py -k "flagship" -q -p no:cacheprovider
+9 passed, 47 deselected
+
+python -m pytest tests/test_examples.py tests/test_app_server.py -q -p no:cacheprovider --basetemp .tmp/pytest-task4-review-final
+98 passed in 3.82s
+
+python scripts/smoke_examples.py
+All manifest examples passed smoke checks.
+
+python -m ruff check examples/data_pipeline_command_center/app.py tests/test_examples.py
+All checks passed!
+
+git diff --check
+exit 0
+```
