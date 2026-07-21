@@ -8,6 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from brickflowui.server import create_asgi_app
+from scripts.example_manifest import load_example_manifest
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES_ROOT = REPO_ROOT / "examples"
@@ -29,6 +30,74 @@ RUNTIME_SMOKE_EXAMPLES = (
     "auth_portal",
     "pipeline_observability_015",
 )
+
+
+def test_maintained_example_manifest_is_complete() -> None:
+    specs = load_example_manifest(REPO_ROOT)
+
+    assert [spec.name for spec in specs] == [
+        "counter",
+        "component_studio",
+        "data_pipeline_command_center",
+        "clinical_trial_command_center",
+        "auth_portal",
+        "chatbot_workspace",
+    ]
+    assert len({spec.name for spec in specs}) == len(specs)
+    for spec in specs:
+        root = EXAMPLES_ROOT / spec.name
+        assert (root / "app.py").is_file()
+        assert (root / "requirements.txt").is_file()
+        assert (root / "app.yaml").is_file()
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        ({"schema_version": 2, "examples": []}, "Unsupported examples manifest schema_version"),
+        ({"schema_version": 1, "examples": {}}, "examples must be a list"),
+        (
+            {
+                "schema_version": 1,
+                "examples": [
+                    {"name": "counter", "title": "Counter", "kind": "quickstart", "routes": ["/"], "auth_headers": {}},
+                    {"name": "counter", "title": "Counter", "kind": "quickstart", "routes": ["/"], "auth_headers": {}},
+                ],
+            },
+            "Example names must be unique",
+        ),
+        (
+            {
+                "schema_version": 1,
+                "examples": [{"name": "../counter", "title": "Counter", "kind": "quickstart", "routes": ["/"], "auth_headers": {}}],
+            },
+            "Example name must be a relative directory name",
+        ),
+        (
+            {
+                "schema_version": 1,
+                "examples": [{"name": "counter", "title": "Counter", "kind": "quickstart", "routes": [], "auth_headers": {}}],
+            },
+            "Example routes must be a non-empty list of strings",
+        ),
+        (
+            {
+                "schema_version": 1,
+                "examples": [{"name": "counter", "title": "Counter", "kind": "quickstart", "routes": ["/"], "auth_headers": {"x-user": 1}}],
+            },
+            "Example auth_headers must map strings to strings",
+        ),
+    ],
+)
+def test_manifest_rejects_invalid_configuration(
+    tmp_path: Path, payload: dict[str, object], message: str
+) -> None:
+    manifest_path = tmp_path / "examples" / "manifest.json"
+    manifest_path.parent.mkdir()
+    manifest_path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match=message):
+        load_example_manifest(tmp_path)
 
 
 def test_every_example_app_compiles() -> None:
