@@ -43,7 +43,7 @@
 
 **Interfaces:**
 - Produces: `load_example_manifest(repo_root: Path) -> tuple[ExampleSpec, ...]`
-- Produces: `ExampleSpec(name: str, title: str, kind: str, routes: tuple[str, ...], auth_headers: dict[str, str])`
+- Produces: `ExampleSpec(name: str, title: str, kind: str, routes: tuple[str, ...], auth_headers: Mapping[str, str])`
 - Consumes: standard-library `json`, `dataclasses`, and `pathlib` only.
 
 - [ ] **Step 1: Write failing manifest tests**
@@ -104,7 +104,7 @@ class ExampleSpec:
     title: str
     kind: str
     routes: tuple[str, ...]
-    auth_headers: dict[str, str]
+    auth_headers: Mapping[str, str]
 
 def load_example_manifest(repo_root: Path) -> tuple[ExampleSpec, ...]:
     payload = json.loads((repo_root / "examples" / "manifest.json").read_text(encoding="utf-8"))

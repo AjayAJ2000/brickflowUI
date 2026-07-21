@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from pathlib import Path
 import runpy
 
@@ -55,7 +56,8 @@ def test_manifest_auth_headers_are_immutable() -> None:
     specs = load_example_manifest(REPO_ROOT)
     clinical_trial = next(spec for spec in specs if spec.name == "clinical_trial_command_center")
 
-    assert isinstance(clinical_trial.auth_headers, dict)
+    assert isinstance(clinical_trial.auth_headers, Mapping)
+    assert not isinstance(clinical_trial.auth_headers, dict)
     with pytest.raises(TypeError):
         clinical_trial.auth_headers["x-brickflow-user-id"] = "changed@example.com"
 
@@ -130,6 +132,8 @@ def test_manifest_rejects_invalid_configuration(
         "foo|bar",
         "foo?bar",
         "foo*bar",
+        "foo\u0001bar",
+        "foo\u001fbar",
     ),
 )
 def test_manifest_rejects_windows_aliasing_names(tmp_path: Path, name: str) -> None:
