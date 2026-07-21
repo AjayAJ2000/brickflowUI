@@ -4,6 +4,7 @@ import json
 from collections.abc import Mapping
 from pathlib import Path
 import runpy
+import subprocess
 
 import pytest
 from fastapi.testclient import TestClient
@@ -60,6 +61,27 @@ def test_manifest_auth_headers_are_immutable() -> None:
     assert not isinstance(clinical_trial.auth_headers, dict)
     with pytest.raises(TypeError):
         clinical_trial.auth_headers["x-brickflow-user-id"] = "changed@example.com"
+
+
+def test_repository_tooling_is_tracked_candidate() -> None:
+    for tool_path in (
+        "scripts/smoke_examples.py",
+        "scripts/cleanup_local_artifacts.ps1",
+    ):
+        result = subprocess.run(
+            ["git", "check-ignore", "--quiet", tool_path],
+            cwd=REPO_ROOT,
+            check=False,
+        )
+        assert result.returncode == 1, f"{tool_path} must not be ignored"
+
+
+def test_smoke_runner_uses_the_maintained_manifest() -> None:
+    from scripts.smoke_examples import configured_checks
+
+    assert [item.name for item in configured_checks(REPO_ROOT)] == [
+        spec.name for spec in load_example_manifest(REPO_ROOT)
+    ]
 
 
 @pytest.mark.parametrize(
