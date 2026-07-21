@@ -77,7 +77,7 @@ describe('Modal accessibility', () => {
     expect(title?.id).toBeTruthy()
     expect(dialog?.getAttribute('aria-labelledby')).toBe(title?.id)
     expect(close?.getAttribute('aria-label')).toBe('Close Executive brief')
-    expect(action?.dataset.bfFocusKey).toBe('review-details')
+    expect(action?.dataset.bfFocusKey).toBe('0-0')
   })
 
   it('moves focus into the dialog and restores the trigger when the modal unmounts', () => {
@@ -104,37 +104,38 @@ describe('Modal accessibility', () => {
     expect(document.activeElement).toBe(replacement)
   })
 
-  it('captures the trigger before an opening patch replaces it', () => {
+  it('restores the correct keyed trigger when duplicate labels survive an opening patch', () => {
     function ModalFlow() {
-      const [open, setOpen] = React.useState(false)
-      const node: VNodeData = open
-        ? {
-            type: 'Column',
-            props: {},
-            children: [
-              {
-                type: 'Button',
-                props: { label: 'Executive brief', click: 'open-replacement' },
-                children: [],
-                key: null,
-              },
-              modalNode,
-            ],
-            key: null,
-          }
-        : {
-            type: 'Button',
-            props: { label: 'Executive brief', click: 'open-initial' },
-            children: [],
-            key: null,
-          }
+      const [phase, setPhase] = React.useState<'initial' | 'open' | 'closed'>('initial')
+      const suffix = phase === 'initial' ? 'initial' : phase === 'open' ? 'replacement' : 'final'
+      const children: VNodeData[] = [
+        {
+          type: 'Button',
+          props: { label: 'Executive brief', click: `decoy-${suffix}` },
+          children: [],
+          key: null,
+        },
+        {
+          type: 'Button',
+          props: { label: 'Executive brief', click: `target-${suffix}` },
+          children: [],
+          key: null,
+        },
+      ]
+      if (phase === 'open') children.push(modalNode)
+      const node: VNodeData = {
+        type: 'Column',
+        props: {},
+        children,
+        key: null,
+      }
 
       return (
         <Renderer
           node={node}
           dispatch={(eventId) => {
-            if (eventId.startsWith('open-')) setOpen(true)
-            if (eventId === 'close-modal') setOpen(false)
+            if (eventId === 'target-initial') setPhase('open')
+            if (eventId === 'close-modal') setPhase('closed')
           }}
           navigate={vi.fn()}
           pendingEvents={new Map()}
@@ -145,18 +146,50 @@ describe('Modal accessibility', () => {
     }
 
     act(() => root.render(<ModalFlow />))
-    const openingTrigger = container.querySelector<HTMLButtonElement>('.bf-btn')
+    const openingButtons = container.querySelectorAll<HTMLButtonElement>('.bf-column > .bf-btn')
+    const openingTrigger = openingButtons[1]
+    expect(openingButtons[0].textContent).toBe(openingTrigger.textContent)
+    expect(openingTrigger.dataset.bfFocusKey).toBe('0-1')
     openingTrigger?.focus()
     act(() => openingTrigger?.click())
 
+    const openButtons = container.querySelectorAll<HTMLButtonElement>('.bf-column > .bf-btn')
+    expect(openButtons[1].dataset.bfFocusKey).toBe('0-1')
+    const serverReplacement = openButtons[1].cloneNode(true) as HTMLButtonElement
+    openButtons[1].replaceWith(serverReplacement)
     expect(openingTrigger?.isConnected).toBe(false)
     const close = container.querySelector<HTMLButtonElement>('.bf-modal-close')
     expect(document.activeElement).toBe(close)
 
     act(() => close?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })))
-    const replacement = container.querySelector<HTMLButtonElement>('.bf-btn')
+    const closedButtons = container.querySelectorAll<HTMLButtonElement>('.bf-column > .bf-btn')
+    const replacement = closedButtons[1]
+    expect(closedButtons[0].textContent).toBe(replacement.textContent)
     expect(replacement).not.toBe(openingTrigger)
     expect(document.activeElement).toBe(replacement)
+  })
+
+  it('excludes hidden, non-rendered, inert, aria-hidden, and disabled controls from the focus trap', () => {
+    renderModal()
+
+    const close = container.querySelector<HTMLButtonElement>('.bf-modal-close')
+    const body = container.querySelector<HTMLElement>('.bf-modal-body')
+    const action = body?.querySelector<HTMLButtonElement>('.bf-btn')
+    const hidden = document.createElement('button')
+    hidden.hidden = true
+    const nonRendered = document.createElement('button')
+    nonRendered.style.display = 'none'
+    const inert = document.createElement('button')
+    inert.setAttribute('inert', '')
+    const ariaHidden = document.createElement('button')
+    ariaHidden.setAttribute('aria-hidden', 'true')
+    const disabled = document.createElement('button')
+    disabled.disabled = true
+    body?.append(hidden, nonRendered, inert, ariaHidden, disabled)
+
+    action?.focus()
+    act(() => action?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true })))
+    expect(document.activeElement).toBe(close)
   })
 
   it('dispatches close on Escape and contains Tab focus within the dialog', () => {

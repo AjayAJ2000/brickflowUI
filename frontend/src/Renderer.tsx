@@ -227,12 +227,47 @@ function statusTone(status?: unknown) {
 // ── Main recursive renderer ────────────────────────────────────────────────
 const MODAL_FOCUSABLE_SELECTOR = [
   'a[href]',
-  'button:not([disabled])',
-  'input:not([disabled])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
+  'area[href]',
+  'button',
+  'input:not([type="hidden"])',
+  'select',
+  'textarea',
+  'iframe',
+  'object',
+  'embed',
+  'audio[controls]',
+  'video[controls]',
+  'summary',
+  '[contenteditable="true"]',
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
+
+function isElementTabbable(element: HTMLElement): boolean {
+  if (!element.isConnected || element.tabIndex < 0) return false
+  if (element.matches(':disabled, [aria-disabled="true"]')) return false
+
+  let current: HTMLElement | null = element
+  while (current) {
+    if (
+      current.hidden
+      || current.hasAttribute('inert')
+      || current.getAttribute('aria-hidden') === 'true'
+    ) return false
+
+    const style = current.ownerDocument.defaultView?.getComputedStyle(current)
+    if (
+      style?.display === 'none'
+      || style?.visibility === 'hidden'
+      || style?.visibility === 'collapse'
+      || style?.contentVisibility === 'hidden'
+    ) return false
+    current = current.parentElement
+  }
+
+  const documentHasLayout = element.ownerDocument.documentElement.getClientRects().length > 0
+  if (documentHasLayout && element.getClientRects().length === 0) return false
+  return true
+}
 
 interface FocusIdentity {
   element: HTMLElement
@@ -325,7 +360,7 @@ function ModalComponent({
     if (event.key !== 'Tab') return
     const focusable = Array.from(
       dialogRef.current?.querySelectorAll<HTMLElement>(MODAL_FOCUSABLE_SELECTOR) || [],
-    ).filter((element) => element.tabIndex >= 0)
+    ).filter(isElementTabbable)
     if (!focusable.length) {
       event.preventDefault()
       dialogRef.current?.focus()
@@ -498,7 +533,7 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
           className={resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ['bf-btn', `bf-btn-${(p.variant as string) || 'primary'}`])}
           disabled={(p.disabled as boolean) || (p.loading as boolean) || autoLoading || false}
           type={(p.htmlType as 'button' | 'submit' | 'reset') || 'button'}
-          data-bf-focus-key={typeof p.click === 'string' ? p.click : undefined}
+          data-bf-focus-key={key}
           style={resolveMotionStyle(p)}
           onClick={(event) => {
             ctx.interactionFocus.current = captureFocusIdentity(event.currentTarget)

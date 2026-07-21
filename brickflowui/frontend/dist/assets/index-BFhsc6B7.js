@@ -19746,12 +19746,34 @@ function statusTone(status) {
 }
 const MODAL_FOCUSABLE_SELECTOR = [
   "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
+  "area[href]",
+  "button",
+  'input:not([type="hidden"])',
+  "select",
+  "textarea",
+  "iframe",
+  "object",
+  "embed",
+  "audio[controls]",
+  "video[controls]",
+  "summary",
+  '[contenteditable="true"]',
   '[tabindex]:not([tabindex="-1"])'
 ].join(",");
+function isElementTabbable(element) {
+  if (!element.isConnected || element.tabIndex < 0) return false;
+  if (element.matches(':disabled, [aria-disabled="true"]')) return false;
+  let current = element;
+  while (current) {
+    if (current.hidden || current.hasAttribute("inert") || current.getAttribute("aria-hidden") === "true") return false;
+    const style = current.ownerDocument.defaultView?.getComputedStyle(current);
+    if (style?.display === "none" || style?.visibility === "hidden" || style?.visibility === "collapse" || style?.contentVisibility === "hidden") return false;
+    current = current.parentElement;
+  }
+  const documentHasLayout = element.ownerDocument.documentElement.getClientRects().length > 0;
+  if (documentHasLayout && element.getClientRects().length === 0) return false;
+  return true;
+}
 function captureFocusIdentity(element) {
   return {
     element,
@@ -19808,7 +19830,7 @@ function ModalComponent({
     if (event.key !== "Tab") return;
     const focusable = Array.from(
       dialogRef.current?.querySelectorAll(MODAL_FOCUSABLE_SELECTOR) || []
-    ).filter((element) => element.tabIndex >= 0);
+    ).filter(isElementTabbable);
     if (!focusable.length) {
       event.preventDefault();
       dialogRef.current?.focus();
@@ -19941,7 +19963,7 @@ function renderNode(node, ctx, key) {
           className: resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ["bf-btn", `bf-btn-${p.variant || "primary"}`]),
           disabled: p.disabled || p.loading || autoLoading || false,
           type: p.htmlType || "button",
-          "data-bf-focus-key": typeof p.click === "string" ? p.click : void 0,
+          "data-bf-focus-key": key,
           style: resolveMotionStyle(p),
           onClick: (event) => {
             ctx.interactionFocus.current = captureFocusIdentity(event.currentTarget);
@@ -21569,4 +21591,4 @@ function App() {
 ReactDOM.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-B7bcrHds.js.map
+//# sourceMappingURL=index-BFhsc6B7.js.map
