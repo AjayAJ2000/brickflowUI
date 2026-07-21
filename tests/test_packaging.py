@@ -3,6 +3,11 @@ import re
 
 import yaml
 
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python 3.10 CI uses the backport.
+    import tomli as tomllib
+
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,21 +20,14 @@ def _load_workflow(name: str) -> dict:
     return workflow
 
 
-def _executable_lines(step: dict) -> tuple[str, ...]:
+def _single_command(step: dict) -> str | None:
     run = step.get("run")
     if not isinstance(run, str):
-        return ()
-
-    commands = []
-    for raw_line in run.splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        executable = line.split(maxsplit=1)[0]
-        if executable in {"echo", "printf"}:
-            continue
-        commands.append(line)
-    return tuple(commands)
+        return None
+    if len(run.splitlines()) != 1:
+        return None
+    command = run.strip()
+    return command or None
 
 
 def _working_directory(job: dict, step: dict) -> str | None:
@@ -43,12 +41,22 @@ def _command_occurrences(workflow: dict, command: str) -> list[tuple[str, int, s
         (job_name, step_index, _working_directory(job, step))
         for job_name, job in workflow["jobs"].items()
         for step_index, step in enumerate(job["steps"])
-        if command in _executable_lines(step)
+        if _single_command(step) == command
     ]
 
 
-def _command_sequence(job: dict) -> list[str]:
-    return [command for step in job["steps"] for command in _executable_lines(step)]
+def _command_step_indexes(job: dict, command: str) -> list[int]:
+    return [
+        step_index
+        for step_index, step in enumerate(job["steps"])
+        if _single_command(step) == command
+    ]
+
+
+def _required_command_step(job: dict, command: str) -> int:
+    indexes = _command_step_indexes(job, command)
+    assert len(indexes) == 1
+    return indexes[0]
 
 
 def _assert_owned_by(workflow: dict, command: str, job_name: str) -> None:
@@ -57,17 +65,21 @@ def _assert_owned_by(workflow: dict, command: str, job_name: str) -> None:
     assert occurrences[0][0] == job_name
 
 
-def test_workflow_command_parser_ignores_comments_and_output_only_commands():
-    step = {
-        "run": """
-            # python -m pytest -q
-            echo "python -m pytest -q"
-            printf '%s\\n' "python -m pytest -q"
-            python -m ruff check brickflowui tests examples
-        """
-    }
+def test_required_command_lookup_rejects_multiline_shell_spoofs():
+    required = "python -m pytest -q"
+    spoofed_runs = (
+        f'echo "{required}"',
+        "echo continued \\" + "\n" + required,
+        f"cat <<'COMMAND'\n{required}\nCOMMAND",
+        f"# claimed gate\n{required}",
+    )
 
-    assert _executable_lines(step) == ("python -m ruff check brickflowui tests examples",)
+    for run in spoofed_runs:
+        workflow = {"jobs": {"spoof": {"steps": [{"run": run}]}}}
+        assert _command_occurrences(workflow, required) == []
+
+    workflow = {"jobs": {"real": {"steps": [{"run": required}]}}}
+    assert _command_occurrences(workflow, required) == [("real", 0, None)]
 
 
 def test_ci_splits_python_matrix_from_python_311_integration_gates():
@@ -86,28 +98,24 @@ def test_ci_splits_python_matrix_from_python_311_integration_gates():
         step for step in python_job["steps"] if step.get("uses") == "actions/setup-python@v5"
     )
     assert python_setup["with"]["python-version"] == "${{ matrix.python-version }}"
-    assert any(
-        job_name == "python"
-        for job_name, _, _ in _command_occurrences(
-            workflow, 'python -m pip install -e ".[dev]"'
-        )
-    )
+    python_install = 'python -m pip install -e ".[dev]"'
+    _required_command_step(python_job, python_install)
     for command in (
         "python -m pytest -q",
         "python -m ruff check brickflowui tests examples",
         "python -m mypy brickflowui",
     ):
         _assert_owned_by(workflow, command, "python")
-    python_sequence = _command_sequence(python_job)
     python_gate_order = (
-        'python -m pip install -e ".[dev]"',
+        python_install,
         "python -m pytest -q",
         "python -m ruff check brickflowui tests examples",
         "python -m mypy brickflowui",
     )
-    assert [python_sequence.index(command) for command in python_gate_order] == sorted(
-        python_sequence.index(command) for command in python_gate_order
-    )
+    python_gate_steps = [
+        _required_command_step(python_job, command) for command in python_gate_order
+    ]
+    assert python_gate_steps == sorted(python_gate_steps)
 
     integration_job = jobs["integration"]
     integration_setup = next(
@@ -117,6 +125,13 @@ def test_ci_splits_python_matrix_from_python_311_integration_gates():
     assert any(
         step.get("uses") == "actions/setup-node@v4" for step in integration_job["steps"]
     )
+
+    integration_installs = (
+        'python -m pip install -e ".[dev,docs,databricks,viz]"',
+        "python -m pip install build",
+    )
+    for command in integration_installs:
+        _required_command_step(integration_job, command)
 
     frontend_commands = (
         "npm ci",
@@ -140,8 +155,8 @@ def test_ci_splits_python_matrix_from_python_311_integration_gates():
     ):
         _assert_owned_by(workflow, command, "integration")
 
-    integration_sequence = _command_sequence(integration_job)
     integration_gate_order = (
+        *integration_installs,
         "npm ci",
         "npm test -- --run",
         "npm run lint",
@@ -155,9 +170,10 @@ def test_ci_splits_python_matrix_from_python_311_integration_gates():
         "python -m mkdocs build --strict",
         "python -m build",
     )
-    assert [integration_sequence.index(command) for command in integration_gate_order] == sorted(
-        integration_sequence.index(command) for command in integration_gate_order
-    )
+    integration_gate_steps = [
+        _required_command_step(integration_job, command) for command in integration_gate_order
+    ]
+    assert integration_gate_steps == sorted(integration_gate_steps)
 
 
 def test_security_audits_installed_project_dependencies():
@@ -165,31 +181,40 @@ def test_security_audits_installed_project_dependencies():
     audit_job = workflow["jobs"]["audit"]
     assert any(step.get("uses") == "actions/setup-node@v4" for step in audit_job["steps"])
 
-    commands = _command_sequence(audit_job)
-    audit_index = commands.index("python -m pip_audit")
+    audit_step = _required_command_step(audit_job, "python -m pip_audit")
     for install_command in (
         "python -m pip install pip-audit",
         'python -m pip install -e ".[dev]"',
         'python -m pip install -e ".[databricks,viz]"',
     ):
-        assert commands.count(install_command) == 1
-        assert commands.index(install_command) < audit_index
+        assert _required_command_step(audit_job, install_command) < audit_step
 
     for frontend_command in ("npm ci", "npm audit --omit=dev"):
         occurrences = _command_occurrences(workflow, frontend_command)
         assert len(occurrences) == 1
         assert occurrences[0][0] == "audit"
         assert occurrences[0][2] == "frontend"
-    assert commands.index("npm ci") < commands.index("npm audit --omit=dev")
+    assert _required_command_step(audit_job, "npm ci") < _required_command_step(
+        audit_job, "npm audit --omit=dev"
+    )
 
 
 def test_package_uses_canonical_async_framework_classifiers():
-    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    with (REPO_ROOT / "pyproject.toml").open("rb") as pyproject_file:
+        project = tomllib.load(pyproject_file)["project"]
+    classifiers = project["classifiers"]
 
-    assert '"Framework :: AsyncIO"' in pyproject
-    assert '"Framework :: FastAPI"' in pyproject
-    assert "ASGI :: Application" not in pyproject
-    assert "WSGI :: Application" not in pyproject
+    assert classifiers.count("Framework :: AsyncIO") == 1
+    assert classifiers.count("Framework :: FastAPI") == 1
+    assert "Topic :: Internet :: WWW/HTTP :: ASGI :: Application" not in classifiers
+    assert "Topic :: Internet :: WWW/HTTP :: WSGI :: Application" not in classifiers
+
+
+def test_python_310_dev_dependencies_include_tomllib_backport():
+    with (REPO_ROOT / "pyproject.toml").open("rb") as pyproject_file:
+        project = tomllib.load(pyproject_file)["project"]
+
+    assert 'tomli>=2.0.1; python_version < "3.11"' in project["optional-dependencies"]["dev"]
 
 
 def test_current_changelog_does_not_claim_an_unconfigured_twine_gate():
