@@ -27,6 +27,11 @@ Recheck these areas:
   empty, disabled, and error states
 - rebuild pinned containers and application bundles with
   `brickflowui>=0.1.15`
+- update local scripts, bookmarks, and training material that reference retired
+  example directories; `examples/manifest.json` is now the authoritative
+  showcase inventory
+- use `examples/data_pipeline_command_center` for pipeline health, reliability,
+  triage, and assistant patterns that previously lived in overlapping examples
 - run the full frontend, Python, docs, package, installed-wheel, and browser
   acceptance matrix from the [Release Checklist](./RELEASE_CHECKLIST.md)
 

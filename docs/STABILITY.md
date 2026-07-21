@@ -4,7 +4,10 @@ BrickflowUI `0.1.15` is an alpha framework with a tested core-runtime baseline. 
 
 ## Supported baseline
 
-- Python 3.10, 3.11, and 3.12 are declared package targets.
+- Python 3.10, 3.11, and 3.12 are supported package targets. CI runs the core
+  test, Ruff, and MyPy gates on every supported Python version; the complete
+  frontend, documentation, example-smoke, bundle-drift, and package integration
+  gate runs on Python 3.11.
 - The backend is FastAPI/Starlette and the browser runtime is the packaged React production build.
 - Published wheels must contain `brickflowui/frontend/dist/index.html` and its referenced hashed assets.
 - A source checkout must run `npm ci` and `npm run build` in `frontend/` before it can serve an application.
@@ -16,6 +19,7 @@ Run from the repository root:
 
 ```powershell
 python -m pytest -q
+python scripts/smoke_examples.py
 python scripts/generate_component_reference.py
 git diff --exit-code -- docs/components/reference
 python -m mkdocs build --strict
@@ -30,10 +34,13 @@ npm test -- --run
 npm run lint
 npm run typecheck
 npm run build
+git diff --exit-code -- ..\brickflowui\frontend\dist
 npm audit --audit-level=high
 ```
 
-The release is not ready when a test, lint, build, documentation-drift, package-content, or high-severity runtime dependency gate fails.
+The release is not ready when a supported-Python test, lint, type-check, example
+smoke, build, committed-bundle drift, documentation-drift, package-content, or
+high-severity runtime dependency gate fails.
 
 ## Browser verification
 
