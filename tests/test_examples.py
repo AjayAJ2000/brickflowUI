@@ -336,6 +336,104 @@ def test_retained_example_routes_render_with_self_contained_media() -> None:
                 _assert_media_value_stays_in_example(app, root, value)
 
 
+def test_flagship_exposes_complete_operational_views() -> None:
+    namespace = runpy.run_path(
+        str(EXAMPLES_ROOT / "data_pipeline_command_center" / "app.py")
+    )
+
+    rows = namespace["load_pipeline_records"]("mock")
+    nodes, edges = namespace["pipeline_flow"](rows)
+    columns = namespace["triage_columns"](rows)
+
+    assert rows and all("pipeline" in row for row in rows)
+    assert len({row["pipeline"] for row in rows}) == len(rows)
+    assert {node["id"] for node in nodes} == {row["pipeline"] for row in rows}
+    assert all(edge["from"] != edge["to"] for edge in edges)
+    assert [column["id"] for column in columns] == ["healthy", "watch", "at-risk"]
+    assert {
+        card["id"] for column in columns for card in column["cards"]
+    } == {row["pipeline"] for row in rows}
+
+
+def test_flagship_websocket_switches_every_operational_view() -> None:
+    namespace = runpy.run_path(
+        str(EXAMPLES_ROOT / "data_pipeline_command_center" / "app.py")
+    )
+    assert namespace["VIEW_KEYS"] == (
+        "overview",
+        "pipelines",
+        "reliability",
+        "triage",
+        "assistant",
+    )
+
+    def find_view_button(node: dict, view_key: str) -> dict | None:
+        if node.get("type") == "Button" and node.get("props", {}).get(
+            "viewKey"
+        ) == view_key:
+            return node
+        for child in node.get("children", []):
+            found = find_view_button(child, view_key)
+            if found:
+                return found
+        return None
+
+    app = namespace["app"]
+    client = TestClient(create_asgi_app(app))
+    expected_markers = {
+        "overview": "Operational pulse",
+        "pipelines": "Pipeline flow",
+        "reliability": "Reliability signals",
+        "triage": "Triage queue",
+        "assistant": "Pipeline assistant",
+    }
+
+    for view_key in namespace["VIEW_KEYS"]:
+        with client.websocket_connect("/events?path=/") as websocket:
+            full = websocket.receive_json()
+            buttons = {
+                key: find_view_button(full["tree"], key)
+                for key in namespace["VIEW_KEYS"]
+            }
+            assert all(buttons.values())
+
+            if view_key != "overview":
+                button = buttons[view_key]
+                assert button is not None
+                websocket.send_json(
+                    {
+                        "type": "event",
+                        "event_id": button["props"]["click"],
+                        "data": {"value": None},
+                    }
+                )
+                response = websocket.receive_json()
+            else:
+                pipelines_button = buttons["pipelines"]
+                overview_button = buttons["overview"]
+                assert pipelines_button is not None and overview_button is not None
+                websocket.send_json(
+                    {
+                        "type": "event",
+                        "event_id": pipelines_button["props"]["click"],
+                        "data": {"value": None},
+                    }
+                )
+                assert websocket.receive_json()["type"] == "patch"
+                assert websocket.receive_json()["type"] == "event_complete"
+                websocket.send_json(
+                    {
+                        "type": "event",
+                        "event_id": overview_button["props"]["click"],
+                        "data": {"value": None},
+                    }
+                )
+                response = websocket.receive_json()
+
+        assert response["type"] == "patch", response
+        assert expected_markers[view_key] in json.dumps(response)
+
+
 @pytest.mark.parametrize("example_name", RUNTIME_SMOKE_EXAMPLES)
 def test_maintained_example_serves_shell_and_full_websocket_tree(example_name: str) -> None:
     app = _load_example_app(example_name)
