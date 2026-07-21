@@ -36,29 +36,6 @@ PUBLIC_RUNTIME_SMOKE_EXAMPLES = (
 
 MEDIA_PROP_KEYS = frozenset({"src", "poster", "logo", "favicon", "avatar", "image"})
 REMOTE_MEDIA_PREFIXES = ("http://", "https://", "data:", "blob:")
-TRACKED_TEXT_SUFFIXES = frozenset(
-    {
-        ".cfg",
-        ".css",
-        ".html",
-        ".ini",
-        ".js",
-        ".json",
-        ".jsx",
-        ".md",
-        ".ps1",
-        ".py",
-        ".sh",
-        ".svg",
-        ".toml",
-        ".ts",
-        ".tsx",
-        ".txt",
-        ".xml",
-        ".yaml",
-        ".yml",
-    }
-)
 
 
 def _load_example_app(example_name: str):
@@ -142,7 +119,7 @@ def test_examples_directory_matches_manifest() -> None:
     assert actual == declared
 
 
-def test_tracked_text_does_not_reference_removed_examples() -> None:
+def test_tracked_files_do_not_reference_removed_examples() -> None:
     removed = {
         "_".join(parts)
         for parts in (
@@ -157,25 +134,50 @@ def test_tracked_text_does_not_reference_removed_examples() -> None:
             ("workspace", "studio"),
         )
     }
-    tracked = subprocess.run(
+    tracked_paths = subprocess.run(
         ["git", "ls-files", "-z"],
         cwd=REPO_ROOT,
         check=True,
         capture_output=True,
     ).stdout.decode("utf-8", errors="surrogateescape")
-    references = {
-        relative_path: sorted(name for name in removed if name in text)
-        for relative_path in tracked.split("\0")
-        if relative_path
-        and Path(relative_path).suffix.lower() in TRACKED_TEXT_SUFFIXES
-        and (
-            text := (REPO_ROOT / relative_path).read_text(
-                encoding="utf-8", errors="replace"
-            )
-        )
-        and any(name in text for name in removed)
+    gitlinks = {
+        entry.split(b"\t", 1)[1].decode("utf-8", errors="surrogateescape")
+        for entry in subprocess.run(
+            ["git", "ls-files", "--stage", "-z"],
+            cwd=REPO_ROOT,
+            check=True,
+            capture_output=True,
+        ).stdout.split(b"\0")
+        if entry.startswith(b"160000 ")
     }
+    removed_bytes = {name: name.encode("ascii") for name in removed}
+    missing_regular_files: list[str] = []
+    references: dict[str, list[str]] = {}
 
+    for relative_path in filter(None, tracked_paths.split("\0")):
+        if relative_path in gitlinks:
+            continue
+
+        path = REPO_ROOT / relative_path
+        if path.is_dir():
+            missing_regular_files.append(relative_path)
+            continue
+
+        try:
+            content = path.read_bytes()
+        except FileNotFoundError:
+            missing_regular_files.append(relative_path)
+            continue
+
+        matches = sorted(
+            name for name, encoded_name in removed_bytes.items() if encoded_name in content
+        )
+        if matches:
+            references[relative_path] = matches
+
+    assert not missing_regular_files, (
+        f"Tracked regular files disappeared while scanning: {missing_regular_files}"
+    )
     assert not references
 
 
