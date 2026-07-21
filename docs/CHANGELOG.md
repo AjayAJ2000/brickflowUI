@@ -22,7 +22,7 @@ Highlights:
   generation of queued events, caches handler call shapes, and reconnects on
   invalid browser patches
 - frontend tests, lint, type checks, dependency audit, committed-bundle drift,
-  manifest-driven example smoke checks, strict docs, build, and Twine checks are
+  manifest-driven example smoke checks, strict docs, and package build are
   enforced in the Python 3.11 integration gate; Python tests, Ruff, and MyPy run
   across the supported Python 3.10, 3.11, and 3.12 matrix
 - the example archive is consolidated into six maintained, manifest-listed
