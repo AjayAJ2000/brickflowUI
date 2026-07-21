@@ -55,6 +55,7 @@ def test_manifest_auth_headers_are_immutable() -> None:
     specs = load_example_manifest(REPO_ROOT)
     clinical_trial = next(spec for spec in specs if spec.name == "clinical_trial_command_center")
 
+    assert isinstance(clinical_trial.auth_headers, dict)
     with pytest.raises(TypeError):
         clinical_trial.auth_headers["x-brickflow-user-id"] = "changed@example.com"
 
@@ -110,7 +111,26 @@ def test_manifest_rejects_invalid_configuration(
 
 @pytest.mark.parametrize(
     "name",
-    ("counter ", "counter.", "NUL", "nul", "CON", "PRN", "AUX", "COM1", "LPT9"),
+    (
+        "counter ",
+        "counter.",
+        "NUL",
+        "nul",
+        "CON",
+        "PRN",
+        "AUX",
+        "COM1",
+        "LPT9",
+        "foo<bar",
+        "foo>bar",
+        'foo"bar',
+        "foo:bar",
+        "foo/bar",
+        r"foo\bar",
+        "foo|bar",
+        "foo?bar",
+        "foo*bar",
+    ),
 )
 def test_manifest_rejects_windows_aliasing_names(tmp_path: Path, name: str) -> None:
     manifest_path = tmp_path / "examples" / "manifest.json"

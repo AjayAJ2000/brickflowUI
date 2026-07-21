@@ -1,10 +1,8 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from types import MappingProxyType
 
 
 _WINDOWS_RESERVED_NAMES = {
@@ -15,6 +13,40 @@ _WINDOWS_RESERVED_NAMES = {
     *(f"COM{number}" for number in range(1, 10)),
     *(f"LPT{number}" for number in range(1, 10)),
 }
+_WINDOWS_INVALID_FILENAME_CHARS = frozenset('<>:"/\\|?*')
+
+
+class _ImmutableHeaders(dict[str, str]):
+    def __init__(self, values: dict[str, str]) -> None:
+        super().__init__(values)
+
+    def _raise_immutable(self) -> None:
+        raise TypeError("Example auth_headers are immutable")
+
+    def __setitem__(self, key: str, value: str) -> None:
+        self._raise_immutable()
+
+    def __delitem__(self, key: str) -> None:
+        self._raise_immutable()
+
+    def clear(self) -> None:
+        self._raise_immutable()
+
+    def pop(self, key: str, default: object = None) -> str:
+        self._raise_immutable()
+
+    def popitem(self) -> tuple[str, str]:
+        self._raise_immutable()
+
+    def setdefault(self, key: str, default: str = "") -> str:
+        self._raise_immutable()
+
+    def update(self, *args: object, **kwargs: str) -> None:
+        self._raise_immutable()
+
+    def __ior__(self, other: object) -> _ImmutableHeaders:
+        self._raise_immutable()
+        return self
 
 
 @dataclass(frozen=True)
@@ -23,7 +55,7 @@ class ExampleSpec:
     title: str
     kind: str
     routes: tuple[str, ...]
-    auth_headers: Mapping[str, str]
+    auth_headers: dict[str, str]
 
 
 def load_example_manifest(repo_root: Path) -> tuple[ExampleSpec, ...]:
@@ -74,7 +106,7 @@ def _parse_spec(row: object) -> ExampleSpec:
         title=title,
         kind=kind,
         routes=tuple(routes),
-        auth_headers=MappingProxyType(dict(auth_headers)),
+        auth_headers=_ImmutableHeaders(dict(auth_headers)),
     )
 
 
@@ -84,6 +116,7 @@ def _is_relative_directory_name(name: str) -> bool:
         and Path(name).name == name
         and "/" not in name
         and "\\" not in name
+        and not any(character in _WINDOWS_INVALID_FILENAME_CHARS for character in name)
         and not name.endswith((" ", "."))
         and name.split(".", 1)[0].upper() not in _WINDOWS_RESERVED_NAMES
     )
