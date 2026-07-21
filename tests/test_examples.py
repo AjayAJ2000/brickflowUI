@@ -4,6 +4,7 @@ import json
 from collections.abc import Mapping
 import os
 from pathlib import Path
+import re
 import runpy
 import subprocess
 import uuid
@@ -191,6 +192,41 @@ def test_maintained_examples_are_self_contained() -> None:
         assert "brickflowui" in (root / "requirements.txt").read_text(encoding="utf-8").lower()
         manifest = (root / "app.yaml").read_text(encoding="utf-8")
         assert "python" in manifest and "app.py" in manifest
+
+
+def test_retained_examples_do_not_borrow_external_brand_copy() -> None:
+    forbidden_brands = {b"astellas", b"inspired"}
+    references: dict[str, list[str]] = {}
+    retained_paths = [f"examples/{name}" for name in sorted(MAINTAINED_EXAMPLES)]
+    tracked_files = subprocess.run(
+        ["git", "ls-files", "-z", "--", *retained_paths],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout.split(b"\0")
+
+    for relative_path_bytes in filter(None, tracked_files):
+        relative_path = relative_path_bytes.decode(
+            "utf-8", errors="surrogateescape"
+        )
+        content = (REPO_ROOT / relative_path).read_bytes().lower()
+        matches = sorted(
+            brand.decode("ascii")
+            for brand in forbidden_brands
+            if brand in content
+        )
+        if matches:
+            references[relative_path] = matches
+
+    assert not references
+
+
+def test_component_studio_does_not_embed_a_release_version() -> None:
+    source = (EXAMPLES_ROOT / "component_studio" / "app.py").read_text(
+        encoding="utf-8-sig"
+    )
+
+    assert not re.search(r"\b\d+\.\d+\.\d+\b", source)
 
 
 def test_manifest_auth_headers_are_immutable() -> None:
@@ -535,7 +571,7 @@ def test_flagship_emits_status_values_supported_by_the_renderer() -> None:
     assert columns[2]["cards"][0]["status"] == "at risk"
 
 
-def test_flagship_header_children_do_not_force_desktop_stacking() -> None:
+def test_flagship_header_navigation_wraps_without_hiding_mobile_controls() -> None:
     namespace = runpy.run_path(
         str(EXAMPLES_ROOT / "data_pipeline_command_center" / "app.py")
     )
@@ -550,12 +586,12 @@ def test_flagship_header_children_do_not_force_desktop_stacking() -> None:
         "width": "auto",
         "flex": "0 0 auto",
     }
+    assert navigation["props"]["wrap"] is True
     assert navigation["props"]["style"] == {
         "width": "auto",
-        "flex": "1 1 auto",
+        "flex": "0 1 auto",
         "minWidth": "0",
-        "overflowX": "auto",
-        "justifyContent": "flex-end",
+        "justifyContent": "flex-start",
     }
 
 

@@ -511,7 +511,18 @@ def top_nav(active_view: str, set_active_view, set_show_brief):
             db.Row(
                 [
                     db.Column([db.Text("BrickflowUI", variant="h3"), db.Text("Pipeline Command Center", variant="caption", muted=True)], gap=0, style={"width": "auto", "flex": "0 0 auto"}),
-                    db.Row(buttons, gap=1, align="center", style={"width": "auto", "flex": "1 1 auto", "minWidth": "0", "overflowX": "auto", "justifyContent": "flex-end"}),
+                    db.Row(
+                        buttons,
+                        gap=1,
+                        align="center",
+                        wrap=True,
+                        style={
+                            "width": "auto",
+                            "flex": "0 1 auto",
+                            "minWidth": "0",
+                            "justifyContent": "flex-start",
+                        },
+                    ),
                 ],
                 justify="between",
                 align="center",
