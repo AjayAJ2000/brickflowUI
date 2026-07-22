@@ -5,7 +5,7 @@
 ```text
 Status: LOCAL AUTOMATED AND BROWSER GATES PASS — LIVE DATABRICKS VALIDATION REQUIRED
 Foundation commit: 397e02a829c9197688f8bae83b44e141764d1a57
-Implementation commits tested: 9e443bd160e2115c7d03cd38e28beccd5be93378, a18722f15f0e98028bb176a6a3dbac4b36394698
+Implementation commits tested: 9e443bd160e2115c7d03cd38e28beccd5be93378, a18722f15f0e98028bb176a6a3dbac4b36394698, f2f0ae1
 Branch: codex/production-data-apps-02
 Automated result: mandated local commands pass in the repaired working tree
 Browser result: six examples and the flagship responsive/accessibility flow pass
@@ -40,12 +40,12 @@ The friendly Windows edition probe was denied by local WMI permissions; `platfor
 
 | Command | Result and exact evidence |
 | --- | --- |
-| `python -m pytest -q -p no:cacheprovider` | Passed: **343 passed** in 6.99s on the final commit-candidate run. |
+| `python -m pytest -q -p no:cacheprovider` | Passed: **345 passed** in 5.43s on the final `0.1.16` commit-candidate run. |
 | `python scripts/smoke_examples.py` | Passed: all **6 manifest examples** passed smoke checks. |
 | `python scripts/generate_component_reference.py` | Passed with exit 0. |
 | `git diff --exit-code -- docs/components/reference` | Passed: no generated reference drift. Git emitted Windows CRLF-to-LF checkout warnings only. |
 | `python -m mkdocs build --strict -d .site_validation_showcase` | Passed in 3.98s. Existing pages outside `nav` were reported as informational notices. |
-| `python -m build` | Passed: built `brickflowui-0.1.15.tar.gz` and `brickflowui-0.1.15-py3-none-any.whl`. |
+| `python -m build` | Passed: built `brickflowui-0.1.16.tar.gz` and `brickflowui-0.1.16-py3-none-any.whl`. |
 | `python -m twine check dist/*` | Passed: **2/2 artifacts**. |
 | `npm --prefix frontend test -- --run` | Passed on the latest frontend run: **43 tests across 11 files**. |
 | `npm --prefix frontend run lint` | Passed with zero ESLint errors. |

@@ -12,6 +12,24 @@ After every upgrade:
 4. verify custom branding, logos, and loading assets
 5. run your app against the current [Examples](./EXAMPLES.md) and [API Reference](./API_REFERENCE.md)
 
+## Upgrading To 0.1.16
+
+Version `0.1.16` preserves the public component API while consolidating the
+showcase surface and hardening the flagship operational workflow.
+
+Recheck these areas:
+
+- update local scripts to launch source examples as modules from the repository
+  root so they resolve the checked-out runtime
+- replace retired example links with the maintained inventory in
+  `examples/manifest.json`
+- exercise the Pipeline Command Center navigation, Executive Brief modal,
+  filters, graph interactions, triage actions, and assistant simulation
+- rebuild pinned containers and application bundles with
+  `brickflowui>=0.1.16`
+- run the full frontend, Python, docs, package, installed-wheel, and browser
+  acceptance matrix from the [Release Checklist](./RELEASE_CHECKLIST.md)
+
 ## Upgrading To 0.1.15
 
 Version `0.1.15` is additive for existing component APIs and introduces complete
@@ -27,11 +45,6 @@ Recheck these areas:
   empty, disabled, and error states
 - rebuild pinned containers and application bundles with
   `brickflowui>=0.1.15`
-- update local scripts, bookmarks, and training material that reference retired
-  example directories; `examples/manifest.json` is now the authoritative
-  showcase inventory
-- use `examples/data_pipeline_command_center` for pipeline health, reliability,
-  triage, and assistant patterns that previously lived in overlapping examples
 - run the full frontend, Python, docs, package, installed-wheel, and browser
   acceptance matrix from the [Release Checklist](./RELEASE_CHECKLIST.md)
 

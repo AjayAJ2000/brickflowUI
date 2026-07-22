@@ -18,9 +18,9 @@ from pathlib import Path
 from fastapi import Request, WebSocket
 from fastapi.responses import JSONResponse
 
-APP_DIR = Path(__file__).parent
-
 import brickflowui as db
+
+APP_DIR = Path(__file__).parent
 
 
 class DemoCookieAuthProvider:

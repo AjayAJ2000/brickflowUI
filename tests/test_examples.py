@@ -273,6 +273,7 @@ def test_smoke_tree_validator_accepts_vdom_root() -> None:
     validate_full_tree({"type": "full", "tree": {"type": "div", "children": []}}, "/")
 
 
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell reparse points are Windows-only")
 def test_cleanup_rejects_reparse_target() -> None:
     test_root = REPO_ROOT / ".tmp" / f"cleanup-reparse-{uuid.uuid4().hex}"
     target = test_root / "target"

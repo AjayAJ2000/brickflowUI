@@ -113,6 +113,17 @@ Current stabilization baseline:
 - functional `CatalogBrowser`, `WarehouseSelector`, and `JobTrigger` contracts
 - bounded local assets and correlation-only browser runtime errors
 
+### `0.1.16`
+
+Current showcase baseline:
+
+- six maintained end-to-end examples backed by a validated manifest
+- a production-style Pipeline Command Center covering operations, reliability,
+  triage, lineage, and assistant workflows
+- browser-verified modal focus restoration and responsive navigation
+- source-checkout launch commands that cannot silently load stale global builds
+- reproducible CI, dependency-audit, package, and installed-wheel release gates
+
 ### `0.2.0`
 
 Recommended focus:

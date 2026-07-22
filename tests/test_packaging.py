@@ -98,7 +98,7 @@ def test_ci_splits_python_matrix_from_python_311_integration_gates():
         step for step in python_job["steps"] if step.get("uses") == "actions/setup-python@v5"
     )
     assert python_setup["with"]["python-version"] == "${{ matrix.python-version }}"
-    python_install = 'python -m pip install -e ".[dev]"'
+    python_install = 'python -m pip install -e ".[dev,viz]"'
     _required_command_step(python_job, python_install)
     for command in (
         "python -m pytest -q",
@@ -182,6 +182,8 @@ def test_security_audits_installed_project_dependencies():
     assert any(step.get("uses") == "actions/setup-node@v4" for step in audit_job["steps"])
 
     audit_step = _required_command_step(audit_job, "python -m pip_audit")
+    setuptools_upgrade = 'python -m pip install --upgrade pip "setuptools>=83"'
+    assert _required_command_step(audit_job, setuptools_upgrade) < audit_step
     for install_command in (
         "python -m pip install pip-audit",
         'python -m pip install -e ".[dev]"',

@@ -2,6 +2,36 @@
 
 This page tracks the highest-signal changes for evaluators and adopters. It is not meant to replace commit history. It is meant to explain what changed, why it matters, and what to recheck when you upgrade.
 
+## 0.1.16
+
+Focus: a smaller, end-to-end showcase foundation and a more resilient flagship
+data-operations experience.
+
+Highlights:
+
+- the public example archive is consolidated into six maintained,
+  manifest-listed applications with redundant and incomplete demos retired
+- the Data Pipeline Command Center now demonstrates operational KPIs, filters,
+  dependency flow, reliability signals, triage, simulated actions, and an
+  assistant workflow from one normalized data boundary
+- modal focus behavior, mobile navigation wrapping, queued event handling, and
+  source-checkout launches have regression coverage across browser and server
+  boundaries
+- local example commands resolve the checked-out `0.1.16` runtime instead of a
+  stale globally installed BrickflowUI package
+- CI installs visualization dependencies wherever the full example suite runs,
+  treats PowerShell reparse-point coverage as Windows-only, and upgrades audited
+  packaging tools past known vulnerabilities
+
+Upgrade notes:
+
+- rebuild containers and Databricks App bundles with `brickflowui>=0.1.16`
+- refresh source-checkout launch commands to use
+  `python -m examples.data_pipeline_command_center.app`
+- replace retired example links with the maintained entries in
+  `examples/manifest.json`
+- no existing public component constructor was intentionally removed
+
 ## 0.1.15
 
 Focus: identity-safe Databricks integrations, complete server-driven Databricks
@@ -25,18 +55,12 @@ Highlights:
   manifest-driven example smoke checks, strict docs, and package build are
   enforced in the Python 3.11 integration gate; Python tests, Ruff, and MyPy run
   across the supported Python 3.10, 3.11, and 3.12 matrix
-- the example archive is consolidated into six maintained, manifest-listed
-  showcases, led by the production-style Data Pipeline Command Center; retired
-  overlapping examples are no longer release references
 - frontend dependencies and the packaged production bundle were refreshed with
   no known npm vulnerabilities at release preparation time
 
 Upgrade notes:
 
 - rebuild containers and Databricks App bundles with `brickflowui>=0.1.15`
-- replace links or automation that targeted a retired example with the
-  corresponding entry in `examples/manifest.json`; use
-  `data_pipeline_command_center` for the consolidated operational workflow
 - deployments using per-user identity must forward the supported authorization
   and user headers and grant the corresponding Databricks scopes
 - validate both per-user and shared-app modes in your own Databricks Apps
