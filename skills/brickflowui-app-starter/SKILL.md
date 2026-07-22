@@ -5,7 +5,7 @@
 Use this skill when an agent needs to start a new BrickflowUI app, reshape an
 existing one, or choose the right example and shell pattern before building.
 
-This skill is not a replacement for the repo-root [SKILL.md](D:\Projects\brickflowUI\brickflowUI\SKILL.md).
+This skill is not a replacement for the repo-root [SKILL.md](../../SKILL.md).
 Read that file first. Then use this skill as the execution overlay for the
 "how do I start correctly?" part.
 

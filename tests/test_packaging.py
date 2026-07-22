@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+import subprocess
 
 import yaml
 
@@ -10,6 +11,52 @@ except ModuleNotFoundError:  # pragma: no cover - Python 3.10 CI uses the backpo
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_public_tree_excludes_internal_agent_artifacts():
+    tracked = subprocess.run(
+        ["git", "ls-files"],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+    forbidden_prefixes = (
+        ".agents/",
+        ".codex/",
+        ".superpowers/",
+        "docs/superpowers/",
+        "docs/verification/",
+    )
+
+    assert not [path for path in tracked if path.startswith(forbidden_prefixes)]
+
+    ignored = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()
+    for prefix in forbidden_prefixes:
+        assert prefix in ignored
+
+
+def test_public_tree_excludes_developer_absolute_paths():
+    tracked = subprocess.run(
+        ["git", "ls-files", "-z"],
+        cwd=REPO_ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout.split(b"\0")
+    windows_sep = b"\\"
+    forbidden = (
+        b"C:" + windows_sep + b"Users" + windows_sep,
+        b"D:" + windows_sep + b"Projects" + windows_sep,
+        b"/home/" + b"runner/work/",
+    )
+    matches: list[str] = []
+
+    for relative_path in filter(None, tracked):
+        path = REPO_ROOT / relative_path.decode("utf-8", errors="surrogateescape")
+        if path.is_file() and any(marker in path.read_bytes() for marker in forbidden):
+            matches.append(path.relative_to(REPO_ROOT).as_posix())
+
+    assert not matches
 
 
 def _load_workflow(name: str) -> dict:
@@ -80,6 +127,17 @@ def test_required_command_lookup_rejects_multiline_shell_spoofs():
 
     workflow = {"jobs": {"real": {"steps": [{"run": required}]}}}
     assert _command_occurrences(workflow, required) == [("real", 0, None)]
+
+
+def test_publish_workflow_installs_visualization_test_dependencies():
+    workflow = _load_workflow("publish.yml")
+    install_step = next(
+        step for step in workflow["jobs"]["tests"]["steps"]
+        if step.get("name") == "Install dependencies"
+    )
+    install_lines = [line.strip() for line in install_step["run"].splitlines() if line.strip()]
+
+    assert 'python -m pip install -e ".[dev,docs,viz]"' in install_lines
 
 
 def test_ci_splits_python_matrix_from_python_311_integration_gates():
