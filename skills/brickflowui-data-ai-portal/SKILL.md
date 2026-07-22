@@ -6,7 +6,7 @@ Use this skill when the target surface is an operational portal, analytics
 workspace, pipeline command center, AI copilot shell, or governed internal
 application for data and AI teams.
 
-Read the repo-root [SKILL.md](D:\Projects\brickflowUI\brickflowUI\SKILL.md)
+Read the repo-root [SKILL.md](../../SKILL.md)
 first. This file is the focused overlay for domain-specific structure,
 information architecture, and quality rules.
 

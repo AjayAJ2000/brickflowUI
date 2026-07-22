@@ -6,7 +6,7 @@ Use this skill when the goal is a geometry-led, glassmorphism-heavy, image-led,
 editorial, or product-showcase surface rather than a traditional operator
 dashboard.
 
-Read the repo-root [SKILL.md](D:\Projects\brickflowUI\brickflowUI\SKILL.md)
+Read the repo-root [SKILL.md](../../SKILL.md)
 first. This file is the design-led overlay.
 
 ## Mission
