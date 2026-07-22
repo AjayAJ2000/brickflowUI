@@ -19744,6 +19744,141 @@ function statusTone(status) {
   if (["info", "active", "processing"].includes(normalized)) return "info";
   return "neutral";
 }
+const MODAL_FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "area[href]",
+  "button",
+  'input:not([type="hidden"])',
+  "select",
+  "textarea",
+  "iframe",
+  "object",
+  "embed",
+  "audio[controls]",
+  "video[controls]",
+  "summary",
+  '[contenteditable="true"]',
+  '[tabindex]:not([tabindex="-1"])'
+].join(",");
+function isElementTabbable(element) {
+  if (!element.isConnected || element.tabIndex < 0) return false;
+  if (element.matches(':disabled, [aria-disabled="true"]')) return false;
+  let current = element;
+  while (current) {
+    if (current.hidden || current.hasAttribute("inert") || current.getAttribute("aria-hidden") === "true") return false;
+    const style = current.ownerDocument.defaultView?.getComputedStyle(current);
+    if (style?.display === "none" || style?.visibility === "hidden" || style?.visibility === "collapse" || style?.contentVisibility === "hidden") return false;
+    current = current.parentElement;
+  }
+  const documentHasLayout = element.ownerDocument.documentElement.getClientRects().length > 0;
+  if (documentHasLayout && element.getClientRects().length === 0) return false;
+  return true;
+}
+function captureFocusIdentity(element) {
+  return {
+    element,
+    id: element.id,
+    focusKey: element.dataset.bfFocusKey || "",
+    ariaLabel: element.getAttribute("aria-label") || "",
+    tagName: element.tagName.toLowerCase(),
+    text: (element.textContent || "").replace(/\s+/g, " ").trim()
+  };
+}
+function restoreFocus(identity) {
+  if (!identity) return false;
+  if (identity.element.isConnected) {
+    identity.element.focus();
+    return document.activeElement === identity.element;
+  }
+  const candidates = Array.from(
+    document.querySelectorAll(identity.tagName)
+  );
+  const replacement = (identity.id ? document.getElementById(identity.id) : null) || (identity.focusKey ? candidates.find((element) => element.dataset.bfFocusKey === identity.focusKey) : null) || (identity.ariaLabel ? candidates.find((element) => element.getAttribute("aria-label") === identity.ariaLabel) : null) || (identity.text ? candidates.find(
+    (element) => (element.textContent || "").replace(/\s+/g, " ").trim() === identity.text
+  ) : null);
+  replacement?.focus();
+  return document.activeElement === replacement;
+}
+function ModalComponent({
+  props: p,
+  children,
+  dispatchClose,
+  interactionFocus
+}) {
+  const dialogRef = reactExports.useRef(null);
+  const closeRef = reactExports.useRef(null);
+  const titleId = `bf-modal-title-${reactExports.useId().replace(/:/g, "")}`;
+  const title = String(p.title || "Dialog");
+  reactExports.useEffect(() => {
+    const focusIdentity = interactionFocus.current || (document.activeElement instanceof HTMLElement ? captureFocusIdentity(document.activeElement) : null);
+    interactionFocus.current = null;
+    closeRef.current?.focus();
+    return () => {
+      interactionFocus.current = null;
+      if (!restoreFocus(focusIdentity)) {
+        window.setTimeout(() => restoreFocus(focusIdentity), 0);
+      }
+    };
+  }, []);
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      dispatchClose();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = Array.from(
+      dialogRef.current?.querySelectorAll(MODAL_FOCUSABLE_SELECTOR) || []
+    ).filter(isElementTabbable);
+    if (!focusable.length) {
+      event.preventDefault();
+      dialogRef.current?.focus();
+      return;
+    }
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || !dialogRef.current?.contains(active))) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+  return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-modal-overlay", onClick: dispatchClose, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      ref: dialogRef,
+      className: resolveMotionClass(p, [`bf-modal`, `bf-modal-${String(p.size || "md")}`]),
+      style: resolveMotionStyle(p),
+      role: "dialog",
+      "aria-modal": "true",
+      "aria-labelledby": titleId,
+      tabIndex: -1,
+      onClick: (event) => event.stopPropagation(),
+      onKeyDown: handleKeyDown,
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-modal-header", children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { id: titleId, className: "bf-modal-title", children: title }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "button",
+            {
+              ref: closeRef,
+              type: "button",
+              className: "bf-modal-close",
+              onClick: dispatchClose,
+              "aria-label": `Close ${title}`,
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: "X", size: 16 })
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-modal-body", children })
+      ]
+    }
+  ) });
+}
 function Renderer({
   node,
   dispatch,
@@ -19752,7 +19887,15 @@ function Renderer({
   themeMode,
   setThemeMode
 }) {
-  const ctx = { dispatch, navigate, pendingEvents, themeMode, setThemeMode };
+  const interactionFocus = reactExports.useRef(null);
+  const ctx = {
+    dispatch,
+    navigate,
+    pendingEvents,
+    themeMode,
+    setThemeMode,
+    interactionFocus
+  };
   return /* @__PURE__ */ jsxRuntimeExports.jsx(jsxRuntimeExports.Fragment, { children: renderNode(node, ctx, "0") });
 }
 function renderChildren(children, ctx, prefix) {
@@ -19820,8 +19963,12 @@ function renderNode(node, ctx, key) {
           className: resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ["bf-btn", `bf-btn-${p.variant || "primary"}`]),
           disabled: p.disabled || p.loading || autoLoading || false,
           type: p.htmlType || "button",
+          "data-bf-focus-key": key,
           style: resolveMotionStyle(p),
-          onClick: () => ev("click"),
+          onClick: (event) => {
+            ctx.interactionFocus.current = captureFocusIdentity(event.currentTarget);
+            ev("click");
+          },
           children: [
             (p.loading || autoLoading) && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-spinner bf-spinner-sm" }),
             p.icon && /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: p.icon, size: 14 }),
@@ -19922,13 +20069,16 @@ function renderNode(node, ctx, key) {
       return null;
     case "Modal":
       if (!p.visible) return null;
-      return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-modal-overlay", onClick: () => ev("close"), children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: resolveMotionClass(p, [`bf-modal`, `bf-modal-${p.size || "md"}`]), style: resolveMotionStyle(p), onClick: (e) => e.stopPropagation(), children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { className: "bf-modal-header", children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { className: "bf-modal-title", children: p.title }),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("button", { type: "button", className: "bf-modal-close", onClick: () => ev("close"), children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon, { name: "X", size: 16 }) })
-        ] }),
-        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { className: "bf-modal-body", children: renderChildren(children, ctx, key) })
-      ] }) }, key);
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(
+        ModalComponent,
+        {
+          props: p,
+          dispatchClose: () => ev("close"),
+          interactionFocus: ctx.interactionFocus,
+          children: renderChildren(children, ctx, key)
+        },
+        key
+      );
     // ── Form ───────────────────────────────────────────────────────────────
     case "Drawer":
       if (!p.visible) return null;
@@ -21441,4 +21591,4 @@ function App() {
 ReactDOM.createRoot(document.getElementById("root")).render(
   /* @__PURE__ */ jsxRuntimeExports.jsx(React.StrictMode, { children: /* @__PURE__ */ jsxRuntimeExports.jsx(App, {}) })
 );
-//# sourceMappingURL=index-DX0KM9Ux.js.map
+//# sourceMappingURL=index-BFhsc6B7.js.map

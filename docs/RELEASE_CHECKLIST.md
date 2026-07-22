@@ -42,7 +42,7 @@ All example apps must compile. Flagship examples must also render in the browser
 Run a representative multi-page app from the repository root so Python imports the checkout being released:
 
 ```bash
-python -c "from examples.acme_analytics_command_center.app import app; app.run()"
+python -c "from examples.data_pipeline_command_center.app import app; app.run()"
 ```
 
 Verify:

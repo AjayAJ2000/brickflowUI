@@ -264,11 +264,11 @@ If those assets are missing, Databricks Apps often stop at the loading shell.
 
 ## Recommended examples
 
-- [`examples/local_playground/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/local_playground/app.py) for framework validation
+- [`examples/counter/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/counter/app.py) for the fastest framework validation
 - [`examples/component_studio/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/component_studio/app.py) for broad component coverage
-- [`examples/acme_analytics_command_center/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/acme_analytics_command_center/app.py) for a product-style shell
+- [`examples/data_pipeline_command_center/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/data_pipeline_command_center/app.py) for a product-style data operations workflow
 - [`examples/clinical_trial_command_center/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/clinical_trial_command_center/app.py) for a regulated-industry style dashboard
-- [`examples/secure_internal_tools/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/secure_internal_tools/app.py) for role-aware internal tools
+- [`examples/auth_portal/app.py`](https://github.com/AjayAJ2000/brickflowUI/blob/main/examples/auth_portal/app.py) for role-aware internal tools
 
 ## Vibe coding skills
 

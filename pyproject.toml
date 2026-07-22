@@ -13,13 +13,14 @@ authors = [{ name = "BrickflowUI Contributors" }]
 keywords = ["databricks", "ui", "dashboard", "portal", "fastapi", "python-framework"]
 classifiers = [
     "Development Status :: 3 - Alpha",
+    "Framework :: AsyncIO",
+    "Framework :: FastAPI",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
     "Topic :: Software Development :: User Interfaces",
 ]
 
@@ -48,6 +49,7 @@ dev = [
     "httpx>=0.27.0",
     "ruff>=0.4.0",
     "mypy>=1.10.0",
+    'tomli>=2.0.1; python_version < "3.11"',
 ]
 docs = [
     "mkdocs>=1.6.0",

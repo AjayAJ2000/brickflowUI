@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useId, useRef, useState } from 'react'
 import * as LucideIcons from 'lucide-react'
 import type { VNodeData } from './types'
 import { chatBlockingEvents, shouldSubmitChatInput } from './runtime/chat'
@@ -57,6 +57,7 @@ interface RenderCtx {
   pendingEvents: Map<string, number>
   themeMode: 'light' | 'dark'
   setThemeMode: (mode: 'light' | 'dark') => void
+  interactionFocus: React.MutableRefObject<FocusIdentity | null>
 }
 
 // ── Icon component ──────────────────────────────────────────────────────────
@@ -224,6 +225,191 @@ function statusTone(status?: unknown) {
 }
 
 // ── Main recursive renderer ────────────────────────────────────────────────
+const MODAL_FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'area[href]',
+  'button',
+  'input:not([type="hidden"])',
+  'select',
+  'textarea',
+  'iframe',
+  'object',
+  'embed',
+  'audio[controls]',
+  'video[controls]',
+  'summary',
+  '[contenteditable="true"]',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
+
+function isElementTabbable(element: HTMLElement): boolean {
+  if (!element.isConnected || element.tabIndex < 0) return false
+  if (element.matches(':disabled, [aria-disabled="true"]')) return false
+
+  let current: HTMLElement | null = element
+  while (current) {
+    if (
+      current.hidden
+      || current.hasAttribute('inert')
+      || current.getAttribute('aria-hidden') === 'true'
+    ) return false
+
+    const style = current.ownerDocument.defaultView?.getComputedStyle(current)
+    if (
+      style?.display === 'none'
+      || style?.visibility === 'hidden'
+      || style?.visibility === 'collapse'
+      || style?.contentVisibility === 'hidden'
+    ) return false
+    current = current.parentElement
+  }
+
+  const documentHasLayout = element.ownerDocument.documentElement.getClientRects().length > 0
+  if (documentHasLayout && element.getClientRects().length === 0) return false
+  return true
+}
+
+interface FocusIdentity {
+  element: HTMLElement
+  id: string
+  focusKey: string
+  ariaLabel: string
+  tagName: string
+  text: string
+}
+
+function captureFocusIdentity(element: HTMLElement): FocusIdentity {
+  return {
+    element,
+    id: element.id,
+    focusKey: element.dataset.bfFocusKey || '',
+    ariaLabel: element.getAttribute('aria-label') || '',
+    tagName: element.tagName.toLowerCase(),
+    text: (element.textContent || '').replace(/\s+/g, ' ').trim(),
+  }
+}
+
+function restoreFocus(identity: FocusIdentity | null): boolean {
+  if (!identity) return false
+  if (identity.element.isConnected) {
+    identity.element.focus()
+    return document.activeElement === identity.element
+  }
+
+  const candidates = Array.from(
+    document.querySelectorAll<HTMLElement>(identity.tagName),
+  )
+  const replacement = (
+    (identity.id ? document.getElementById(identity.id) : null)
+    || (identity.focusKey
+      ? candidates.find((element) => element.dataset.bfFocusKey === identity.focusKey)
+      : null)
+    || (identity.ariaLabel
+      ? candidates.find((element) => element.getAttribute('aria-label') === identity.ariaLabel)
+      : null)
+    || (identity.text
+      ? candidates.find(
+        (element) => (element.textContent || '').replace(/\s+/g, ' ').trim() === identity.text,
+      )
+      : null)
+  )
+  replacement?.focus()
+  return document.activeElement === replacement
+}
+
+function ModalComponent({
+  props: p,
+  children,
+  dispatchClose,
+  interactionFocus,
+}: {
+  props: Record<string, any>
+  children: React.ReactNode
+  dispatchClose: () => void
+  interactionFocus: React.MutableRefObject<FocusIdentity | null>
+}) {
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+  const closeRef = useRef<HTMLButtonElement | null>(null)
+  const titleId = `bf-modal-title-${useId().replace(/:/g, '')}`
+  const title = String(p.title || 'Dialog')
+
+  useEffect(() => {
+    const focusIdentity = interactionFocus.current
+      || (document.activeElement instanceof HTMLElement
+        ? captureFocusIdentity(document.activeElement)
+        : null)
+    interactionFocus.current = null
+    closeRef.current?.focus()
+
+    return () => {
+      interactionFocus.current = null
+      if (!restoreFocus(focusIdentity)) {
+        window.setTimeout(() => restoreFocus(focusIdentity), 0)
+      }
+    }
+  }, [])
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      event.stopPropagation()
+      dispatchClose()
+      return
+    }
+
+    if (event.key !== 'Tab') return
+    const focusable = Array.from(
+      dialogRef.current?.querySelectorAll<HTMLElement>(MODAL_FOCUSABLE_SELECTOR) || [],
+    ).filter(isElementTabbable)
+    if (!focusable.length) {
+      event.preventDefault()
+      dialogRef.current?.focus()
+      return
+    }
+
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    const active = document.activeElement
+    if (event.shiftKey && (active === first || !dialogRef.current?.contains(active))) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+
+  return (
+    <div className="bf-modal-overlay" onClick={dispatchClose}>
+      <div
+        ref={dialogRef}
+        className={resolveMotionClass(p, [`bf-modal`, `bf-modal-${String(p.size || 'md')}`])}
+        style={resolveMotionStyle(p)}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={handleKeyDown}
+      >
+        <div className="bf-modal-header">
+          <span id={titleId} className="bf-modal-title">{title}</span>
+          <button
+            ref={closeRef}
+            type="button"
+            className="bf-modal-close"
+            onClick={dispatchClose}
+            aria-label={`Close ${title}`}
+          >
+            <Icon name="X" size={16} />
+          </button>
+        </div>
+        <div className="bf-modal-body">{children}</div>
+      </div>
+    </div>
+  )
+}
+
 export function Renderer({
   node,
   dispatch,
@@ -239,7 +425,15 @@ export function Renderer({
   themeMode: 'light' | 'dark'
   setThemeMode: (mode: 'light' | 'dark') => void
 }) {
-  const ctx: RenderCtx = { dispatch, navigate, pendingEvents, themeMode, setThemeMode }
+  const interactionFocus = useRef<FocusIdentity | null>(null)
+  const ctx: RenderCtx = {
+    dispatch,
+    navigate,
+    pendingEvents,
+    themeMode,
+    setThemeMode,
+    interactionFocus,
+  }
   return <>{renderNode(node, ctx, '0')}</>
 }
 
@@ -339,8 +533,12 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
           className={resolveMotionClass({ ...p, loading: Boolean(p.loading) || autoLoading }, ['bf-btn', `bf-btn-${(p.variant as string) || 'primary'}`])}
           disabled={(p.disabled as boolean) || (p.loading as boolean) || autoLoading || false}
           type={(p.htmlType as 'button' | 'submit' | 'reset') || 'button'}
+          data-bf-focus-key={key}
           style={resolveMotionStyle(p)}
-          onClick={() => ev('click')}
+          onClick={(event) => {
+            ctx.interactionFocus.current = captureFocusIdentity(event.currentTarget)
+            ev('click')
+          }}
         >
           {(p.loading || autoLoading) && <span className="bf-spinner bf-spinner-sm" />}
           {p.icon && <Icon name={p.icon as string} size={14} />}
@@ -482,15 +680,14 @@ function renderNode(node: VNodeData, ctx: RenderCtx, key: string): React.ReactNo
     case 'Modal':
       if (!p.visible) return null
       return (
-        <div key={key} className="bf-modal-overlay" onClick={() => ev('close')}>
-          <div className={resolveMotionClass(p, [`bf-modal`, `bf-modal-${(p.size as string) || 'md'}`])} style={resolveMotionStyle(p)} onClick={e => e.stopPropagation()}>
-            <div className="bf-modal-header">
-              <span className="bf-modal-title">{p.title as string}</span>
-              <button type="button" className="bf-modal-close" onClick={() => ev('close')}><Icon name="X" size={16} /></button>
-            </div>
-            <div className="bf-modal-body">{renderChildren(children, ctx, key)}</div>
-          </div>
-        </div>
+        <ModalComponent
+          key={key}
+          props={p}
+          dispatchClose={() => ev('close')}
+          interactionFocus={ctx.interactionFocus}
+        >
+          {renderChildren(children, ctx, key)}
+        </ModalComponent>
       )
 
     // ── Form ───────────────────────────────────────────────────────────────

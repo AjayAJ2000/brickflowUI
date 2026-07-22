@@ -22,14 +22,21 @@ Highlights:
   generation of queued events, caches handler call shapes, and reconnects on
   invalid browser patches
 - frontend tests, lint, type checks, dependency audit, committed-bundle drift,
-  Python tests, Ruff, MyPy, strict docs, build, and Twine checks are enforced as
-  release gates
+  manifest-driven example smoke checks, strict docs, and package build are
+  enforced in the Python 3.11 integration gate; Python tests, Ruff, and MyPy run
+  across the supported Python 3.10, 3.11, and 3.12 matrix
+- the example archive is consolidated into six maintained, manifest-listed
+  showcases, led by the production-style Data Pipeline Command Center; retired
+  overlapping examples are no longer release references
 - frontend dependencies and the packaged production bundle were refreshed with
   no known npm vulnerabilities at release preparation time
 
 Upgrade notes:
 
 - rebuild containers and Databricks App bundles with `brickflowui>=0.1.15`
+- replace links or automation that targeted a retired example with the
+  corresponding entry in `examples/manifest.json`; use
+  `data_pipeline_command_center` for the consolidated operational workflow
 - deployments using per-user identity must forward the supported authorization
   and user headers and grant the corresponding Databricks scopes
 - validate both per-user and shared-app modes in your own Databricks Apps

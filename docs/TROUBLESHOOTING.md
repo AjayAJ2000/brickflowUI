@@ -62,7 +62,7 @@ Check these things:
 Recommended validation:
 
 ```bash
-python examples/local_playground/app.py
+python examples/component_studio/app.py
 ```
 
 ## `python -m build` fails around frontend assets
@@ -71,4 +71,3 @@ Before publishing, always verify the wheel contains:
 
 - [`brickflowui/frontend/dist/index.html`](https://github.com/AjayAJ2000/brickflowUI/blob/main/brickflowui/frontend/dist/index.html)
 - [`brickflowui/frontend/dist/assets/...`](https://github.com/AjayAJ2000/brickflowUI/tree/main/brickflowui/frontend/dist/assets)
-
