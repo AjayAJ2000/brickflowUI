@@ -18,13 +18,13 @@ my_app/
 ## `requirements.txt`
 
 ```text
-brickflowui>=0.1.15
+brickflowui>=0.1.16
 ```
 
 If using Databricks SQL or Unity Catalog helpers:
 
 ```text
-brickflowui[databricks]>=0.1.15
+brickflowui[databricks]>=0.1.16
 ```
 
 ## `app.yaml`
@@ -95,4 +95,3 @@ Then explain what each file does.
 ## Checkpoint
 
 You should understand how to package a BrickflowUI app for Databricks Apps.
-

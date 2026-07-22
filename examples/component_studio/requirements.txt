@@ -1,1 +1,1 @@
-brickflowui[viz]>=0.1.15
+brickflowui[viz]>=0.1.16
